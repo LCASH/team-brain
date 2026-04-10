@@ -56,8 +56,18 @@ def save_flush_state(state: dict) -> None:
     STATE_FILE.write_text(json.dumps(state), encoding="utf-8")
 
 
-def append_to_daily_log(content: str, section: str = "Session") -> Path:
-    """Append content to today's daily log (developer-namespaced)."""
+def _extract_project_name(cwd: str) -> str:
+    """Extract a short project name from the working directory path."""
+    if not cwd:
+        return ""
+    # Use the last directory component as the project name
+    from pathlib import Path as _P
+    name = _P(cwd).name
+    return name if name else ""
+
+
+def append_to_daily_log(content: str, section: str = "Session", project: str = "") -> Path:
+    """Append content to today's daily log (developer-namespaced, project-tagged)."""
     today = datetime.now(timezone.utc).astimezone()
     log_path = DEVELOPER_DAILY_DIR / f"{today.strftime('%Y-%m-%d')}.md"
 
@@ -69,7 +79,8 @@ def append_to_daily_log(content: str, section: str = "Session") -> Path:
         )
 
     time_str = today.strftime("%H:%M")
-    entry = f"### {section} ({time_str})\n\n{content}\n\n"
+    tag = f" [{project}]" if project else ""
+    entry = f"### {section} ({time_str}){tag}\n\n{content}\n\n"
 
     with open(log_path, "a", encoding="utf-8") as f:
         f.write(entry)
@@ -256,13 +267,15 @@ def maybe_trigger_compilation() -> None:
 
 def main():
     if len(sys.argv) < 3:
-        logging.error("Usage: %s <context_file.md> <session_id>", sys.argv[0])
+        logging.error("Usage: %s <context_file.md> <session_id> [cwd]", sys.argv[0])
         sys.exit(1)
 
     context_file = Path(sys.argv[1])
     session_id = sys.argv[2]
+    cwd = sys.argv[3] if len(sys.argv) > 3 else ""
+    project = _extract_project_name(cwd)
 
-    logging.info("flush.py started for session %s, context: %s", session_id, context_file)
+    logging.info("flush.py started for session %s, project: %s, context: %s", session_id, project or "(none)", context_file)
 
     if not context_file.exists():
         logging.error("Context file not found: %s", context_file)
@@ -294,14 +307,14 @@ def main():
     if "FLUSH_OK" in response:
         logging.info("Result: FLUSH_OK")
         append_to_daily_log(
-            "FLUSH_OK - Nothing worth saving from this session", "Memory Flush"
+            "FLUSH_OK - Nothing worth saving from this session", "Memory Flush", project
         )
     elif "FLUSH_ERROR" in response:
         logging.error("Result: %s", response)
-        append_to_daily_log(response, "Memory Flush")
+        append_to_daily_log(response, "Memory Flush", project)
     else:
         logging.info("Result: saved to daily log (%d chars)", len(response))
-        append_to_daily_log(response, "Session")
+        append_to_daily_log(response, "Session", project)
 
     # Update dedup state
     save_flush_state({"session_id": session_id, "timestamp": time.time()})

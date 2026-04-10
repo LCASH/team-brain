@@ -134,6 +134,7 @@ def main() -> None:
 
     session_id = hook_input.get("session_id", "unknown")
     transcript_path_str = hook_input.get("transcript_path", "")
+    cwd = hook_input.get("cwd", "")
 
     if not transcript_path_str or not isinstance(transcript_path_str, str):
         return
@@ -171,6 +172,7 @@ def main() -> None:
         str(flush_script),
         str(context_file),
         session_id,
+        cwd,
     ]
 
     creation_flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
