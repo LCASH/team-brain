@@ -51,21 +51,27 @@ Each person writes to their own `daily/<name>/` folder — no merge conflicts. K
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed
 - [uv](https://docs.astral.sh/uv/) installed (`curl -LsSf https://astral.sh/uv/install.sh | sh`)
-- Access to this GitHub repo
+- Access to this GitHub repo (you need to be added as a collaborator)
 
-### Step 1: Download the skill file
+### Step 1: Clone this repo and install the skill
 
-Download `setup-kb.md` from this repo and put it in your Claude Code skills folder:
+This repo contains a **Claude Code skill file** (`setup-kb.md`) that automates the entire setup. You need to copy it into your global Claude Code skills folder so it's available as a `/setup-kb` command in any project.
 
 ```bash
-# Create the skills directory if it doesn't exist
-mkdir -p ~/.claude/skills
+# Clone the repo
+git clone https://github.com/LCASH/team-brain.git /tmp/team-brain
 
-# Download the skill file
-curl -o ~/.claude/skills/setup-kb.md https://raw.githubusercontent.com/LCASH/team-brain/main/setup-kb.md
+# Copy the skill file into your Claude Code skills folder
+mkdir -p ~/.claude/skills
+cp /tmp/team-brain/setup-kb.md ~/.claude/skills/setup-kb.md
+
+# Clean up
+rm -rf /tmp/team-brain
 ```
 
-### Step 2: Run the skill
+**What is `~/.claude/skills/`?** It's where Claude Code looks for custom slash commands. Any `.md` file in this folder becomes a global skill you can run from any project. The `setup-kb.md` file tells Claude how to set up the knowledge base automatically.
+
+### Step 2: Run the skill in your project
 
 Open Claude Code in whatever project you want team knowledge on, and type:
 
@@ -74,11 +80,11 @@ Open Claude Code in whatever project you want team knowledge on, and type:
 ```
 
 That's it. Claude will:
-1. Clone this repo into your project
+1. Clone this repo into your project as `claude-memory-compiler/`
 2. Install Python dependencies
 3. Detect your name from git config
-4. Create your daily log folder
-5. Configure the hooks
+4. Create your daily log folder (`daily/<your-name>/`)
+5. Configure the Claude Code hooks on the project
 6. Verify everything works
 
 ### Step 3: Work normally
