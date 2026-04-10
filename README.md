@@ -55,18 +55,15 @@ Each person writes to their own `daily/<name>/` folder — no merge conflicts. K
 
 ### Step 1: Clone this repo and install the skill
 
-This repo contains a **Claude Code skill** (`setup-kb/SKILL.md`) that automates the entire setup. You need to copy it into your global Claude Code skills folder so it's available as a `/setup-kb` command in any project.
+This repo contains a **Claude Code skill** (`setup-kb/SKILL.md`) that automates the entire setup. You clone the repo once to `~/Documents/`, copy the skill file, and you're done. The repo stays in one place — it does NOT get copied into every project.
 
 ```bash
-# Clone the repo
-git clone https://github.com/LCASH/team-brain.git /tmp/team-brain
+# Clone the repo to ~/Documents/ (one-time install)
+git clone https://github.com/LCASH/team-brain.git ~/Documents/claude-memory-compiler
 
-# Copy the skill folder into your Claude Code skills directory
+# Install the skill so /setup-kb works in Claude Code
 mkdir -p ~/.claude/skills
-cp -r /tmp/team-brain/setup-kb ~/.claude/skills/setup-kb
-
-# Clean up
-rm -rf /tmp/team-brain
+cp -r ~/Documents/claude-memory-compiler/setup-kb ~/.claude/skills/setup-kb
 ```
 
 **What is `~/.claude/skills/`?** It's where Claude Code looks for custom slash commands. Each skill is a folder containing a `SKILL.md` file. The folder name becomes the command — so `~/.claude/skills/setup-kb/SKILL.md` gives you the `/setup-kb` command, available globally in every project.
@@ -80,12 +77,14 @@ Open Claude Code in whatever project you want team knowledge on, and type:
 ```
 
 That's it. Claude will:
-1. Clone this repo into your project as `claude-memory-compiler/`
+1. Find the existing installation at `~/Documents/claude-memory-compiler/`
 2. Install Python dependencies
 3. Detect your name from git config
 4. Create your daily log folder (`daily/<your-name>/`)
-5. Configure the Claude Code hooks on the project
+5. Configure this project's hooks to point at the shared installation
 6. Verify everything works
+
+The repo lives once in `~/Documents/`. Each project just gets hooks in its `.claude/settings.json` that point there. No duplicates.
 
 ### Step 3: Work normally
 

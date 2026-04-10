@@ -1,42 +1,41 @@
 ---
 name: setup-kb
-description: Set up the team knowledge base (claude-memory-compiler) on the current project — clones shared repo, installs deps, configures hooks
+description: Set up the team knowledge base on the current project — finds or clones the shared repo in ~/Documents/, configures hooks with absolute paths
 user_invocable: true
 ---
 
 # /setup-kb — Team Knowledge Base Setup
 
-Sets up the claude-memory-compiler on the current project so conversations are automatically captured into daily logs, compiled into a shared knowledge base, and injected into future sessions.
+Sets up the team knowledge base on the current project. The `claude-memory-compiler` repo lives once in `~/Documents/claude-memory-compiler/` (NOT inside each project). This skill finds or installs it there, then configures the current project's hooks to point at it.
 
 ## Default Repo
 The shared team knowledge repo is: `https://github.com/LCASH/team-brain.git`
 
 ## Usage
-- `/setup-kb` — full setup (clone from default repo, install, configure hooks)
+- `/setup-kb` — find existing installation or clone, configure hooks on this project
 - `/setup-kb <github-repo-url>` — use a different repo URL instead of the default
-
-## What This Does
-
-1. Clones the shared knowledge repo into `<project>/claude-memory-compiler/`
-2. Installs Python dependencies via `uv sync`
-3. Detects developer name from `git config user.name` (or `CLAUDE_KB_USER` env var)
-4. Creates the developer's namespaced daily log directory: `daily/<developer-name>/`
-5. Configures Claude Code hooks in `<project>/.claude/settings.json`
-6. Verifies the session-start hook runs correctly
 
 ## Steps to Execute
 
-### Step 1: Clone or Update
+### Step 1: Find or Install claude-memory-compiler
 
-Use the default repo URL `https://github.com/LCASH/team-brain.git` unless the user provides a different one as an argument.
+Search for an existing installation. Check these locations in order:
+1. `~/Documents/claude-memory-compiler/`
+2. If not found, search: `find ~/Documents -maxdepth 3 -type d -name "claude-memory-compiler" 2>/dev/null | head -1`
 
-- If `claude-memory-compiler/` doesn't exist: `git clone <url> claude-memory-compiler`
-- If `claude-memory-compiler/` already exists: `cd claude-memory-compiler && git pull`
+**If found:** `cd <path> && git pull` to get latest.
+
+**If not found anywhere:** Clone to `~/Documents/`:
+```bash
+git clone https://github.com/LCASH/team-brain.git ~/Documents/claude-memory-compiler
+```
+
+Store the **absolute path** for use in later steps. For example: `/Users/<username>/Documents/claude-memory-compiler`
 
 ### Step 2: Install Dependencies
 
 ```bash
-cd claude-memory-compiler && uv sync
+cd <absolute-path> && uv sync
 ```
 
 If `uv` is not installed, tell the user to install it: `curl -LsSf https://astral.sh/uv/install.sh | sh`
@@ -52,12 +51,12 @@ Slugify it (lowercase, hyphens for spaces, strip special chars). If empty, ask t
 ### Step 4: Create Developer Daily Directory
 
 ```bash
-mkdir -p claude-memory-compiler/daily/<developer-slug>/
+mkdir -p <absolute-path>/daily/<developer-slug>/
 ```
 
 ### Step 5: Configure Hooks
 
-Create or update `.claude/settings.json` in the **current project root** (NOT inside claude-memory-compiler). The hooks must point into the claude-memory-compiler subdirectory:
+Create or update `.claude/settings.json` in the **current project root**. All hook commands must use the **absolute path** to `claude-memory-compiler`. Do NOT use relative paths.
 
 ```json
 {
@@ -68,7 +67,7 @@ Create or update `.claude/settings.json` in the **current project root** (NOT in
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --directory claude-memory-compiler python hooks/session-start.py",
+            "command": "uv run --directory <ABSOLUTE-PATH> python hooks/session-start.py",
             "timeout": 15
           }
         ]
@@ -80,7 +79,7 @@ Create or update `.claude/settings.json` in the **current project root** (NOT in
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --directory claude-memory-compiler python hooks/stop.py",
+            "command": "uv run --directory <ABSOLUTE-PATH> python hooks/stop.py",
             "timeout": 10
           }
         ]
@@ -92,7 +91,7 @@ Create or update `.claude/settings.json` in the **current project root** (NOT in
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --directory claude-memory-compiler python hooks/pre-compact.py",
+            "command": "uv run --directory <ABSOLUTE-PATH> python hooks/pre-compact.py",
             "timeout": 10
           }
         ]
@@ -104,7 +103,7 @@ Create or update `.claude/settings.json` in the **current project root** (NOT in
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --directory claude-memory-compiler python hooks/session-end.py",
+            "command": "uv run --directory <ABSOLUTE-PATH> python hooks/session-end.py",
             "timeout": 10
           }
         ]
@@ -114,6 +113,8 @@ Create or update `.claude/settings.json` in the **current project root** (NOT in
 }
 ```
 
+Replace `<ABSOLUTE-PATH>` with the actual path found/created in Step 1 (e.g., `/Users/lukecashman/Documents/claude-memory-compiler`).
+
 **IMPORTANT:** If `.claude/settings.json` already exists with other hooks or settings, MERGE the hook configuration — do NOT overwrite the entire file. Read the existing file first, add the four hooks (SessionStart, Stop, PreCompact, SessionEnd), and preserve any existing hooks or settings.
 
 ### Step 6: Verify
@@ -121,7 +122,7 @@ Create or update `.claude/settings.json` in the **current project root** (NOT in
 Run the session-start hook to confirm it works:
 
 ```bash
-uv run --directory claude-memory-compiler python hooks/session-start.py
+uv run --directory <ABSOLUTE-PATH> python hooks/session-start.py
 ```
 
 It should output valid JSON with `hookSpecificOutput`. If it fails, diagnose and fix.
@@ -131,13 +132,13 @@ It should output valid JSON with `hookSpecificOutput`. If it fails, diagnose and
 Print a summary:
 
 ```
+Installation: <absolute-path>
 Developer:    <name>
-Your logs:    claude-memory-compiler/daily/<name>/
-Knowledge:    claude-memory-compiler/knowledge/
-Hooks:        .claude/settings.json
+Your logs:    <absolute-path>/daily/<name>/
+Knowledge:    <absolute-path>/knowledge/
+Hooks:        .claude/settings.json (this project)
 
-Your next Claude Code session in this project will automatically
-sync with the team knowledge base.
+This project is now connected to the team knowledge base.
 ```
 
 ## How the System Works (for reference)
@@ -151,7 +152,14 @@ sync with the team knowledge base.
 
 After 6 PM local time, the first developer to finish a session triggers compilation — reads all team members' daily logs and builds shared knowledge articles. A nightly GitHub Action runs as a fallback.
 
+## Key Design: One Installation, Many Projects
+
+`claude-memory-compiler` lives ONCE at `~/Documents/claude-memory-compiler/`. Each project just has hooks in its `.claude/settings.json` pointing to that shared installation via absolute paths. This means:
+- No duplicate clones in every project
+- All projects feed into the same daily logs and knowledge base
+- `git pull` in one place updates everything
+
 ## Argument Parsing
 
-- `/setup-kb` → clone from `https://github.com/LCASH/team-brain.git` (or pull if already exists)
-- `/setup-kb <url>` → clone from the given URL instead of the default
+- `/setup-kb` → find existing installation in ~/Documents/ or clone there, configure hooks on current project
+- `/setup-kb <url>` → use a different repo URL instead of the default
