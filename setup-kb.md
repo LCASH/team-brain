@@ -74,6 +74,18 @@ Create or update `.claude/settings.json` in the **current project root** (NOT in
         ]
       }
     ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --directory claude-memory-compiler python hooks/stop.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PreCompact": [
       {
         "matcher": "",
@@ -102,7 +114,7 @@ Create or update `.claude/settings.json` in the **current project root** (NOT in
 }
 ```
 
-**IMPORTANT:** If `.claude/settings.json` already exists with other hooks or settings, MERGE the hook configuration — do NOT overwrite the entire file. Read the existing file first, add the three hooks (SessionStart, PreCompact, SessionEnd), and preserve any existing hooks or settings.
+**IMPORTANT:** If `.claude/settings.json` already exists with other hooks or settings, MERGE the hook configuration — do NOT overwrite the entire file. Read the existing file first, add the four hooks (SessionStart, Stop, PreCompact, SessionEnd), and preserve any existing hooks or settings.
 
 ### Step 6: Verify
 
@@ -133,8 +145,9 @@ sync with the team knowledge base.
 | Hook | When | What |
 |------|------|------|
 | SessionStart | Every new conversation | Pulls team updates, injects knowledge base index + team activity |
+| Stop | After every Claude response | Checks timer — flushes every 30 min of active conversation |
 | PreCompact | Before auto-compaction | Captures context before summarization loses it |
-| SessionEnd | Session closes | Extracts transcript into `daily/<you>/YYYY-MM-DD.md`, pushes to shared repo |
+| SessionEnd | Session closes (explicit) | Final capture when you quit/close |
 
 After 6 PM local time, the first developer to finish a session triggers compilation — reads all team members' daily logs and builds shared knowledge articles. A nightly GitHub Action runs as a fallback.
 

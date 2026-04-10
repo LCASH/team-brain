@@ -16,9 +16,10 @@ Everyone works locally on their own stuff. The system captures what you learn, s
 ║  You work normally. Claude already has team context.         ║
 ║                                                              ║
 ╠══════════════════════════════════════════════════════════════╣
-║                    SESSION ENDS                              ║
+║                    WHILE YOU WORK                            ║
 ║                                                              ║
-║  3. CAPTURE — AI extracts decisions, lessons, discoveries    ║
+║  3. CAPTURE — every 30 min, AI extracts what's worth saving  ║
+║     (also captures before auto-compaction + on session close) ║
 ║  4. PUSH — your daily log syncs to the shared repo           ║
 ║  5. COMPILE — once a day, all logs become knowledge articles ║
 ║                                                              ║
@@ -152,7 +153,8 @@ team-brain/
 │   └── qa/                   #   Filed Q&A answers
 ├── hooks/                    # Claude Code hooks (auto-trigger)
 │   ├── session-start.py      #   Pulls team updates, injects context
-│   ├── session-end.py        #   Captures transcript, spawns flush
+│   ├── stop.py               #   Periodic capture (every 30 min)
+│   ├── session-end.py        #   Final capture on explicit close
 │   └── pre-compact.py        #   Safety net before auto-compaction
 ├── scripts/                  # CLI tools
 │   ├── compile.py            #   Compile daily logs → knowledge articles
