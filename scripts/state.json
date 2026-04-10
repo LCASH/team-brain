@@ -1,0 +1,12 @@
+{
+  "ingested": {
+    "lcash/2026-04-10.md": {
+      "hash": "4bb036280ff2561c",
+      "compiled_at": "2026-04-10T12:32:36+10:00",
+      "cost_usd": 0.300488
+    }
+  },
+  "query_count": 0,
+  "last_lint": null,
+  "total_cost": 0.300488
+}
