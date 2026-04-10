@@ -1,0 +1,93 @@
+# Nightly fallback compilation.
+# Normally compilation runs locally (first dev to finish after 6 PM).
+# This Action catches anything that was missed — runs once at 4 AM UTC,
+# skips entirely if all logs are already compiled.
+#
+# Cost: ~10 seconds most nights (just the check). Only burns real minutes
+# when there's actual uncompiled content.
+
+name: Nightly Compile (fallback)
+
+on:
+  schedule:
+    - cron: '0 4 * * *'  # 4 AM UTC daily
+  workflow_dispatch:       # Manual trigger
+
+concurrency:
+  group: knowledge-compile
+  cancel-in-progress: false
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check for uncompiled logs
+        id: check
+        run: |
+          # Quick check: are there any daily logs not yet in state.json?
+          python3 -c "
+          import json, hashlib
+          from pathlib import Path
+
+          state_file = Path('scripts/state.json')
+          state = json.loads(state_file.read_text()) if state_file.exists() else {}
+          ingested = state.get('ingested', {})
+
+          daily = Path('daily')
+          if not daily.exists():
+              print('SKIP=true')
+              exit()
+
+          uncompiled = 0
+          for dev_dir in sorted(daily.iterdir()):
+              if not dev_dir.is_dir():
+                  continue
+              for log in dev_dir.glob('*.md'):
+                  key = f'{dev_dir.name}/{log.name}'
+                  prev = ingested.get(key, {})
+                  if not prev:
+                      uncompiled += 1
+                  else:
+                      h = hashlib.sha256(log.read_bytes()).hexdigest()[:16]
+                      if prev.get('hash') != h:
+                          uncompiled += 1
+
+          if uncompiled == 0:
+              print('SKIP=true')
+          else:
+              print(f'SKIP=false')
+              print(f'COUNT={uncompiled}')
+          " >> "$GITHUB_OUTPUT"
+
+      - name: Set up uv
+        if: steps.check.outputs.SKIP != 'true'
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        if: steps.check.outputs.SKIP != 'true'
+        run: uv sync
+
+      - name: Install Claude Code
+        if: steps.check.outputs.SKIP != 'true'
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Compile daily logs
+        if: steps.check.outputs.SKIP != 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: uv run python scripts/compile.py
+
+      - name: Commit and push knowledge updates
+        if: steps.check.outputs.SKIP != 'true'
+        run: |
+          git config user.name "Knowledge Compiler"
+          git config user.email "compiler@noreply"
+          git add knowledge/ scripts/state.json
+          git diff --cached --quiet || \
+            git commit -m "compile: nightly fallback $(date +%Y-%m-%d)"
+          git push

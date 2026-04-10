@@ -96,10 +96,14 @@ def list_wiki_articles() -> list[Path]:
 
 
 def list_raw_files() -> list[Path]:
-    """List all daily log files."""
+    """List all daily log files across all developer subdirectories."""
     if not DAILY_DIR.exists():
         return []
-    return sorted(DAILY_DIR.glob("*.md"))
+    files = []
+    for dev_dir in sorted(DAILY_DIR.iterdir()):
+        if dev_dir.is_dir():
+            files.extend(sorted(dev_dir.glob("*.md")))
+    return files
 
 
 # ── Index helpers ─────────────────────────────────────────────────────

@@ -1,5 +1,8 @@
-"""Path constants and configuration for the personal knowledge base."""
+"""Path constants and configuration for the team knowledge base."""
 
+import os
+import re
+import subprocess
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -18,10 +21,44 @@ AGENTS_FILE = ROOT_DIR / "AGENTS.md"
 INDEX_FILE = KNOWLEDGE_DIR / "index.md"
 LOG_FILE = KNOWLEDGE_DIR / "log.md"
 STATE_FILE = SCRIPTS_DIR / "state.json"
+COMPILE_LOCK_FILE = SCRIPTS_DIR / "compile.lock"
 
 # ── Timezone ───────────────────────────────────────────────────────────
 TIMEZONE = "America/Chicago"
 
+
+# ── Developer identity ─────────────────────────────────────────────────
+
+def _slugify(text: str) -> str:
+    """Convert text to a filename-safe slug."""
+    text = text.lower().strip()
+    text = re.sub(r"[^\w\s-]", "", text)
+    text = re.sub(r"[\s_]+", "-", text)
+    text = re.sub(r"-+", "-", text)
+    return text.strip("-")
+
+
+def get_developer_name() -> str:
+    """Get developer name from CLAUDE_KB_USER env var or git config."""
+    name = os.environ.get("CLAUDE_KB_USER")
+    if not name:
+        try:
+            result = subprocess.run(
+                ["git", "config", "user.name"],
+                capture_output=True, text=True, timeout=5,
+                cwd=str(ROOT_DIR),
+            )
+            name = result.stdout.strip()
+        except Exception:
+            pass
+    return _slugify(name) if name else "unknown"
+
+
+DEVELOPER = get_developer_name()
+DEVELOPER_DAILY_DIR = DAILY_DIR / DEVELOPER
+
+
+# ── Helpers ────────────────────────────────────────────────────────────
 
 def now_iso() -> str:
     """Current time in ISO 8601 format."""

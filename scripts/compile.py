@@ -18,7 +18,16 @@ import asyncio
 import sys
 from pathlib import Path
 
-from config import AGENTS_FILE, CONCEPTS_DIR, CONNECTIONS_DIR, DAILY_DIR, KNOWLEDGE_DIR, now_iso
+from config import (
+    AGENTS_FILE,
+    COMPILE_LOCK_FILE,
+    CONCEPTS_DIR,
+    CONNECTIONS_DIR,
+    DAILY_DIR,
+    DEVELOPER,
+    KNOWLEDGE_DIR,
+    now_iso,
+)
 from utils import (
     file_hash,
     list_raw_files,
@@ -64,8 +73,17 @@ async def compile_daily_log(log_path: Path, state: dict) -> float:
 
     timestamp = now_iso()
 
-    prompt = f"""You are a knowledge compiler. Your job is to read a daily conversation log
-and extract knowledge into structured wiki articles.
+    # Derive developer name from the log path (daily/<dev>/YYYY-MM-DD.md)
+    dev_name = log_path.parent.name if log_path.parent != DAILY_DIR else "unknown"
+    source_ref = f"daily/{dev_name}/{log_path.name}"
+
+    prompt = f"""You are a knowledge compiler for a TEAM knowledge base. Your job is to read
+a daily conversation log and extract knowledge into structured wiki articles.
+
+This log is from developer **{dev_name}**. When compiling:
+- Attribute insights to the developer who discovered them where relevant
+- Look for connections to concepts already in the wiki from other team members
+- Synthesize team-wide patterns, not just individual notes
 
 ## Schema (AGENTS.md)
 
@@ -81,7 +99,8 @@ and extract knowledge into structured wiki articles.
 
 ## Daily Log to Compile
 
-**File:** {log_path.name}
+**File:** {source_ref}
+**Developer:** {dev_name}
 
 {log_content}
 
@@ -94,7 +113,7 @@ Read the daily log above and compile it into wiki articles following the schema 
 1. **Extract key concepts** - Identify 3-7 distinct concepts worth their own article
 2. **Create concept articles** in `knowledge/concepts/` - One .md file per concept
    - Use the exact article format from AGENTS.md (YAML frontmatter + sections)
-   - Include `sources:` in frontmatter pointing to the daily log file
+   - Include `sources:` in frontmatter pointing to `{source_ref}`
    - Use `[[concepts/slug]]` wikilinks to link to related concepts
    - Write in encyclopedia style - neutral, comprehensive
 3. **Create connection articles** in `knowledge/connections/` if this log reveals non-obvious
@@ -102,11 +121,12 @@ Read the daily log above and compile it into wiki articles following the schema 
 4. **Update existing articles** if this log adds new information to concepts already in the wiki
    - Read the existing article, add the new information, add the source to frontmatter
 5. **Update knowledge/index.md** - Add new entries to the table
-   - Each entry: `| [[path/slug]] | One-line summary | source-file | {timestamp[:10]} |`
+   - Each entry: `| [[path/slug]] | One-line summary | {source_ref} | {timestamp[:10]} |`
 6. **Append to knowledge/log.md** - Add a timestamped entry:
    ```
-   ## [{timestamp}] compile | {log_path.name}
-   - Source: daily/{log_path.name}
+   ## [{timestamp}] compile | {source_ref}
+   - Source: {source_ref}
+   - Developer: {dev_name}
    - Articles created: [[concepts/x]], [[concepts/y]]
    - Articles updated: [[concepts/z]] (if any)
    ```
@@ -150,8 +170,9 @@ Read the daily log above and compile it into wiki articles following the schema 
         print(f"  Error: {e}")
         return 0.0
 
-    # Update state
-    rel_path = log_path.name
+    # Update state — key is "dev/filename" for uniqueness across developers
+    dev_name = log_path.parent.name if log_path.parent != DAILY_DIR else "unknown"
+    rel_path = f"{dev_name}/{log_path.name}"
     state.setdefault("ingested", {})[rel_path] = {
         "hash": file_hash(log_path),
         "compiled_at": now_iso(),
@@ -191,7 +212,8 @@ def main():
         else:
             to_compile = []
             for log_path in all_logs:
-                rel = log_path.name
+                dev_name = log_path.parent.name if log_path.parent != DAILY_DIR else "unknown"
+                rel = f"{dev_name}/{log_path.name}"
                 prev = state.get("ingested", {}).get(rel, {})
                 if not prev or prev.get("hash") != file_hash(log_path):
                     to_compile.append(log_path)
@@ -218,6 +240,19 @@ def main():
     articles = list_wiki_articles()
     print(f"\nCompilation complete. Total cost: ${total_cost:.2f}")
     print(f"Knowledge base: {len(articles)} articles")
+
+    # Push compiled knowledge to shared repo and release lock
+    try:
+        from sync import git_push_with_retry
+        COMPILE_LOCK_FILE.unlink(missing_ok=True)
+        git_push_with_retry(
+            files=["knowledge/", "scripts/state.json", str(COMPILE_LOCK_FILE)],
+            message=f"compile: {len(to_compile)} logs compiled by {DEVELOPER}",
+        )
+        print("Pushed knowledge updates to shared repo.")
+    except Exception as e:
+        print(f"Warning: failed to push compiled knowledge: {e}")
+        COMPILE_LOCK_FILE.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

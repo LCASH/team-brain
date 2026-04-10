@@ -24,10 +24,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DAILY_DIR = ROOT / "daily"
 SCRIPTS_DIR = ROOT / "scripts"
 STATE_FILE = SCRIPTS_DIR / "last-flush.json"
 LOG_FILE = SCRIPTS_DIR / "flush.log"
+
+# Import after setting ROOT so config can resolve paths
+sys.path.insert(0, str(SCRIPTS_DIR))
+from config import COMPILE_LOCK_FILE, DEVELOPER, DEVELOPER_DAILY_DIR
 
 # Set up file-based logging so we can verify the background process ran.
 # The parent process sends stdout/stderr to DEVNULL (to avoid the inherited
@@ -53,15 +56,15 @@ def save_flush_state(state: dict) -> None:
     STATE_FILE.write_text(json.dumps(state), encoding="utf-8")
 
 
-def append_to_daily_log(content: str, section: str = "Session") -> None:
-    """Append content to today's daily log."""
+def append_to_daily_log(content: str, section: str = "Session") -> Path:
+    """Append content to today's daily log (developer-namespaced)."""
     today = datetime.now(timezone.utc).astimezone()
-    log_path = DAILY_DIR / f"{today.strftime('%Y-%m-%d')}.md"
+    log_path = DEVELOPER_DAILY_DIR / f"{today.strftime('%Y-%m-%d')}.md"
 
     if not log_path.exists():
-        DAILY_DIR.mkdir(parents=True, exist_ok=True)
+        DEVELOPER_DAILY_DIR.mkdir(parents=True, exist_ok=True)
         log_path.write_text(
-            f"# Daily Log: {today.strftime('%Y-%m-%d')}\n\n## Sessions\n\n## Memory Maintenance\n\n",
+            f"# Daily Log: {today.strftime('%Y-%m-%d')} ({DEVELOPER})\n\n## Sessions\n\n## Memory Maintenance\n\n",
             encoding="utf-8",
         )
 
@@ -70,6 +73,8 @@ def append_to_daily_log(content: str, section: str = "Session") -> None:
 
     with open(log_path, "a", encoding="utf-8") as f:
         f.write(entry)
+
+    return log_path
 
 
 async def run_flush(context: str) -> str:
@@ -143,37 +148,95 @@ COMPILE_AFTER_HOUR = 18  # 6 PM local time
 
 
 def maybe_trigger_compilation() -> None:
-    """If it's past the compile hour and today's log hasn't been compiled, run compile.py."""
+    """If it's past the compile hour and there are uncompiled team logs, compile.
+
+    Uses a lock file to prevent concurrent compilation across team members.
+    Syncs with the shared repo before and after compilation.
+    """
     import subprocess as _sp
+    from hashlib import sha256
 
     now = datetime.now(timezone.utc).astimezone()
     if now.hour < COMPILE_AFTER_HOUR:
         return
 
-    # Check if today's log has already been compiled
-    today_log = f"{now.strftime('%Y-%m-%d')}.md"
-    compile_state_file = SCRIPTS_DIR / "state.json"
-    if compile_state_file.exists():
-        try:
-            compile_state = json.loads(compile_state_file.read_text(encoding="utf-8"))
-            ingested = compile_state.get("ingested", {})
-            if today_log in ingested:
-                # Already compiled today - check if the log has changed since
-                from hashlib import sha256
-                log_path = DAILY_DIR / today_log
-                if log_path.exists():
-                    current_hash = sha256(log_path.read_bytes()).hexdigest()[:16]
-                    if ingested[today_log].get("hash") == current_hash:
-                        return  # log unchanged since last compile
-        except (json.JSONDecodeError, OSError):
-            pass
-
     compile_script = SCRIPTS_DIR / "compile.py"
     if not compile_script.exists():
         return
 
+    # Sync: push our daily logs, pull team's logs + latest state
+    try:
+        sys.path.insert(0, str(SCRIPTS_DIR))
+        from sync import git_pull, git_push_with_retry
+        git_push_with_retry(
+            files=[f"daily/{DEVELOPER}/"],
+            message=f"daily/{DEVELOPER}: pre-compile sync",
+        )
+        git_pull()
+    except Exception as e:
+        logging.warning("Pre-compile sync failed (continuing anyway): %s", e)
+
+    # Check if there are any uncompiled logs across all developers
+    compile_state_file = SCRIPTS_DIR / "state.json"
+    ingested: dict = {}
+    if compile_state_file.exists():
+        try:
+            compile_state = json.loads(compile_state_file.read_text(encoding="utf-8"))
+            ingested = compile_state.get("ingested", {})
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    # Scan all developer daily dirs for uncompiled logs
+    from pathlib import Path as _Path
+    daily_dir = ROOT / "daily"
+    has_uncompiled = False
+    if daily_dir.exists():
+        for dev_dir in daily_dir.iterdir():
+            if not dev_dir.is_dir():
+                continue
+            for log_file in dev_dir.glob("*.md"):
+                rel_key = f"{dev_dir.name}/{log_file.name}"
+                prev = ingested.get(rel_key, {})
+                if not prev:
+                    has_uncompiled = True
+                    break
+                current_hash = sha256(log_file.read_bytes()).hexdigest()[:16]
+                if prev.get("hash") != current_hash:
+                    has_uncompiled = True
+                    break
+            if has_uncompiled:
+                break
+
+    if not has_uncompiled:
+        return
+
+    # Compile lock: check if someone else is already compiling
+    import time as _time
+    if COMPILE_LOCK_FILE.exists():
+        try:
+            lock_age = _time.time() - COMPILE_LOCK_FILE.stat().st_mtime
+            if lock_age < 600:  # 10 min — someone else is compiling
+                logging.info("Compile lock held (age %.0fs), skipping", lock_age)
+                return
+            logging.info("Stale compile lock (age %.0fs), claiming", lock_age)
+        except OSError:
+            pass
+
+    # Claim the lock and push it
+    COMPILE_LOCK_FILE.write_text(
+        f"{DEVELOPER} {now.isoformat()}", encoding="utf-8"
+    )
+    try:
+        git_push_with_retry(
+            files=[str(COMPILE_LOCK_FILE)],
+            message=f"compile: lock claimed by {DEVELOPER}",
+        )
+    except Exception:
+        pass  # lock push failed, but we'll try compiling anyway
+
     logging.info("End-of-day compilation triggered (after %d:00)", COMPILE_AFTER_HOUR)
 
+    # Run compilation as a background process
     cmd = ["uv", "run", "--directory", str(ROOT), "python", str(compile_script)]
 
     kwargs: dict = {}
@@ -187,6 +250,8 @@ def maybe_trigger_compilation() -> None:
         _sp.Popen(cmd, stdout=log_handle, stderr=_sp.STDOUT, cwd=str(ROOT), **kwargs)
     except Exception as e:
         logging.error("Failed to spawn compile.py: %s", e)
+        # Clean up lock on failure
+        COMPILE_LOCK_FILE.unlink(missing_ok=True)
 
 
 def main():
