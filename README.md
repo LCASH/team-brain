@@ -55,21 +55,21 @@ Each person writes to their own `daily/<name>/` folder — no merge conflicts. K
 
 ### Step 1: Clone this repo and install the skill
 
-This repo contains a **Claude Code skill file** (`setup-kb.md`) that automates the entire setup. You need to copy it into your global Claude Code skills folder so it's available as a `/setup-kb` command in any project.
+This repo contains a **Claude Code skill** (`setup-kb/SKILL.md`) that automates the entire setup. You need to copy it into your global Claude Code skills folder so it's available as a `/setup-kb` command in any project.
 
 ```bash
 # Clone the repo
 git clone https://github.com/LCASH/team-brain.git /tmp/team-brain
 
-# Copy the skill file into your Claude Code skills folder
+# Copy the skill folder into your Claude Code skills directory
 mkdir -p ~/.claude/skills
-cp /tmp/team-brain/setup-kb.md ~/.claude/skills/setup-kb.md
+cp -r /tmp/team-brain/setup-kb ~/.claude/skills/setup-kb
 
 # Clean up
 rm -rf /tmp/team-brain
 ```
 
-**What is `~/.claude/skills/`?** It's where Claude Code looks for custom slash commands. Any `.md` file in this folder becomes a global skill you can run from any project. The `setup-kb.md` file tells Claude how to set up the knowledge base automatically.
+**What is `~/.claude/skills/`?** It's where Claude Code looks for custom slash commands. Each skill is a folder containing a `SKILL.md` file. The folder name becomes the command — so `~/.claude/skills/setup-kb/SKILL.md` gives you the `/setup-kb` command, available globally in every project.
 
 ### Step 2: Run the skill in your project
 
@@ -172,7 +172,8 @@ team-brain/
 │   └── utils.py              #   Shared helpers
 ├── .github/workflows/
 │   └── compile.yml           # Nightly fallback compilation
-├── setup-kb.md               # Skill file — copy to ~/.claude/skills/
+├── setup-kb/
+│   └── SKILL.md              # Skill file — copy folder to ~/.claude/skills/
 ├── setup.sh                  # Alternative: shell script onboarding
 ├── AGENTS.md                 # Full technical reference
 └── pyproject.toml            # Python dependencies
