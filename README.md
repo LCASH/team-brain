@@ -53,38 +53,40 @@ Each person writes to their own `daily/<name>/` folder — no merge conflicts ev
 - [uv](https://docs.astral.sh/uv/) installed (`curl -LsSf https://astral.sh/uv/install.sh | sh`)
 - Collaborator access to this repo (ask the admin to add you)
 
-### One-time install (do this once, ever)
+### Step 1: One-time install (do this once, ever)
+
+This downloads the system and gives you the `/setup-kb` command.
 
 ```bash
-# 1. Clone the repo to your Documents folder
+# Clone the repo to your Documents folder
 git clone https://github.com/LCASH/team-brain.git ~/Documents/claude-memory-compiler
 
-# 2. Install the /setup-kb skill into Claude Code
+# Install the /setup-kb skill into Claude Code
 mkdir -p ~/.claude/skills
 cp -r ~/Documents/claude-memory-compiler/setup-kb ~/.claude/skills/setup-kb
 ```
 
-That's it for the install. The repo lives at `~/Documents/claude-memory-compiler/` and never needs to be cloned again.
+Done. The repo lives at `~/Documents/claude-memory-compiler/` and never needs to be cloned again. The `/setup-kb` command is now available globally in Claude Code.
 
-**What is `~/.claude/skills/`?** Claude Code looks here for custom slash commands. Each folder with a `SKILL.md` file becomes a command. Copying `setup-kb/` there gives you `/setup-kb` globally — in any project.
+**What is `~/.claude/skills/`?** Claude Code looks here for custom slash commands. Each folder with a `SKILL.md` file becomes a command. Copying `setup-kb/` there gives you `/setup-kb` in any project.
 
-### Per-project setup (do this for each project you want knowledge sharing on)
+### Step 2: Activate on a project
 
-Open Claude Code in your project and type:
+The install doesn't do anything until you activate it on a project. Each project you want knowledge sharing on needs to be activated separately.
+
+Open Claude Code **in the project you want to activate**, and type:
 
 ```
 /setup-kb
 ```
 
-Claude will:
-1. Find the installation at `~/Documents/claude-memory-compiler/`
-2. Install dependencies if needed
-3. Detect your name from git config
-4. Create your daily log folder
-5. Configure this project's hooks
-6. Verify everything works
+Claude will configure that project's hooks to connect to the shared knowledge base. You can activate as many projects as you want — they all feed into the same team brain.
 
-That's it. Work normally from here. Everything happens in the background.
+**To activate on another project later**, just open Claude Code in that project and run `/setup-kb` again. That's it.
+
+### Step 3: Work normally
+
+There is no step 3. Just use Claude Code like you always do. Everything happens in the background.
 
 ---
 
