@@ -115,7 +115,12 @@ Create or update `.claude/settings.json` in the **current project root**. All ho
 
 Replace `<ABSOLUTE-PATH>` with the actual path found/created in Step 1 (e.g., `/Users/lukecashman/Documents/claude-memory-compiler`).
 
-**IMPORTANT:** If `.claude/settings.json` already exists with other hooks or settings, MERGE the hook configuration — do NOT overwrite the entire file. Read the existing file first, add the four hooks (SessionStart, Stop, PreCompact, SessionEnd), and preserve any existing hooks or settings.
+**IMPORTANT — Merging with existing settings:**
+1. Read `.claude/settings.json` first if it exists
+2. If it has a `hooks` key, add/replace only `SessionStart`, `Stop`, `PreCompact`, and `SessionEnd` — preserve any other hook types (e.g., `PreToolUse`, `PostToolUse`)
+3. If it has non-hook keys (e.g., `permissions`, `model`), preserve them
+4. If the file doesn't exist, create it with just the hooks above
+5. Never overwrite the entire file — always merge
 
 ### Step 6: Verify
 
