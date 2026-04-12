@@ -1,12 +1,27 @@
 {
   "ingested": {
     "lcash/2026-04-10.md": {
-      "hash": "4bb036280ff2561c",
-      "compiled_at": "2026-04-10T12:32:36+10:00",
-      "cost_usd": 0.300488
+      "hash": "4f9e740b01cc9f6c",
+      "compiled_at": "2026-04-12T20:20:11+10:00",
+      "cost_usd": 0.362461
+    },
+    "carts00/2026-04-10.md": {
+      "hash": "300184de9cf2c4ab",
+      "compiled_at": "2026-04-12T20:18:49+10:00",
+      "cost_usd": 0.5700827500000001
+    },
+    "lcash/2026-04-11.md": {
+      "hash": "33e4173ac922863e",
+      "compiled_at": "2026-04-12T20:24:11+10:00",
+      "cost_usd": 0.594441
+    },
+    "lcash/2026-04-12.md": {
+      "hash": "a8f845d580e03e12",
+      "compiled_at": "2026-04-12T20:27:57+10:00",
+      "cost_usd": 0.7404277499999999
     }
   },
   "query_count": 0,
   "last_lint": null,
-  "total_cost": 0.300488
+  "total_cost": 2.5679005
 }

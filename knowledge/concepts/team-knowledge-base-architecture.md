@@ -5,7 +5,7 @@ tags: [architecture, knowledge-management, collaboration]
 sources:
   - "daily/lcash/2026-04-10.md"
 created: 2026-04-10
-updated: 2026-04-10
+updated: 2026-04-12
 ---
 
 # Team Knowledge Base Architecture
@@ -19,6 +19,7 @@ A shared knowledge base system designed for multi-developer teams using Claude C
 - Onboarding is handled by a single `/setup-kb` skill that clones the repo and configures all necessary hooks
 - The system follows a compiler analogy: daily logs are "source code," the LLM is the "compiler," and the knowledge base is the "executable"
 - Team members' insights are attributed individually but synthesized into shared concept articles
+- Sessions are tagged with project context (`[project-name]`) via cwd extraction, disambiguating multi-project daily logs
 
 ## Details
 
@@ -34,6 +35,7 @@ The shared `knowledge/` directory is where synthesis happens. The compiler reads
 - [[concepts/setup-kb-skill]] - One-command onboarding for new team members
 - [[concepts/stop-hook-periodic-capture]] - The primary capture mechanism feeding daily logs
 - [[concepts/claude-code-hook-reliability]] - Hook behavior that shaped the capture architecture
+- [[concepts/project-context-tagging]] - Project disambiguation in daily logs via cwd extraction
 
 ## Sources
 
