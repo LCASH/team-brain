@@ -37,3 +37,10 @@
 - Note: Incremental recompile — Sessions 15:37 and 20:15 were already compiled; this pass covers Session 21:15 content (betstamp removal, batch file drift)
 - Articles created: [[concepts/betstamp-bet365-scraper-migration]], [[concepts/configuration-drift-manual-launch]], [[connections/scraper-consolidation-provider-dependency]]
 - Articles updated: [[concepts/opticodds-critical-dependency]] (added betstamp removal deepening dependency analysis)
+
+## [2026-04-13T00:15:00+10:00] compile | daily/lcash/2026-04-12.md (incremental)
+- Source: daily/lcash/2026-04-12.md
+- Developer: lcash
+- Note: Incremental recompile — Sessions 15:37, 20:15, 21:15 were already compiled; this pass covers Session 21:51 content (silent auth failures, full system assessment) and remaining 21:15 detail
+- Articles created: [[concepts/silent-worker-authentication-failure]], [[concepts/value-betting-operational-assessment]], [[connections/operational-compound-failures]]
+- Articles updated: [[concepts/configuration-drift-manual-launch]] (added second drift layer: API keys missing from batch file, .env not loaded, two-phase debugging)

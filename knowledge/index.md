@@ -24,5 +24,8 @@
 | [[concepts/opticodds-critical-dependency]] | OpticOdds as sole sharp odds provider — single point of failure for devigging and 3/4 sports | daily/lcash/2026-04-12.md | 2026-04-12 |
 | [[connections/browser-automation-reliability-cost]] | Browser-mediated architecture forced by anti-scraping introduces uncancellable JS hangs and stale session failures | daily/lcash/2026-04-12.md | 2026-04-12 |
 | [[concepts/betstamp-bet365-scraper-migration]] | Removing Betstamp adapter, consolidating Bet365 scraping under game scraper with book_id 366→365 | daily/lcash/2026-04-12.md | 2026-04-12 |
-| [[concepts/configuration-drift-manual-launch]] | Batch file missing flags that were set manually; restart via script causes silent feature regression | daily/lcash/2026-04-12.md | 2026-04-12 |
+| [[concepts/configuration-drift-manual-launch]] | Batch file missing flags and API keys that were set manually; restart via script causes silent feature regression | daily/lcash/2026-04-12.md | 2026-04-12 |
 | [[connections/scraper-consolidation-provider-dependency]] | Betstamp removal deepens OpticOdds single-provider dependency by eliminating independent EV cross-check | daily/lcash/2026-04-12.md | 2026-04-12 |
+| [[concepts/silent-worker-authentication-failure]] | Workers silently exit/idle with zero log output when API keys are missing; discovered with direct_scrapers and blackstream | daily/lcash/2026-04-12.md | 2026-04-12 |
+| [[concepts/value-betting-operational-assessment]] | Systematic 7-weakness assessment: OpticOdds SPOF, no monitoring, config drift, silent failures, browser fragility, no redundancy, bus factor | daily/lcash/2026-04-12.md | 2026-04-12 |
+| [[connections/operational-compound-failures]] | Config drift + silent failures + no monitoring compound to create extended invisible degradation | daily/lcash/2026-04-12.md | 2026-04-12 |
