@@ -10,13 +10,13 @@ updated: 2026-04-12
 
 # OpticOdds Critical Dependency
 
-OpticOdds is the sole external provider of sharp book odds data for the value betting scanner, making it a critical single point of failure. When the OpticOdds API key expired on 2026-04-12, all sharp book odds, Australian soft book odds, resolver statistics, and three of four sports (NRL, AFL, MLB) were completely non-functional. Only Bet365 scrapers (Betstamp + game scraper) for NBA continued operating.
+OpticOdds is the sole external provider of sharp book odds data for the value betting scanner, making it a critical single point of failure. When the OpticOdds API key expired on 2026-04-12, all sharp book odds, Australian soft book odds, resolver statistics, and three of four sports (NRL, AFL, MLB) were completely non-functional. Only Bet365 scrapers (Betstamp + game scraper) for NBA continued operating. The subsequent decision to remove the Betstamp adapter entirely (see [[concepts/betstamp-bet365-scraper-migration]]) further concentrates this dependency.
 
 ## Key Points
 
 - OpticOdds provides all sharp book odds used for devigging — without it, no true odds calculation is possible for any sport
 - Australian soft book odds for NRL, AFL, and MLB are sourced exclusively through OpticOdds — these sports have zero odds data without it
-- NBA is the only sport with partial resilience: Bet365 scrapers (Betstamp adapter + game scraper) provide soft book odds independently of OpticOdds
+- NBA is the only sport with partial resilience: the Bet365 game scraper provides soft book odds independently of OpticOdds (Betstamp adapter is being removed — see [[concepts/betstamp-bet365-scraper-migration]])
 - The scanner runs across three environments: local development, a Windows mini PC (via Tailscale SSH at `100.67.233.95`), and a Linux VPS — all require synchronized key updates
 - API keys are stored only in `.env` files, not hardcoded in source — a clean configuration practice that simplifies rotation
 
@@ -42,11 +42,17 @@ Post-rotation health checks confirmed: NBA(8800) healthy, NRL(8801) degraded (no
 
 The single-provider dependency on OpticOdds represents a classic availability risk. The system has no fallback sharp odds provider, and adding one would require either a second API subscription or building a devigging model that can operate without a sharp reference (e.g., using wisdom-of-crowds across multiple soft books). The current architecture accepts this risk in exchange for the simplicity of a single data source.
 
+### Dependency Deepening: Betstamp Removal
+
+The planned removal of the Betstamp adapter (see [[concepts/betstamp-bet365-scraper-migration]]) further concentrates the dependency on OpticOdds. Betstamp provided an independent EV calculation (`betstamp_ev`) derived from its own true line — a cross-check against the OpticOdds-based devigging pipeline. With Betstamp's service discontinued and its adapter being removed, this independent signal is permanently lost. The system's data pipeline now flows through exactly two sources: OpticOdds (sharp + Australian soft books) and the in-house Bet365 game scraper (NBA soft books only). See [[connections/scraper-consolidation-provider-dependency]] for the full analysis.
+
 ## Related Concepts
 
 - [[concepts/bet365-racing-adapter-architecture]] - Bet365 scrapers are the only odds source independent of OpticOdds
 - [[concepts/parlay-ev-calculation]] - EV calculations depend on true odds derived from sharp book data (via OpticOdds)
+- [[concepts/betstamp-bet365-scraper-migration]] - Betstamp removal that deepens the single-provider dependency
+- [[connections/scraper-consolidation-provider-dependency]] - Analysis of how scraper consolidation interacts with provider dependency
 
 ## Sources
 
-- [[daily/lcash/2026-04-12.md]] - OpticOdds key expiry exposed full dependency scope: NRL/AFL/MLB 100% dependent, NBA partially resilient via Bet365 scrapers; key rotated across 3 environments; Windows `taskkill /F /PID` gotcha; port mappings documented (Session 20:15)
+- [[daily/lcash/2026-04-12.md]] - OpticOdds key expiry exposed full dependency scope: NRL/AFL/MLB 100% dependent, NBA partially resilient via Bet365 scrapers; key rotated across 3 environments; Windows `taskkill /F /PID` gotcha; port mappings documented (Session 20:15). Betstamp removal analysis confirmed deepening dependency (Session 21:15)

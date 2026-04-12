@@ -30,3 +30,10 @@
 - Developer: lcash
 - Articles created: [[concepts/playwright-evaluate-uncancellable]], [[concepts/async-global-timeout-partial-results]], [[concepts/opticodds-critical-dependency]], [[connections/browser-automation-reliability-cost]]
 - Articles updated: [[concepts/bet365-racing-adapter-architecture]] (added venue scanning reliability section: Toowoomba hang, global timeout pattern, stale session issues)
+
+## [2026-04-12T23:45:00+10:00] compile | daily/lcash/2026-04-12.md (incremental)
+- Source: daily/lcash/2026-04-12.md
+- Developer: lcash
+- Note: Incremental recompile — Sessions 15:37 and 20:15 were already compiled; this pass covers Session 21:15 content (betstamp removal, batch file drift)
+- Articles created: [[concepts/betstamp-bet365-scraper-migration]], [[concepts/configuration-drift-manual-launch]], [[connections/scraper-consolidation-provider-dependency]]
+- Articles updated: [[concepts/opticodds-critical-dependency]] (added betstamp removal deepening dependency analysis)

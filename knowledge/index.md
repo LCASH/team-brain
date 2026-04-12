@@ -23,3 +23,6 @@
 | [[concepts/async-global-timeout-partial-results]] | Global timeout + mutable containers pattern to preserve partial work when individual async ops hang | daily/lcash/2026-04-12.md | 2026-04-12 |
 | [[concepts/opticodds-critical-dependency]] | OpticOdds as sole sharp odds provider — single point of failure for devigging and 3/4 sports | daily/lcash/2026-04-12.md | 2026-04-12 |
 | [[connections/browser-automation-reliability-cost]] | Browser-mediated architecture forced by anti-scraping introduces uncancellable JS hangs and stale session failures | daily/lcash/2026-04-12.md | 2026-04-12 |
+| [[concepts/betstamp-bet365-scraper-migration]] | Removing Betstamp adapter, consolidating Bet365 scraping under game scraper with book_id 366→365 | daily/lcash/2026-04-12.md | 2026-04-12 |
+| [[concepts/configuration-drift-manual-launch]] | Batch file missing flags that were set manually; restart via script causes silent feature regression | daily/lcash/2026-04-12.md | 2026-04-12 |
+| [[connections/scraper-consolidation-provider-dependency]] | Betstamp removal deepens OpticOdds single-provider dependency by eliminating independent EV cross-check | daily/lcash/2026-04-12.md | 2026-04-12 |
