@@ -7,8 +7,9 @@ connects:
   - "concepts/opticodds-critical-dependency"
 sources:
   - "daily/lcash/2026-04-12.md"
+  - "daily/lcash/2026-04-15.md"
 created: 2026-04-12
-updated: 2026-04-12
+updated: 2026-04-15
 ---
 
 # Connection: Configuration Drift, Silent Failures, and Missing Monitoring

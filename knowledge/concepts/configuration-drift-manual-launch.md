@@ -4,8 +4,9 @@ aliases: [batch-file-drift, manual-launch-regression, env-var-drift]
 tags: [deployment, operations, gotcha, windows, value-betting]
 sources:
   - "daily/lcash/2026-04-12.md"
+  - "daily/lcash/2026-04-15.md"
 created: 2026-04-12
-updated: 2026-04-12
+updated: 2026-04-15
 ---
 
 # Configuration Drift from Manual Launch
@@ -37,9 +38,17 @@ The first fix was to add the three enable flags to `start_nba.bat` and restart. 
 
 This two-phase debugging experience illustrates how configuration drift can be layered: fixing one category of missing config (enable flags) reveals a second category (API keys), each invisible until the previous layer is resolved. See [[concepts/silent-worker-authentication-failure]] for the specific anti-pattern of workers failing without log output.
 
+### Third Drift Vector: Watchdog Restart (2026-04-15)
+
+Even after fixing `start_nba.bat` to include all enable flags and API keys, a third drift vector was discovered on 2026-04-15. The Windows watchdog process — which automatically restarts the NBA server if it crashes — relaunches with a bare `cmd /c python -m server.main` command instead of invoking `start_nba.bat`. This means every automatic restart silently strips all environment variables, producing the same degraded 4-of-9-task state that the batch file fix was supposed to prevent.
+
+This is particularly dangerous because it is automated: a deploy that kills the process, an out-of-memory crash, or any other unexpected exit triggers the watchdog, which quietly relaunches without configuration. The operator sees "server is running" but it's running without bet365_game, direct_scrapers, or betstamp. Diagnosis was further complicated by stale log files from the dead process (`nba_out.log` showed healthy bet365_game output from the previous run, while the live process logged to `server.log`).
+
+The three drift vectors are now: (1) manual launch with ad-hoc env vars (original issue), (2) batch file missing flags/keys (fixed Apr 12), and (3) watchdog bypassing the batch file entirely (discovered Apr 15). The long-term fix is to ensure the watchdog invokes `start_nba.bat` rather than bare Python. See [[concepts/watchdog-environment-stripping]] for the full analysis.
+
 ### Prevention
 
-The root prevention is ensuring that all production launch configuration lives in committed, version-controlled startup scripts — never in manual command-line invocations. When adding a new feature flag or environment variable during development, the startup script should be updated in the same change. A secondary defense is health check automation that compares expected task counts against actual running tasks, catching drift at restart time rather than waiting for a user to notice degraded output.
+The root prevention is ensuring that all production launch configuration lives in committed, version-controlled startup scripts — never in manual command-line invocations. When adding a new feature flag or environment variable during development, the startup script should be updated in the same change. Critically, all launch paths — manual, scheduled task, and watchdog — must go through the same startup script. A secondary defense is health check automation that compares expected task counts against actual running tasks, catching drift at restart time rather than waiting for a user to notice degraded output.
 
 ## Related Concepts
 
@@ -47,7 +56,9 @@ The root prevention is ensuring that all production launch configuration lives i
 - [[concepts/betstamp-bet365-scraper-migration]] - The NBA scraper ecosystem where this drift occurred
 - [[concepts/silent-worker-authentication-failure]] - The second drift layer: workers launching but silently failing without API keys
 - [[connections/operational-compound-failures]] - How this drift compounds with silent failures and missing monitoring
+- [[concepts/watchdog-environment-stripping]] - The third drift vector: watchdog bypassing the batch file on automatic restarts
 
 ## Sources
 
 - [[daily/lcash/2026-04-12.md]] - `start_nba.bat` missing ENABLE_* flags since Apr 8 commit; manual launch on Apr 10 masked the gap; restart during key rotation exposed regression (4/9 tasks, 3/8 soft books); fixed by adding flags to batch file (Session 21:15). Second layer: API keys in `.env` but not in batch file; workers launched but silently failed; required third restart to fully resolve (Session 21:51)
+- [[daily/lcash/2026-04-15.md]] - Third drift vector: watchdog restarts with bare `cmd /c python -m server.main` stripping all env vars; bet365_game went dark; stale `nba_out.log` from dead process misdirected diagnosis; fixed via full kill + `schtasks /Run /TN NBA_Server` (Session 23:17)
