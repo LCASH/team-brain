@@ -5,8 +5,11 @@ tags: [architecture, adapter, bet365, racing, superwin]
 sources:
   - "daily/lcash/2026-04-11.md"
   - "daily/lcash/2026-04-12.md"
+  - "daily/lcash/2026-04-13.md"
+  - "daily/lcash/2026-04-14.md"
+  - "daily/lcash/2026-04-15.md"
 created: 2026-04-11
-updated: 2026-04-12
+updated: 2026-04-15
 ---
 
 # bet365 Racing Adapter Architecture
@@ -37,7 +40,20 @@ The adapter went through four distinct architectural iterations in a single day,
 
 ### Discovery Phase
 
-The T6 discovery endpoint (`nexttojumpcontentapi/splash T6`) returns all current racing meetings (~30K chars) without requiring authentication or navigation state. Meetings include venue names, race times, and PD identifiers. The correct API path prefix is `/contentdata/` — the existing adapter had been calling without this prefix, which returned empty responses. Racing classification codes in discovery responses: `CL=2030` (horse racing), `CL=2031` (greyhounds), `CL=2032` (harness). Promotional entries with `#P12#` in their PD field should be filtered out.
+The T6 discovery endpoint (`nexttojumpcontentapi/splash T6`) returns all current racing meetings (~30K chars) without requiring authentication or navigation state. Meetings include venue names, race times, and PD identifiers. Racing classification codes in discovery responses: `CL=2030` (horse racing), `CL=2031` (greyhounds), `CL=2032` (harness). Promotional entries with `#P12#` in their PD field should be filtered out.
+
+**Discovery endpoint migration (2026-04-13):** The original `/contentdata/racecouponcontentapi/T6Splash` endpoint is dead. The replacement is `/nexttojumpcontentapi/splash` (no `/contentdata/` prefix), which only fires on cold page loads. Reusing an existing tab produces a lighter delta-only response at `/contentdata/nexttojumpcontentapi/splash` containing only navigation data, not the full meeting list. The solution is to open a fresh tab via `ctx.new_page()` for each discovery scan and close it after parsing — the cold-load URL is per-page-session, not per-browser-session. Direct `page.evaluate(fetch(...))` still returns empty due to SPA cache validation, so the adapter intercepts the SPA's own request via CDP `Network.responseReceived` + `Network.getResponseBody`.
+
+### End-to-End Pipeline (Current)
+
+As of 2026-04-13, the full adapter pipeline uses WebSocket constructor injection (see [[concepts/websocket-constructor-injection]]) for live streaming:
+
+1. **Discovery:** Open fresh tab → navigate to racing → intercept full splash response via CDP → close tab
+2. **Auth:** On main tab (with injected constructor wrapper already in place), cycle through 5 hash navigations to force a subscription frame. Capture `sync_term` from the `,A_{1452-char-token}` pattern in WS frames
+3. **Runner map:** Tab-click capture technique: click each race tab within each meeting, intercept `racecoupon` HTTP responses via CDP, parse fixture/participant IDs and runner names
+4. **Stream:** Send subscription messages on the captured WS, receive and parse odds updates via `addEventListener` + Python polling
+
+Page reload kills the WebSocket, so auth extraction (which needs the WS alive for frame sniffing) must happen after the constructor injection but before any operation that would reload the page. First successful end-to-end run: 4 meetings, 294 participants across 25 fixtures, live price moves confirmed (e.g., `Scone #3 Yacht Girl 3.40 → 3.20 DOWN`).
 
 ### Venue Scanning Reliability
 
@@ -47,6 +63,28 @@ The adopted mitigation is a global 4-minute timeout on the entire `build_runner_
 
 Additionally, stale browser WebSocket connections from repeated process kills cause auth extraction failures. The `x-net-sync-term` and session tokens may reference expired connections, producing silent failures. A fresh browser session (clean AdsPower profile start) is required for reliable full runs.
 
+### Discovery Timing Dependency
+
+The splash HTTP endpoint has a server-side population schedule — it returns 0 meetings before approximately 09:00 AEST. However, WebSocket OV topics already carry live race data by ~07:50 AEST. This creates a time-of-day blind spot where the adapter cannot discover races that are already streaming. Previous testing (Sunday 16:30) masked this because the splash was already populated. A WS-based discovery path (parsing race info from OV topics) would eliminate this dependency. See [[concepts/bet365-splash-timing-dependency]] for full analysis.
+
+### WebSocket Cluster Selection
+
+The adapter must specifically target `premws-pt1.365lpodds.com` connections when hijacking the browser's WebSocket. bet365 operates multiple WS clusters (`premws`, `pshudws`) carrying different data. Hijacking a `pshudws` connection produces 1% coverage (4/556 participants) despite valid subscriptions. The `premws` connections can transition to CLOSED state mid-session, requiring cluster-aware selection and recovery logic. See [[concepts/bet365-websocket-cluster-topology]].
+
+### Supervisor Retry Logic
+
+WS discovery failures (0 frames captured) initially caused the adapter's `main()` to return implicitly, which the supervisor treated as a clean exit. Fixed to return `False` on discovery failure so the supervisor retries the run instead of accepting 0 results as success.
+
+### Dell Server Deployment
+
+The adapter was ported to a Dell server on 2026-04-15, revealing several deployment-critical discoveries:
+
+**Headless detection:** bet365 detects `--headless=new` Chrome and serves degraded/inert SPA content — the page loads, JS runs, and WS constructor wrappers inject, but zero WS traffic arrives. The existing NBA/MLB game scrapers already run in headed mode intentionally. The Dell server has an active desktop session, so headed Chrome renders into a real window with genuine fingerprints. Profile wiping via `shutil.rmtree` is fine — session warming is not required; headed mode alone is sufficient. See [[concepts/bet365-headless-detection]] for full analysis.
+
+**Runner map alternative:** The CSS selector approach for race tab clicking (`.rcr-7b`) fails on fresh Chrome profiles — obfuscated class names may differ between versions. The preferred alternative is using the `racecoupon` HTTP endpoint via `page.evaluate("fetch(...)")` to inherit session cookies and sync_term, reusing the existing `_parse_racecoupon_response` parser (~30 lines).
+
+**Windows issues:** Zombie Chrome processes hold CDP port and profile directory hostage — new connections silently attach to zombies instead of spawning fresh. Must kill entire process tree + re-wipe profile. Python stdout buffering on Windows loses output on crash (fix: `python -u` or `PYTHONUNBUFFERED=1`). Unicode characters crash due to cp1252 default encoding (fix: `sys.stdout.reconfigure(encoding='utf-8')`).
+
 ### Current Limitations
 
 - **Horse racing only** — greyhound (`B4`) and harness (`B3`) meetings require separate discovery queries not yet implemented
@@ -55,6 +93,11 @@ Additionally, stale browser WebSocket connections from repeated process kills ca
 - **Race tab detection** — 2/14 meetings failed tab detection (likely fully completed meetings with no active races)
 - **Past races** — races that have already jumped return runner data but no odds; this is expected behavior, not a bug
 - **Venue scanning hangs** — certain venues (consistently Toowoomba) cause uncancellable `page.evaluate()` hangs after 10+ venues scanned; mitigated by global timeout with partial results
+- **Splash timing dependency** — HTTP discovery returns 0 meetings before ~09:00 AEST; WS-based discovery not yet implemented
+- **WS cluster selection** — premws connections can go CLOSED mid-session; adapter must detect and rehijack to correct cluster
+- **Runner map degradation** — coverage degrades after ~5 meetings (outstanding investigation)
+- **Subscription chunk-dropping** — only ~45 runners respond regardless of chunk count (outstanding investigation)
+- **Headless mode blocked** — bet365 detects `--headless=new` and serves empty data; headed Chrome on a desktop session required (see [[concepts/bet365-headless-detection]])
 
 ### Deployment Architecture
 
@@ -66,11 +109,19 @@ The adapter runs locally against an AdsPower browser instance. VPS deployment is
 - [[concepts/spa-navigation-state-api-access]] - The SPA constraints that shaped the adapter's navigation strategy
 - [[concepts/cdp-browser-data-interception]] - The data capture technique at the adapter's core
 - [[concepts/browser-mediated-websocket-streaming]] - The target streaming architecture for real-time odds
+- [[concepts/websocket-constructor-injection]] - The WS capture technique used in the current pipeline
 - [[concepts/playwright-evaluate-uncancellable]] - The uncancellable evaluate issue affecting venue scanning reliability
 - [[concepts/async-global-timeout-partial-results]] - The timeout pattern adopted for resilient venue scanning
 - [[connections/browser-automation-reliability-cost]] - The broader reliability costs of the browser-mediated approach
+- [[concepts/bet365-splash-timing-dependency]] - The splash endpoint timing gap affecting early-morning discovery
+- [[concepts/bet365-websocket-cluster-topology]] - WS cluster selection required for correct data capture
+- [[concepts/bet365-headless-detection]] - Headless Chrome detection that blocks data flow; headed mode required
+- [[concepts/bet365-ws-topic-authorization]] - WS topic authorization limits streaming to registered render topics; racing works, NBA props don't
 
 ## Sources
 
 - [[daily/lcash/2026-04-11.md]] - Full adapter development across sessions 12:39–16:06: four architecture iterations, discovery of /contentdata/ prefix (Session 13:35), navigate-away trick (Session 14:45), single-pass tab-click (Session 15:53), pivot to WS streaming (Session 16:06)
 - [[daily/lcash/2026-04-12.md]] - Venue scanning reliability: Toowoomba hang discovery, global timeout + mutable containers solution, stale browser session issues (Session 15:37)
+- [[daily/lcash/2026-04-13.md]] - Discovery endpoint migration (old T6Splash dead, new cold-load-only endpoint), full end-to-end pipeline with constructor injection: discovery → auth → runner map → stream, first live price moves confirmed (Session 15:00 onward)
+- [[daily/lcash/2026-04-14.md]] - Splash returns 0 meetings before ~09:00 AEST (timing dependency); WS cluster selection: premws vs pshudws, 1% coverage from wrong cluster; supervisor retry on discovery failure; runner map degradation and chunk-dropping still outstanding (Sessions 07:56, 10:00)
+- [[daily/lcash/2026-04-15.md]] - Dell server port: headless Chrome detection (zero WS traffic in headless mode), headed mode required, racecoupon HTTP preferred over CSS click runner map, Windows zombie Chrome/stdout buffering/cp1252 issues (Session 14:55)

@@ -44,3 +44,22 @@
 - Note: Incremental recompile — Sessions 15:37, 20:15, 21:15 were already compiled; this pass covers Session 21:51 content (silent auth failures, full system assessment) and remaining 21:15 detail
 - Articles created: [[concepts/silent-worker-authentication-failure]], [[concepts/value-betting-operational-assessment]], [[connections/operational-compound-failures]]
 - Articles updated: [[concepts/configuration-drift-manual-launch]] (added second drift layer: API keys missing from batch file, .env not loaded, two-phase debugging)
+
+## [2026-04-15T22:03:56+10:00] compile | daily/lcash/2026-04-13.md
+- Source: daily/lcash/2026-04-13.md
+- Developer: lcash
+- Articles created: [[concepts/value-betting-theory-system]], [[concepts/worker-status-observability]], [[concepts/self-evolving-operational-skill]], [[connections/push-latency-trail-quality-cascade]]
+- Articles updated: [[concepts/bet365-racing-adapter-architecture]] (added discovery endpoint migration, end-to-end pipeline with constructor injection, first live price moves), [[concepts/bet365-racing-data-protocol]] (added binary framing section with control characters \x14/\x15/\x16/\x08/\x01), [[connections/browser-automation-reliability-cost]] (added browser scraper warmup latency: hours to recover after restart), [[connections/anti-scraping-driven-architecture]] (added 5th defense layer: cross-origin WS failure and closure-hidden instances forcing constructor injection)
+- Note: 5 articles already existed from a prior partial compilation of this log (alt-line-mismatch-poisoned-picks, server-side-snapshot-cache, trail-data-temporal-resolution, fixture-name-canonicalization, websocket-constructor-injection) — added to index in this pass
+
+## [2026-04-15T23:30:00+10:00] compile | daily/lcash/2026-04-14.md
+- Source: daily/lcash/2026-04-14.md
+- Developer: lcash
+- Articles created: [[concepts/bet365-splash-timing-dependency]], [[concepts/bet365-websocket-cluster-topology]], [[concepts/bet365-mlb-lazy-subscribe-migration]], [[concepts/afl-circular-devig-trap]], [[concepts/one-sided-consensus-structural-bias]], [[concepts/pick-dedup-multi-theory-limitation]], [[connections/circular-devig-provider-dependency]]
+- Articles updated: [[concepts/bet365-racing-adapter-architecture]] (added splash timing dependency, WS cluster selection, supervisor retry logic, new limitations), [[concepts/value-betting-theory-system]] (added theory proliferation audit, one_sided_consensus discovery, theory_evs column plan), [[connections/anti-scraping-driven-architecture]] (added VPS Cloudflare IP reputation evidence from DigitalOcean testing, raw-WS-as-ideal-path note), [[concepts/bet365-racing-data-protocol]] (added WS cluster topology section, in-band auth format, cluster data roles)
+
+## [2026-04-16T00:15:00+10:00] compile | daily/lcash/2026-04-15.md
+- Source: daily/lcash/2026-04-15.md
+- Developer: lcash
+- Articles created: [[concepts/bet365-ws-topic-authorization]], [[concepts/bet365-headless-detection]], [[concepts/odds-staleness-pipeline-diagnosis]], [[concepts/dashboard-client-server-ev-divergence]], [[connections/ws-viability-sport-rendering-divergence]]
+- Articles updated: [[concepts/bet365-racing-adapter-architecture]] (added Dell server deployment section: headless detection, racecoupon HTTP runner map, Windows issues), [[concepts/value-betting-theory-system]] (added loadTheories() bug fix deployed, client-server EV divergence link), [[connections/anti-scraping-driven-architecture]] (added headless detection as 6th defense layer, WS topic authorization as streaming constraint)

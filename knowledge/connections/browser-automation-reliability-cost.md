@@ -8,8 +8,9 @@ connects:
 sources:
   - "daily/lcash/2026-04-12.md"
   - "daily/lcash/2026-04-11.md"
+  - "daily/lcash/2026-04-13.md"
 created: 2026-04-12
-updated: 2026-04-12
+updated: 2026-04-15
 ---
 
 # Connection: Browser Automation Reliability Cost
@@ -37,6 +38,10 @@ On 2026-04-12, the Toowoomba venue consistently caused `page.evaluate()` to hang
 Additionally, stale browser WebSocket connections from repeated process kills caused auth extraction failures — the browser's WS connection state diverges from what the adapter expects after unclean shutdowns. A fresh browser session is required for reliable runs, adding operational overhead.
 
 These failures are a direct consequence of the architectural choice documented on 2026-04-11: bet365's 403 rejection of independent WS connections forced the adapter to pipe everything through the browser. The browser's JS context became load-bearing infrastructure — and infrastructure that the orchestrator cannot restart or recover without killing the entire browser session.
+
+### Warmup Latency After Restart (2026-04-13)
+
+A further reliability cost was observed on 2026-04-13: browser-mediated scrapers in the value betting scanner (Bet365 2.0, PointsBet AU) took **hours** to warm up after a restart. Following a full system restart the previous evening, NBA soft book coverage was only 3/8 by midnight but recovered to 5/8 by the next morning check. The warmup delay is not a bug but an inherent property of browser-mediated scraping: the browser must establish sessions, pass Cloudflare challenges, navigate through SPA initialization flows, and accumulate market subscriptions before data begins flowing. This adds a third failure dimension beyond JS hangs and stale sessions: **slow recovery time** means that even when problems are fixed promptly, the system operates in a degraded state for an extended period afterward. Operators should not panic if soft book counts are low immediately post-restart — the expected pattern is gradual recovery over hours, not immediate full coverage.
 
 ## Related Concepts
 
