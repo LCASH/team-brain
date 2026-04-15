@@ -63,3 +63,10 @@
 - Developer: lcash
 - Articles created: [[concepts/bet365-ws-topic-authorization]], [[concepts/bet365-headless-detection]], [[concepts/odds-staleness-pipeline-diagnosis]], [[concepts/dashboard-client-server-ev-divergence]], [[connections/ws-viability-sport-rendering-divergence]]
 - Articles updated: [[concepts/bet365-racing-adapter-architecture]] (added Dell server deployment section: headless detection, racecoupon HTTP runner map, Windows issues), [[concepts/value-betting-theory-system]] (added loadTheories() bug fix deployed, client-server EV divergence link), [[connections/anti-scraping-driven-architecture]] (added headless detection as 6th defense layer, WS topic authorization as streaming constraint)
+
+## [2026-04-16T08:30:00+10:00] compile | daily/lcash/2026-04-15.md (incremental)
+- Source: daily/lcash/2026-04-15.md
+- Developer: lcash
+- Note: Incremental recompile — Sessions 13:06 through 22:03/16:20+ were compiled in prior pass; this pass covers Session 22:36 (coupon endpoint, Pinnacle commit) and Session 07:14 (VPS/mini PC write topology)
+- Articles created: [[concepts/bet365-nba-coupon-endpoint]], [[concepts/pinnacle-prediction-market-pipeline]]
+- Articles updated: [[concepts/odds-staleness-pipeline-diagnosis]] (added coupon endpoint as fourth HTTP-poll optimization, feature branch status), [[concepts/dashboard-client-server-ev-divergence]] (added Pinnacle commit hash 9a0b19d, cross-reference to prediction market pipeline), [[concepts/value-betting-operational-assessment]] (added VPS/mini PC write topology: mini PC writes to Supabase directly, VPS outage only affects dashboard/relay), [[connections/ws-viability-sport-rendering-divergence]] (added Phase 2 progress: coupon endpoint dual-capture and Pinnacle pipeline committed)

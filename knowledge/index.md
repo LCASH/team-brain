@@ -27,7 +27,7 @@
 | [[concepts/configuration-drift-manual-launch]] | Batch file missing flags and API keys that were set manually; restart via script causes silent feature regression | daily/lcash/2026-04-12.md | 2026-04-12 |
 | [[connections/scraper-consolidation-provider-dependency]] | Betstamp removal deepens OpticOdds single-provider dependency by eliminating independent EV cross-check | daily/lcash/2026-04-12.md | 2026-04-12 |
 | [[concepts/silent-worker-authentication-failure]] | Workers silently exit/idle with zero log output when API keys are missing; discovered with direct_scrapers and blackstream | daily/lcash/2026-04-12.md | 2026-04-12 |
-| [[concepts/value-betting-operational-assessment]] | Systematic 7-weakness assessment: OpticOdds SPOF, no monitoring, config drift, silent failures, browser fragility, no redundancy, bus factor | daily/lcash/2026-04-12.md | 2026-04-12 |
+| [[concepts/value-betting-operational-assessment]] | Systematic 7-weakness assessment: OpticOdds SPOF, no monitoring, config drift, silent failures, browser fragility, no redundancy, bus factor | daily/lcash/2026-04-12.md, daily/lcash/2026-04-15.md | 2026-04-15 |
 | [[connections/operational-compound-failures]] | Config drift + silent failures + no monitoring compound to create extended invisible degradation | daily/lcash/2026-04-12.md | 2026-04-12 |
 | [[concepts/alt-line-mismatch-poisoned-picks]] | Alt-line/main-line mismatch in tracker interpolation produces 50-200% phantom EV; fix verified with 0 new poisoned picks | daily/lcash/2026-04-13.md | 2026-04-15 |
 | [[concepts/server-side-snapshot-cache]] | Background task pre-serializes odds response every 2s; reduced push cycle 55s→1.9s (29x faster) | daily/lcash/2026-04-13.md | 2026-04-15 |
@@ -50,3 +50,5 @@
 | [[concepts/odds-staleness-pipeline-diagnosis]] | Six causes of odds drift identified; `source_captured_at` end-to-end plumbing pattern for measuring scraper-to-dashboard latency | daily/lcash/2026-04-15.md | 2026-04-15 |
 | [[concepts/dashboard-client-server-ev-divergence]] | Dashboard computes EV against all soft books ignoring theory restrictions; `loadTheories()` bug fix deployed | daily/lcash/2026-04-15.md | 2026-04-15 |
 | [[connections/ws-viability-sport-rendering-divergence]] | Racing WS works (per-participant render registration) but NBA prop WS doesn't (bulk BB wizard fetch); dual-architecture needed | daily/lcash/2026-04-15.md | 2026-04-15 |
+| [[concepts/bet365-nba-coupon-endpoint]] | Dual-capture via BB wizard + coupon endpoint with I99/I0 alternation; 332 odds/game, 5-15s freshness improvement | daily/lcash/2026-04-15.md | 2026-04-15 |
+| [[concepts/pinnacle-prediction-market-pipeline]] | Pinnacle as sharp reference vs prediction market soft books (Kalshi, Polymarket, DraftKings Predictions, Underdog, Crypto.com) | daily/lcash/2026-04-15.md | 2026-04-15 |

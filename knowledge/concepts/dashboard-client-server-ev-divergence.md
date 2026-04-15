@@ -18,7 +18,7 @@ The value betting dashboard's "+EV Picks" tab computes EV live in the browser ag
 - Server-side tracker correctly applies per-theory `soft_books` when evaluating and persisting picks
 - The Pinnacle theory appeared to work (showing EV against Ladbrokes, PointsBet AU) but should have been showing EV against prediction markets (Kalshi, Polymarket)
 - Root cause: `loadTheories()` JS destructuring silently dropped `soft_books`, `prop_filter`, `max_line_gap`, `line_gap_penalty`, `max_line`, and `excluded_props` when mapping Supabase rows to JS objects
-- Fix deployed 2026-04-15: all theory columns now explicitly mapped in `loadTheories()`
+- Fix deployed 2026-04-15 as part of Pinnacle commit `9a0b19d` (5 files, +177/-28 lines): all theory columns now explicitly mapped in `loadTheories()`
 - Deploy on mini PC killed all workers (push worker, AFL, MLB, NRL) but only restarted NBA — required manual restart of all services
 
 ## Details
@@ -56,6 +56,7 @@ A related operational discovery during the same session: deploying changes to th
 - [[concepts/value-betting-operational-assessment]] - Weakness #2 (no monitoring) applies: the mismatch was discovered manually
 - [[concepts/configuration-drift-manual-launch]] - Deploy-kills-all-workers is a deployment variant of the config drift pattern
 - [[connections/operational-compound-failures]] - The silent field-dropping + no monitoring chain echoes the compound failure pattern
+- [[concepts/pinnacle-prediction-market-pipeline]] - The Pinnacle pipeline whose verification exposed this bug; commit `9a0b19d` includes both the bug fix and prediction market book IDs
 
 ## Sources
 

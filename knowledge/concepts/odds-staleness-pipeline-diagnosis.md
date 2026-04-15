@@ -59,7 +59,9 @@ Layer A was implemented across 4+ files but then reverted in the same day (2026-
 
 However, the WS probe (see [[concepts/bet365-ws-topic-authorization]]) discovered that NBA prop streaming via WS is not viable due to session-bound topic authorization. WS only works for main markets (spread/total/moneyline), not player props. This meant HTTP polling remains the production path for prop data, and Layer A's diagnostic approach is needed after all.
 
-The recommended reinstatement includes Layer A plus three HTTP-poll optimizations: reduce `_REFRESH_INTERVAL` from 15s to 8s, kill the 30s hash-skip blackout, and parallelize per-game fetching. Expected improvement: 15–65s lag reduced to ~5–10s.
+The recommended reinstatement includes Layer A plus four HTTP-poll optimizations: reduce `_REFRESH_INTERVAL` from 15s to 8s, kill the 30s hash-skip blackout, parallelize per-game fetching, and add a coupon endpoint as a dual-capture data source (see [[concepts/bet365-nba-coupon-endpoint]]). The coupon endpoint provides 5-15s of additional freshness improvement by catching cache invalidations at offset moments from the BB wizard endpoint. Expected improvement: 15–65s lag reduced to ~5–10s.
+
+By end of day, the Layer A reinstatement and all four optimizations were organized into a three-commit feature branch (`bet365-nba-coupon-endpoint`), awaiting deployment.
 
 ### Additional Staleness Observations
 
@@ -78,7 +80,8 @@ A latent timezone bug was discovered during implementation: `datetime.utcnow()` 
 - [[concepts/betstamp-bet365-scraper-migration]] - Book 365 vs 366 disagreement as a staleness cause
 - [[connections/push-latency-trail-quality-cascade]] - A related cascade where pipeline latency degraded data quality
 - [[concepts/value-betting-operational-assessment]] - The broader operational assessment context
+- [[concepts/bet365-nba-coupon-endpoint]] - The dual-capture optimization built as part of the HTTP-poll reinstatement
 
 ## Sources
 
-- [[daily/lcash/2026-04-15.md]] - 6 causes of odds drift identified; `source_captured_at` end-to-end plumbing with ratchet-only logic; `datetime.utcnow()` tz bug; `captured_at` re-stamped at each layer; 30s hash-skip as biggest quick-win; SSE ghost markets; Layer A reverted for WS commitment then recommended for reinstatement after WS probe; color-coded age display (Sessions 13:06, 13:38, 14:17, 16:20)
+- [[daily/lcash/2026-04-15.md]] - 6 causes of odds drift identified; `source_captured_at` end-to-end plumbing with ratchet-only logic; `datetime.utcnow()` tz bug; `captured_at` re-stamped at each layer; 30s hash-skip as biggest quick-win; SSE ghost markets; Layer A reverted for WS commitment then recommended for reinstatement after WS probe; color-coded age display; Layer A + coupon endpoint dual-capture organized into 3-commit feature branch awaiting deploy (Sessions 13:06, 13:38, 14:17, 16:20, 22:36)

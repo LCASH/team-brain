@@ -54,6 +54,8 @@ The recommended approach is to optimize HTTP polling for props (where WS doesn't
 
 A three-phase plan was agreed: Phase 1 (standalone WS probe — completed, answered unknowns) → Phase 2 (HTTP-poll optimization + `source_captured_at` reinstatement) → Phase 3 (optional WS for main markets if sub-second updates prove valuable).
 
+**Phase 2 progress (Session 22:36):** The HTTP-poll optimization work was organized into a three-commit feature branch on the same day. Beyond the planned parameter changes (15s→8s polling, hash-skip removal), a more substantive optimization was added: a coupon endpoint dual-capture strategy using alternating I99/I0 tab navigation (332 odds/game, 5-15s additional freshness improvement). See [[concepts/bet365-nba-coupon-endpoint]]. Additionally, the Pinnacle prediction market pipeline was committed separately (`9a0b19d`), adding Kalshi, Polymarket, and other prediction markets as soft books evaluated against Pinnacle's sharp line — see [[concepts/pinnacle-prediction-market-pipeline]].
+
 ## Related Concepts
 
 - [[concepts/bet365-ws-topic-authorization]] - The session-bound authorization mechanism that creates the divergence
@@ -61,3 +63,5 @@ A three-phase plan was agreed: Phase 1 (standalone WS probe — completed, answe
 - [[concepts/bet365-mlb-lazy-subscribe-migration]] - MLB's lazy-subscribe model may produce individual registrations (testable)
 - [[concepts/odds-staleness-pipeline-diagnosis]] - The HTTP-poll optimization path necessitated by WS non-viability for props
 - [[connections/anti-scraping-driven-architecture]] - The broader defense stack that WS topic authorization is part of
+- [[concepts/bet365-nba-coupon-endpoint]] - The concrete HTTP-poll optimization built in Phase 2
+- [[concepts/pinnacle-prediction-market-pipeline]] - New soft book universe (prediction markets) committed alongside Phase 2 work

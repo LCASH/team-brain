@@ -4,8 +4,9 @@ aliases: [vb-assessment, scanner-weaknesses, system-health-assessment]
 tags: [value-betting, operations, architecture, assessment, infrastructure]
 sources:
   - "daily/lcash/2026-04-12.md"
+  - "daily/lcash/2026-04-15.md"
 created: 2026-04-12
-updated: 2026-04-12
+updated: 2026-04-15
 ---
 
 # Value Betting System Operational Assessment
@@ -38,7 +39,7 @@ The system's core strengths are in its logic and architecture: the EV calculatio
 
 **5. Browser-mediated scraping fragility.** Bet365's anti-scraping defenses force the adapter through Playwright → CDP → JS injection. This stack introduces uncancellable hangs (see [[concepts/playwright-evaluate-uncancellable]]), stale sessions, and auth failures. The global timeout + partial results pattern mitigates but doesn't eliminate the fragility. See [[connections/browser-automation-reliability-cost]].
 
-**6. No infrastructure redundancy.** One mini PC, one VPS. If either loses power or goes down, coverage for those sports is lost entirely. No failover, no hot spare, no automatic recovery.
+**6. No infrastructure redundancy.** One mini PC, one VPS. If either loses power or goes down, coverage for those sports is lost entirely. No failover, no hot spare, no automatic recovery. However, on 2026-04-15 lcash clarified that the impact is asymmetric: mini PC trackers write picks directly to Supabase, so a VPS outage only affects dashboard visibility, VPS relay tracker (backup writes), and push notifications — picks ARE still being tracked. The VPS is a DigitalOcean droplet that can be hard-rebooted via the dashboard. The only gap during VPS downtime is the relay's supplementary writes and the dashboard being inaccessible.
 
 **7. Operational bus factor.** Restarting, debugging, key rotation, and health checks all require someone SSH-ing in and knowing the specific incantations. The `/vb` skill helps with discoverability, but the system is not self-healing. A weekend away during an OpticOdds key rotation means full downtime until manual intervention.
 
@@ -70,3 +71,4 @@ The weaknesses are characteristic of a system that grew organically from experim
 ## Sources
 
 - [[daily/lcash/2026-04-12.md]] - Full system assessment prompted by lcash after fixing config drift + silent failures: 7 weaknesses identified, 4 prioritized fixes recommended; core math validated as solid, all weaknesses operational/infrastructure (Session 21:51)
+- [[daily/lcash/2026-04-15.md]] - VPS/mini PC write topology clarified: mini PC writes picks directly to Supabase, VPS outage only affects dashboard/relay/push — picks still tracked (Session 07:14)
