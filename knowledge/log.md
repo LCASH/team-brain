@@ -70,3 +70,16 @@
 - Note: Incremental recompile — Sessions 13:06 through 22:03/16:20+ were compiled in prior pass; this pass covers Session 22:36 (coupon endpoint, Pinnacle commit) and Session 07:14 (VPS/mini PC write topology)
 - Articles created: [[concepts/bet365-nba-coupon-endpoint]], [[concepts/pinnacle-prediction-market-pipeline]]
 - Articles updated: [[concepts/odds-staleness-pipeline-diagnosis]] (added coupon endpoint as fourth HTTP-poll optimization, feature branch status), [[concepts/dashboard-client-server-ev-divergence]] (added Pinnacle commit hash 9a0b19d, cross-reference to prediction market pipeline), [[concepts/value-betting-operational-assessment]] (added VPS/mini PC write topology: mini PC writes to Supabase directly, VPS outage only affects dashboard/relay), [[connections/ws-viability-sport-rendering-divergence]] (added Phase 2 progress: coupon endpoint dual-capture and Pinnacle pipeline committed)
+
+## [2026-04-16T20:38:29+10:00] compile | daily/lcash/2026-04-15.md (incremental)
+- Source: daily/lcash/2026-04-15.md
+- Developer: lcash
+- Note: Incremental recompile — Sessions 07:14 through 22:36 were compiled in prior passes; this pass covers Session 23:17 (watchdog env stripping, bet365_game diagnosis) and fixes missing index/log entries
+- Articles created: [[concepts/watchdog-environment-stripping]]
+- Articles updated: [[concepts/configuration-drift-manual-launch]] (added third drift vector: watchdog bypasses batch file on automatic restarts), [[connections/operational-compound-failures]] (added watchdog as automated entry point to compound failure chain)
+
+## [2026-04-16T21:00:00+10:00] compile | daily/lcash/2026-04-16.md
+- Source: daily/lcash/2026-04-16.md
+- Developer: lcash
+- Articles created: [[concepts/soccer-three-way-devig-phantom-ev]], [[concepts/pinnacle-prop-type-sharpness-variance]], [[concepts/dd-td-resolver-bias]], [[concepts/bet365-coupon-pm-id-mismatch]], [[concepts/trail-capture-soft-ids-gap]], [[concepts/ev-pipeline-dropout-logging]], [[connections/devig-method-market-structure-mismatch]]
+- Articles updated: [[concepts/pinnacle-prediction-market-pipeline]] (added NHL/MLB viability, soccer deactivation, prop-type variance, trail capture gap fix, 3h window), [[concepts/watchdog-environment-stripping]] (added 2026-04-16 recurrence: 7.2h without bet365 data, same root cause), [[concepts/bet365-racing-adapter-architecture]] (added multi-fixture Dell+VPS production deployment, coupon-PM ID mismatch fix, runner map all-fixture iteration, CPU impact, schtasks persistence), [[concepts/pick-dedup-multi-theory-limitation]] (added DD/TD analytics inflation: 768→291 unique, 62% duplicates, 2.6x inflation from soft_book_id)

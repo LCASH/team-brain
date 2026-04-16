@@ -4,8 +4,9 @@ aliases: [pinnacle-pipeline, prediction-markets, virtual-sport, kalshi-polymarke
 tags: [value-betting, pinnacle, prediction-markets, dashboard, integration]
 sources:
   - "daily/lcash/2026-04-15.md"
+  - "daily/lcash/2026-04-16.md"
 created: 2026-04-15
-updated: 2026-04-15
+updated: 2026-04-16
 ---
 
 # Pinnacle Prediction Market Pipeline
@@ -71,13 +72,34 @@ Committed as `9a0b19d` on main — 5 files changed, +177/-28 lines. Includes:
 
 The Pinnacle work was committed using a stash/restore pattern to isolate it from pre-existing uncommitted bet365 feature branch work. The uncommitted bet365 coupon endpoint changes (see [[concepts/bet365-nba-coupon-endpoint]]) were stashed, the Pinnacle commit was made on main, and the stash was restored afterward. This avoided mixing unrelated changes in a single commit.
 
+### Multi-Sport Expansion (2026-04-16)
+
+On 2026-04-16, lcash investigated expanding the Pinnacle pipeline beyond NBA to other sports:
+
+**NHL identified as next viable sport.** Three game-line markets overlap between Pinnacle and prediction markets: `total_goals`, `puck_line`, and `moneyline`. Kalshi has 60 `player_goals` entries but NO Pinnacle counterpart for player props — only game-line overlap exists. Game-line pipeline requires architecture changes: `make_market_key()` requires `player_name` which game lines don't have (Phase 2 work, ~400 LOC, estimated 3-5 day effort).
+
+**MLB confirmed non-viable.** All 288 markets across Kalshi, Polymarket, and Crypto.com returned 0 odds entries on OpticOdds. Pinnacle itself only covers 4 MLB game-line markets (no player props). MLB prediction market coverage does not exist on OpticOdds; direct Kalshi/Polymarket native APIs remain an unexplored alternative.
+
+**Soccer deactivated.** 22 soccer theories were deactivated after discovering that soccer moneyline picks showed 20-41% phantom EVs caused by 3-way markets (Home/Draw/Away) being devigged as 2-way (Over/Under). The Draw probability (~23%) was redistributed across both sides. See [[concepts/soccer-three-way-devig-phantom-ev]] for full analysis. 30 phantom picks were voided. Six genuine 2-way leagues retained: NBA, MLB, NHL, Euroleague, CBA, Turkey BSL.
+
+**Pinnacle prop-type sharpness variance.** Dropout logging revealed Pinnacle is not uniformly sharp across prop types: Threes +27.9% ROI (sharp) vs Assists -45.7% to -50.4% (catastrophically weak). min_ev lowered from 5 to 1 to capture marginal edges for trail data. See [[concepts/pinnacle-prop-type-sharpness-variance]] for full analysis.
+
+**Trail capture gap fixed.** Phase B trail capture was excluding prediction-market book IDs from the hardcoded `SOFT_IDS` iteration set. 0% trail coverage for Pinnacle picks was fixed by adding IDs 950, 970, 971, 980-982. See [[concepts/trail-capture-soft-ids-gap]].
+
+**All 6 Pinnacle theories set to 3-hour pre-game window** (was 24h).
+
 ## Related Concepts
 
 - [[concepts/value-betting-theory-system]] - The theory system that the Pinnacle pipeline extends with a new sharp/soft pairing
 - [[concepts/dashboard-client-server-ev-divergence]] - The loadTheories() bug discovered during Pinnacle pipeline verification
 - [[concepts/opticodds-critical-dependency]] - Pinnacle data is accessed via OpticOdds; this pipeline depends on OpticOdds having Pinnacle coverage
 - [[concepts/bet365-nba-coupon-endpoint]] - The bet365 work stashed/restored around this commit
+- [[concepts/soccer-three-way-devig-phantom-ev]] - Soccer expansion blocked by 3-way devig requirement
+- [[concepts/pinnacle-prop-type-sharpness-variance]] - Pinnacle sharpness varies by prop type; Threes sharp, Assists weak
+- [[concepts/trail-capture-soft-ids-gap]] - Trail capture gap for prediction-market book IDs
+- [[concepts/ev-pipeline-dropout-logging]] - The diagnostic tool used to validate pipeline correctness
 
 ## Sources
 
 - [[daily/lcash/2026-04-15.md]] - Pinnacle theory committed (9a0b19d, +177/-28 lines): prediction market book IDs (Kalshi 950, Polymarket 970, DraftKings Predictions 971, Underdog 980, Crypto.com 981/982), virtual sport pill, sportSupabaseFilter helper; pipeline verified end-to-end (Polymarket 348, Kalshi 168, Pinnacle 402 markets); zero picks correct (outside 3h window); stash/restore pattern for branch isolation (Sessions 22:03, 22:36)
+- [[daily/lcash/2026-04-16.md]] - NHL viable (3 game-line markets, ~400 LOC for game-line support); MLB non-viable (0 prediction market coverage on OpticOdds); soccer deactivated (22 theories, 30 phantom picks voided — 3-way devig needed); Pinnacle prop-type variance: Threes +27.9%, Assists -50.4%; min_ev 5→1; trail capture SOFT_IDS gap fixed; all theories set to 3h window (Sessions 13:04, 13:38, 16:30, 20:38)

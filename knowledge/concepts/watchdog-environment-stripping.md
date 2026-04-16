@@ -4,8 +4,9 @@ aliases: [watchdog-restart, watchdog-env-stripping, bare-restart, watchdog-drift
 tags: [deployment, operations, anti-pattern, windows, value-betting]
 sources:
   - "daily/lcash/2026-04-15.md"
+  - "daily/lcash/2026-04-16.md"
 created: 2026-04-15
-updated: 2026-04-15
+updated: 2026-04-16
 ---
 
 # Watchdog Environment Variable Stripping
@@ -65,6 +66,12 @@ The fix was a full process tree kill followed by a scheduled task restart:
 
 The long-term fix is to modify the watchdog to either invoke `start_nba.bat` directly or pass the required environment variables in its restart command. Without this fix, every process crash or deploy-triggered kill will produce a silently degraded restart.
 
+### Recurrence (2026-04-16)
+
+The identical failure recurred on 2026-04-16 — the watchdog (or equivalent bare restart) relaunched the NBA server without env vars, resulting in **7.2 hours** of scraping without bet365 data before lcash diagnosed and fixed it. The investigation followed the same misdirection pattern: initially suspected multiple orphaned `server.main` processes, but they were 3 legitimate sport servers on different ports. Then discovered `nba_out.log` was from a dead older process (PID != 8724), while the real log was `server.log` showing only OpticOdds activity.
+
+Resolution was the same: kill orphaned processes (including 15 Chrome processes from `bet365_game_profile`), then `schtasks /Run /TN NBA_Server` to relaunch via the batch file. The recurrence — same root cause, same symptoms, same 15 orphaned Chrome processes — confirms that the root fix (updating `watchdog.py` to use the batch file) remains the highest-priority unresolved operational issue.
+
 ## Related Concepts
 
 - [[concepts/configuration-drift-manual-launch]] - The first two drift vectors (manual launch and batch file omission); the watchdog is a third, automated drift vector
@@ -76,3 +83,4 @@ The long-term fix is to modify the watchdog to either invoke `start_nba.bat` dir
 ## Sources
 
 - [[daily/lcash/2026-04-15.md]] - bet365_game went dark: watchdog restarted with bare `cmd /c python -m server.main` stripping all env vars; `nba_out.log` showed stale output from dead process while live process logged to `server.log`; 15 orphaned Chrome processes; naming zoo documented (bet365_game / GameBet365Scraper / "Bet365 2.0" / NBA_Server / book_id 366); fixed via full kill + `schtasks /Run /TN NBA_Server`; watchdog needs fixing to use batch file (Session 23:17)
+- [[daily/lcash/2026-04-16.md]] - Identical recurrence: 7.2 hours without bet365 data; same misdirection via stale `nba_out.log`; same resolution (kill orphans + schtasks restart); confirms root fix (watchdog.py update) still unresolved (Session 11:56)

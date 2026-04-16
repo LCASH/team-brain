@@ -4,8 +4,9 @@ aliases: [pick-dedup, theory-attribution, triggered-by-limitation, theory-evs, o
 tags: [value-betting, architecture, a-b-testing, tracker, deduplication]
 sources:
   - "daily/lcash/2026-04-14.md"
+  - "daily/lcash/2026-04-16.md"
 created: 2026-04-14
-updated: 2026-04-14
+updated: 2026-04-16
 ---
 
 # Pick Dedup Multi-Theory Limitation
@@ -58,13 +59,21 @@ The offline approach is equivalent to live multi-variant testing because trail d
 
 Both options were adopted together: Option A provides real-time multi-theory data that can be queried directly from Supabase, while Option B provides flexible offline analysis without depending on the schema migration being complete. The approaches are complementary — Option A answers "what did each theory compute at trigger time?" while Option B answers "what would have happened under a completely different configuration?"
 
+### Analytics Dedup Inflation (2026-04-16)
+
+Investigation of DD/TD (Double Double / Triple Double) picks on 2026-04-16 revealed the dedup architecture's impact on performance analytics. 768 total resolved DD/TD picks collapsed to only 291 unique `(player, prop, side, game)` combos — **62% duplicates**. The inflation comes from two multiplicative factors: (1) `soft_book_id` in the pick hash generates separate rows per soft book (Sportsbet, Neds, Ladbrokes AU — typically 3-4 books), and (2) multiple theories triggering independently on the same market.
+
+For betting execution, per-book rows are correct (the bettor needs to know which book to bet at). For performance analytics (win rate, ROI by prop type), the inflation distorts metrics approximately 2.6x. The fix belongs in the analytics layer (`server/analytics.py`), not the tracker — deduplication at query time by `(player, prop, side, game)` before calculating aggregate statistics. This is distinct from the theory attribution problem (alphabetical `triggered_by`) — even if only one theory existed, the soft_book_id multiplication would still inflate counts. See [[concepts/dd-td-resolver-bias]] for the DD/TD-specific findings.
+
 ## Related Concepts
 
 - [[concepts/value-betting-theory-system]] - The theory system whose limitations this article describes
 - [[concepts/one-sided-consensus-structural-bias]] - The specific theory bug that the attribution hijack compounded
 - [[concepts/afl-circular-devig-trap]] - The broader AFL devig problem that motivates testing alternative configurations
 - [[concepts/trail-data-temporal-resolution]] - Trail data quality is a prerequisite for offline replay to work
+- [[concepts/dd-td-resolver-bias]] - DD/TD investigation that quantified the analytics inflation (62% duplicates, 2.6x inflation)
 
 ## Sources
 
 - [[daily/lcash/2026-04-14.md]] - Pick dedup architecture limits A/B testing; `triggered_by` records first alphabetical theory only; Option A (theory_evs JSONB column) + Option B (offline replay with 5 variants) adopted as belt-and-suspenders; net cast theory config: min_ev=1, multiplicative/poisson, books 900/901/903/908/911 (Sessions 13:49, 14:31, 16:02)
+- [[daily/lcash/2026-04-16.md]] - DD/TD investigation: 768 picks → 291 unique combos (62% duplicates from soft_book_id); 2.6x analytics inflation; fix belongs in analytics.py not tracker (Session 14:45)

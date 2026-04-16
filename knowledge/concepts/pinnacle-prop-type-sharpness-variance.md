@@ -1,0 +1,75 @@
+---
+title: "Pinnacle Prop-Type Sharpness Variance"
+aliases: [pinnacle-sharpness, prop-type-edge, pinnacle-brier, per-prop-calibration]
+tags: [value-betting, pinnacle, methodology, calibration, prediction-markets]
+sources:
+  - "daily/lcash/2026-04-16.md"
+created: 2026-04-16
+updated: 2026-04-16
+---
+
+# Pinnacle Prop-Type Sharpness Variance
+
+Pinnacle's sharpness varies dramatically by prop type within the same sport. On NBA player props, Pinnacle-only picks produced -4.2% ROI overall (169 picks), but the breakdown by prop type reveals extreme variance: Threes at +27.9% ROI (36 picks, genuinely sharp) versus Assists at -45.7% to -50.4% ROI (catastrophically weak). Pinnacle's Brier score on props is 0.2695, confirming weak overall calibration. Pinnacle's real strength is game lines (moneyline, spread, total), not player props.
+
+## Key Points
+
+- Pinnacle NBA player props overall: -4.2% ROI (79-86 record, 169 picks), positive CLV (+1.16%) but insufficient edge
+- Threes props: **+27.9% ROI** (36 picks) — Pinnacle is genuinely sharp on this market
+- Assists props: **-45.7% to -50.4% ROI** — catastrophically weak, actively harmful to include
+- Pinnacle Brier score on props: 0.2695 — weak calibration compared to traditional sharps
+- Traditional sharps (BetRivers, Hard Rock) outperform Pinnacle on player props: Aggressive theory=130 picks, Calibrated=71, while Pinnacle=0 at min_ev=5
+- Blanket "Pinnacle is sharp" assumptions are dangerous — sharpness must be validated per prop type
+
+## Details
+
+### The Uniform Sharpness Assumption
+
+Pinnacle is widely considered the sharpest sportsbook globally, with tight lines, low margins, and high-limit acceptance that makes its prices the industry benchmark for "true odds." This reputation is well-earned for game lines — moneyline, point spread, and totals — where Pinnacle's high liquidity and sophisticated market-making consistently produce lines close to true probabilities.
+
+The value betting scanner's Pinnacle prediction-market theory (see [[concepts/pinnacle-prediction-market-pipeline]]) extended this assumption to player props, using Pinnacle's lines as the sharp reference against prediction market soft books (Kalshi, Polymarket). The assumption was: if Pinnacle is sharp on game lines, it should be sharp on player props too.
+
+### The Per-Prop Breakdown
+
+EV pipeline dropout logging (see [[concepts/ev-pipeline-dropout-logging]]) confirmed the pipeline was working correctly — markets flowed through all stages without errors. The issue was that Pinnacle simply doesn't produce large edges against prediction markets on player props. When min_ev was lowered from 5 to 1 to capture marginal edges, the full breakdown became visible:
+
+| Prop Type | ROI | Record | Assessment |
+|-----------|-----|--------|------------|
+| Threes | +27.9% | ~36 picks | Genuinely sharp — keep |
+| Points | Mixed | ~50 picks | Marginal, needs more data |
+| Rebounds | Mixed | ~30 picks | Marginal |
+| Assists | -45.7% to -50.4% | ~25 picks | Catastrophically weak — exclude |
+| Overall | -4.2% | 79-86 (169) | Negative — props not Pinnacle's strength |
+
+The extreme variance between Threes (+27.9%) and Assists (-50.4%) within the same sport, same bookmaker, and same pipeline demonstrates that "Pinnacle is sharp" is not a property of the book — it's a property of specific markets within the book.
+
+### Why the Variance Exists
+
+Pinnacle's edge comes from its market-making operation: high limits attract sharp bettors, whose action moves the line toward true probability. For player props, this mechanism works differently across prop types. Threes markets attract significant sharp action (threes betting has become a sophisticated analytics-driven market), while Assists markets receive less sharp volume and may be priced more conservatively or less precisely by Pinnacle's algorithms.
+
+Prediction markets (Kalshi, Polymarket) price NBA player props with their own liquidity dynamics. On markets where Pinnacle is weak (Assists), the prediction market prices may actually be closer to true probability than Pinnacle's — meaning the "sharp vs soft" framing is inverted.
+
+### Pipeline Efficiency Confirmation
+
+The dropout analysis confirmed that the low pick count was not a pipeline bug. Of 2,456 total markets: 734 were live-filtered, 855 were prop-type-filtered, 569 had no soft book entry, 50 had line gaps too wide, 298 reached EV evaluation, 247 had negative EV, 1 was below threshold, and 0 passed at min_ev=5. The pipeline correctly evaluated markets; the market was simply efficient enough that Pinnacle devig produced near-zero edges against prediction markets at the prop level.
+
+### Implications for Theory Configuration
+
+The discovery that sharpness varies by prop type has direct implications for theory system design:
+
+1. **Per-prop-type filtering**: The Pinnacle theory should exclude Assists (and potentially other weak prop types) rather than evaluating all props uniformly
+2. **Per-prop-type sharp assignment**: Future theory configurations could assign different sharp weights to Pinnacle based on prop type — high weight for Threes, low or zero for Assists
+3. **Alternative sharp references**: For prop types where Pinnacle is weak, traditional sharps (BetRivers, Hard Rock) via OpticOdds may be better references than Pinnacle
+4. **min_ev=1 trail data**: The lowered threshold captures marginal edges for ongoing calibration analysis, allowing per-prop-type performance to be tracked over time
+
+## Related Concepts
+
+- [[concepts/pinnacle-prediction-market-pipeline]] - The pipeline that exposed prop-type variance when it produced 0 picks at min_ev=5
+- [[concepts/ev-pipeline-dropout-logging]] - The diagnostic tool that confirmed the pipeline was working correctly
+- [[concepts/afl-circular-devig-trap]] - Another case where "sharp" book calibration varied dramatically (Bet Right 34% WR vs Sportsbet 50.7%)
+- [[concepts/value-betting-theory-system]] - The theory system that needs per-prop-type sharp configuration
+- [[concepts/opticodds-critical-dependency]] - Pinnacle data flows through OpticOdds; prop-type weakness adds a quality dimension beyond availability risk
+
+## Sources
+
+- [[daily/lcash/2026-04-16.md]] - Pinnacle NBA props -4.2% ROI overall; Threes +27.9%, Assists -45.7% to -50.4%; Brier 0.2695; dropout analysis 2456→0 at min_ev=5; min_ev lowered to 1 for trail capture; traditional sharps (BetRivers, Hard Rock) outperform on props; NHL identified as next viable sport but only game-line overlap (Sessions 13:04, 13:38, 16:30, 20:38)

@@ -8,8 +8,9 @@ sources:
   - "daily/lcash/2026-04-13.md"
   - "daily/lcash/2026-04-14.md"
   - "daily/lcash/2026-04-15.md"
+  - "daily/lcash/2026-04-16.md"
 created: 2026-04-11
-updated: 2026-04-15
+updated: 2026-04-16
 ---
 
 # bet365 Racing Adapter Architecture
@@ -99,9 +100,25 @@ The adapter was ported to a Dell server on 2026-04-15, revealing several deploym
 - **Subscription chunk-dropping** — only ~45 runners respond regardless of chunk count (outstanding investigation)
 - **Headless mode blocked** — bet365 detects `--headless=new` and serves empty data; headed Chrome on a desktop session required (see [[concepts/bet365-headless-detection]])
 
+### Multi-Fixture Production Deployment (2026-04-16)
+
+On 2026-04-16, the adapter was deployed as `bet365_stream.py` to both Dell server and VPS for production multi-fixture streaming:
+
+**Local Mac validation:** 502 participants, 24 fixtures, 13 meetings, 198/502 named (39%). AdsPower timeout adds ~9s before Chrome-via-CDP fallback.
+
+**Dell production:** 484 participants, 25 fixtures, 12 meetings, 221/484 named (44%). Multi-fixture iteration (13 meetings × 5-8 races × 3s each) takes 2-3 minutes to build full runner map. Dell CPU at 66-94% (avg ~78%), adding ~15-20% over ~60% baseline from NBA/MLB workers. 8.3GB RAM free — CPU is the constraint, not memory.
+
+**VPS ingest pipeline:** Dell streams → HTTP POST to VPS `/api/v1/ingest/bet365` (INGEST_TOKEN authenticated) → merged alongside Betfair → TAKEOVER SSE. Push interval set to 15s. 23 races pushed, 23 matched on VPS catalogue, bookies=2 showing bet365 merged alongside Betfair. TAKEOVER frontend needs zero changes since it reads `runner.odds["bet365"]` generically from SSE.
+
+**Critical runner map fix:** `build_runner_map` was patched to iterate all fixtures per meeting (not just first) — critical for full race coverage. A secondary `(fixture_id, barrier_number)` lookup was added when direct PA ID match fails — see [[concepts/bet365-coupon-pm-id-mismatch]]. This doubled race coverage from 23→46 matched, 16→39 with live odds.
+
+**Process persistence:** SSH disconnect kills the bet365_stream process tree. A Windows `schtasks` entry (`Bet365Racing`, `/SC ONSTART`) was set up for persistence, with batch file SCP'd from Mac because PowerShell here-string didn't survive SSH escaping.
+
+**Remaining issues:** Greyhound matching broken (0/7 matched — trap/box vs barrier numbering mismatch with Betfair). bet365 only sends odds for races close to jump time (~60 min window). If Dell gets CPU-overloaded, levers are: reduce drain interval (0.5s), increase push interval (15s→30s), or drop workers.
+
 ### Deployment Architecture
 
-The adapter runs locally against an AdsPower browser instance. VPS deployment is blocked by Cloudflare — AdsPower with a residential proxy is needed. The `pstk` cookie and `cf_clearance` cookie are the key authentication tokens. The `x-net-sync-term` header rotates every ~55 seconds and must be refreshed from the page's JavaScript context.
+The adapter runs locally against an AdsPower browser instance or headed Chrome on a desktop session. VPS deployment is blocked by Cloudflare — AdsPower with a residential proxy is needed. The `pstk` cookie and `cf_clearance` cookie are the key authentication tokens. The `x-net-sync-term` header rotates every ~55 seconds and must be refreshed from the page's JavaScript context. The Dell → VPS ingest pipeline uses HTTP POST with token authentication for production streaming.
 
 ## Related Concepts
 
@@ -117,6 +134,7 @@ The adapter runs locally against an AdsPower browser instance. VPS deployment is
 - [[concepts/bet365-websocket-cluster-topology]] - WS cluster selection required for correct data capture
 - [[concepts/bet365-headless-detection]] - Headless Chrome detection that blocks data flow; headed mode required
 - [[concepts/bet365-ws-topic-authorization]] - WS topic authorization limits streaming to registered render topics; racing works, NBA props don't
+- [[concepts/bet365-coupon-pm-id-mismatch]] - Coupon PA IDs ≠ PM subscription IDs; barrier number as fallback join key for runner matching
 
 ## Sources
 
@@ -125,3 +143,4 @@ The adapter runs locally against an AdsPower browser instance. VPS deployment is
 - [[daily/lcash/2026-04-13.md]] - Discovery endpoint migration (old T6Splash dead, new cold-load-only endpoint), full end-to-end pipeline with constructor injection: discovery → auth → runner map → stream, first live price moves confirmed (Session 15:00 onward)
 - [[daily/lcash/2026-04-14.md]] - Splash returns 0 meetings before ~09:00 AEST (timing dependency); WS cluster selection: premws vs pshudws, 1% coverage from wrong cluster; supervisor retry on discovery failure; runner map degradation and chunk-dropping still outstanding (Sessions 07:56, 10:00)
 - [[daily/lcash/2026-04-15.md]] - Dell server port: headless Chrome detection (zero WS traffic in headless mode), headed mode required, racecoupon HTTP preferred over CSS click runner map, Windows zombie Chrome/stdout buffering/cp1252 issues (Session 14:55)
+- [[daily/lcash/2026-04-16.md]] - Multi-fixture production deployment: Mac 502 participants/13 meetings, Dell 484/12 meetings; VPS ingest pipeline (23 races matched, bookies=2); build_runner_map patched for all fixtures per meeting; coupon-PM ID mismatch fixed with barrier-number fallback (23→46 matched); Dell CPU 66-94%; schtasks persistence; greyhound matching still broken (Sessions 12:26, 14:10, 15:16, 15:46)
