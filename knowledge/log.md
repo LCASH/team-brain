@@ -97,3 +97,10 @@
 - Note: Incremental recompile — Sessions 11:56 through 21:31 were compiled in prior passes; this pass covers Session 22:35 (Pinnacle virtual pill rendering, soccer 3-way devig implementation, dashboard multiple render paths)
 - Articles created: (none)
 - Articles updated: [[concepts/soccer-three-way-devig-phantom-ev]] (3-way devig implemented and deployed; render crash misattributed as "Supabase Error" fixed with error boundary separation), [[concepts/pinnacle-prediction-market-pipeline]] (virtual pill skips live computation, only uses stored picks; _storedEVPicks race condition fix on pill switch; multiple render paths anti-pattern), [[concepts/dashboard-client-server-ev-divergence]] (added multiple render paths: renderStats()+renderEV() both calling computeEVPicks(); error misattribution from broad catch block wrapping fetch+render)
+
+## [2026-04-16T23:12:06+10:00] compile | daily/lcash/2026-04-16.md (incremental)
+- Source: daily/lcash/2026-04-16.md
+- Developer: lcash
+- Note: Incremental recompile — Sessions 11:56 through 22:35 were compiled in prior passes; this pass covers Session 23:12 (niche league tracker pipeline bottlenecks: ACTIVE_SPORTS, freshness cutoff, SSE filter compound)
+- Articles created: [[concepts/niche-league-tracker-pipeline-bottlenecks]]
+- Articles updated: [[concepts/pinnacle-prediction-market-pipeline]] (added niche league pipeline unblocking: three compound bottlenecks fixed, post-fix 0 picks confirmed correct)

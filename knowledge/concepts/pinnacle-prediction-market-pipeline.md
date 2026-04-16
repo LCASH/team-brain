@@ -113,6 +113,16 @@ The race condition was fixed by clearing `_storedEVPicks` and cached theories im
 
 A related debugging lesson: the dashboard's `renderStats()` and `renderEV()` functions both independently called `computeEVPicks()`. Fixing the computation logic in one function but not the other left the bug visible through the unfixed path. This "multiple render paths calling the same computation" pattern requires fixing all call sites simultaneously — a single-point fix is insufficient when multiple entry points exist.
 
+### Niche League Pipeline Unblocking (2026-04-16)
+
+Session 23:12 revealed that the Pinnacle pipeline was producing ~10 picks despite 454+ niche league markets with Pinnacle-prediction-market overlap. Three independent bottlenecks compounded to silently kill niche league output:
+
+1. **ACTIVE_SPORTS auto-merge**: The tracker only iterated core sports (`nba`, `mlb`, `nrl`, `afl`) in relay mode, skipping all 29 niche league keys. Fixed by auto-merging all `PINNACLE_LEAGUE_KEYS` when in relay mode.
+2. **Sharp freshness cutoff**: The 30s cutoff was tuned for major leagues (5-10s polling) but niche leagues poll every 60s — by the time the tracker reached them, sharp data was silently discarded. Increased to 120s.
+3. **SSE filter hiding tracker data**: The browser-crash-prevention SSE filter (see [[concepts/sse-display-tracking-market-separation]]) was also filtering the tracker's market view via the same state-access function. A separate `get_tracker_snapshot()` was added to bypass the SSE filter for the tracker.
+
+After all three fixes, zero picks was confirmed as correct behavior — all niche league games were 27-124 hours away, outside the 24-hour pre-game window. Picks will appear automatically as games enter the window. See [[concepts/niche-league-tracker-pipeline-bottlenecks]] for full analysis.
+
 ## Related Concepts
 
 - [[concepts/value-betting-theory-system]] - The theory system that the Pinnacle pipeline extends with a new sharp/soft pairing
@@ -124,8 +134,9 @@ A related debugging lesson: the dashboard's `renderStats()` and `renderEV()` fun
 - [[concepts/trail-capture-soft-ids-gap]] - Trail capture gap for prediction-market book IDs
 - [[concepts/ev-pipeline-dropout-logging]] - The diagnostic tool used to validate pipeline correctness
 - [[concepts/sse-display-tracking-market-separation]] - SSE bloat from game-line expansion forced display/tracking split with VPS-side pollers
+- [[concepts/niche-league-tracker-pipeline-bottlenecks]] - Three compound bottlenecks silently killing niche league picks: ACTIVE_SPORTS, freshness cutoff, SSE filter
 
 ## Sources
 
 - [[daily/lcash/2026-04-15.md]] - Pinnacle theory committed (9a0b19d, +177/-28 lines): prediction market book IDs (Kalshi 950, Polymarket 970, DraftKings Predictions 971, Underdog 980, Crypto.com 981/982), virtual sport pill, sportSupabaseFilter helper; pipeline verified end-to-end (Polymarket 348, Kalshi 168, Pinnacle 402 markets); zero picks correct (outside 3h window); stash/restore pattern for branch isolation (Sessions 22:03, 22:36)
-- [[daily/lcash/2026-04-16.md]] - NHL viable (3 game-line markets, ~400 LOC for game-line support); MLB non-viable (0 prediction market coverage on OpticOdds); soccer deactivated (22 theories, 30 phantom picks voided — 3-way devig needed); Pinnacle prop-type variance: Threes +27.9%, Assists -50.4%; min_ev 5→1; trail capture SOFT_IDS gap fixed; all theories set to 3h window; SSE payload bloated to 6-9MB from game-line expansion (MLB 2K→5,040 markets), fixed by VPS-side Pinnacle pollers with restricted book set and SSE push disabled (Sessions 13:04, 13:38, 16:30, 20:38, 21:31). Virtual pill rendering: skipped live computation entirely, only stored picks; cleared _storedEVPicks on pill switch to fix race condition; multiple render paths (renderStats/renderEV) both calling computeEVPicks independently (Session 22:35)
+- [[daily/lcash/2026-04-16.md]] - NHL viable (3 game-line markets, ~400 LOC for game-line support); MLB non-viable (0 prediction market coverage on OpticOdds); soccer deactivated (22 theories, 30 phantom picks voided — 3-way devig needed); Pinnacle prop-type variance: Threes +27.9%, Assists -50.4%; min_ev 5→1; trail capture SOFT_IDS gap fixed; all theories set to 3h window; SSE payload bloated to 6-9MB from game-line expansion (MLB 2K→5,040 markets), fixed by VPS-side Pinnacle pollers with restricted book set and SSE push disabled (Sessions 13:04, 13:38, 16:30, 20:38, 21:31). Virtual pill rendering: skipped live computation entirely, only stored picks; cleared _storedEVPicks on pill switch to fix race condition; multiple render paths (renderStats/renderEV) both calling computeEVPicks independently (Session 22:35). Niche league pipeline unblocked: three compound bottlenecks (ACTIVE_SPORTS iteration, 30s→120s sharp freshness, SSE filter hiding tracker view) silently killed niche league output; post-fix 0 picks confirmed correct (games 27-124h away) (Session 23:12)
