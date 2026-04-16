@@ -4,8 +4,9 @@ aliases: [client-side-ev, server-side-ev, ev-computation-mismatch, loadtheories-
 tags: [value-betting, dashboard, bug, architecture]
 sources:
   - "daily/lcash/2026-04-15.md"
+  - "daily/lcash/2026-04-16.md"
 created: 2026-04-15
-updated: 2026-04-15
+updated: 2026-04-16
 ---
 
 # Dashboard Client-Server EV Divergence
@@ -49,6 +50,14 @@ After deploying the fix, the Pinnacle pipeline was verified end-to-end. Data was
 
 A related operational discovery during the same session: deploying changes to the mini PC killed all running workers (push worker, AFL, MLB, NRL servers, betstamp worker) but only restarted the primary service (NBA server). This required manually restarting all ancillary services. The NRL scheduled task had also been disabled and needed re-enabling via `schtasks /Change /TN NRL_Server /Enable`. This is a deployment variant of the configuration drift pattern — the deploy process doesn't match the full production service set.
 
+### Multiple Render Paths Anti-Pattern (2026-04-16)
+
+A follow-on manifestation of the client-server divergence was discovered on 2026-04-16 when debugging the Pinnacle virtual pill. The dashboard's `renderStats()` and `renderEV()` functions both independently called `computeEVPicks()` — meaning there were two separate render paths invoking the same EV computation. Fixing the computation logic in one path (e.g., making `renderEV()` skip live computation for the Pinnacle pill) left the bug visible through the other path (`renderStats()` still calling the unfixed `computeEVPicks()`).
+
+This is a generalization of the `loadTheories()` bug: when multiple code paths consume the same data or invoke the same computation, a fix to one path is insufficient. All entry points must be identified and patched simultaneously. The danger is that testing one path and seeing correct results creates false confidence that the fix is complete.
+
+Additionally, a "Supabase Error" message displayed on the Pinnacle pill was traced to an error misattribution bug: a broad `try/catch` block wrapped both the Supabase data fetch AND the render logic. When the 3-way devig code path crashed during rendering (a JS error, not a network error), the catch block attributed it as a Supabase failure. The fix was to separate error boundaries — wrapping fetch and render in independent try/catch blocks so that render crashes are correctly identified rather than misattributed to the data layer.
+
 ## Related Concepts
 
 - [[concepts/value-betting-theory-system]] - The theory system whose client-side consumption was broken by the loadTheories() bug
@@ -61,3 +70,4 @@ A related operational discovery during the same session: deploying changes to th
 ## Sources
 
 - [[daily/lcash/2026-04-15.md]] - Pinnacle theory showing AU soft books instead of prediction markets; `loadTheories()` dropping 6 fields via JS destructuring; client-side EV ≠ server-side EV divergence; fix deployed; zero Pinnacle picks correct (games outside 3h window); deploy killed all workers requiring manual restart; NRL scheduled task re-enable needed (Session 22:03/16:20+)
+- [[daily/lcash/2026-04-16.md]] - Multiple render paths (`renderStats()` + `renderEV()`) both calling `computeEVPicks()` independently — fixing one left bug visible through the other; "Supabase Error" was actually a JS render crash misattributed by broad catch block wrapping fetch+render; error boundary separation deployed (Session 22:35)

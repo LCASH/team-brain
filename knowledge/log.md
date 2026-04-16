@@ -90,3 +90,10 @@
 - Note: Incremental recompile — Sessions 11:56 through 20:38 were compiled in prior pass; this pass covers Session 21:31 (SSE payload bloat from game-line expansion, display/tracking market separation)
 - Articles created: [[concepts/sse-display-tracking-market-separation]]
 - Articles updated: [[concepts/pinnacle-prediction-market-pipeline]] (added SSE bloat discovery, VPS-side Pinnacle pollers, display/tracking split architecture)
+
+## [2026-04-16T22:36:03+10:00] compile | daily/lcash/2026-04-16.md (incremental)
+- Source: daily/lcash/2026-04-16.md
+- Developer: lcash
+- Note: Incremental recompile — Sessions 11:56 through 21:31 were compiled in prior passes; this pass covers Session 22:35 (Pinnacle virtual pill rendering, soccer 3-way devig implementation, dashboard multiple render paths)
+- Articles created: (none)
+- Articles updated: [[concepts/soccer-three-way-devig-phantom-ev]] (3-way devig implemented and deployed; render crash misattributed as "Supabase Error" fixed with error boundary separation), [[concepts/pinnacle-prediction-market-pipeline]] (virtual pill skips live computation, only uses stored picks; _storedEVPicks race condition fix on pill switch; multiple render paths anti-pattern), [[concepts/dashboard-client-server-ev-divergence]] (added multiple render paths: renderStats()+renderEV() both calling computeEVPicks(); error misattribution from broad catch block wrapping fetch+render)

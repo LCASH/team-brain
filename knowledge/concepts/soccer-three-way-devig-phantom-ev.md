@@ -10,7 +10,7 @@ updated: 2026-04-16
 
 # Soccer Three-Way Devig Phantom EV
 
-Soccer moneyline markets have three outcomes (Home/Draw/Away), but the value betting scanner's parser mapped them as two-way (Home→Over, Away→Under), dropping the Draw entirely. This redistributed the Draw probability (~23%) across both sides, producing phantom EVs of 20-41% on soccer fixtures. When properly 3-way devigged, a sample fixture showed zero edge. All 22 soccer Pinnacle theories were deactivated and 30 phantom picks voided on 2026-04-16.
+Soccer moneyline markets have three outcomes (Home/Draw/Away), but the value betting scanner's parser mapped them as two-way (Home→Over, Away→Under), dropping the Draw entirely. This redistributed the Draw probability (~23%) across both sides, producing phantom EVs of 20-41% on soccer fixtures. When properly 3-way devigged, a sample fixture showed zero edge. All 22 soccer Pinnacle theories were deactivated and 30 phantom picks voided on 2026-04-16. A 3-way devig implementation was deployed the same day, eliminating the phantom EVs — though initial deployment exposed a JS render crash misattributed as a "Supabase Error" in the dashboard.
 
 ## Key Points
 
@@ -39,15 +39,17 @@ A manual 3-way devig of a sample fixture confirmed zero edge once the Draw proba
 
 The 30 voided picks had been triggered across multiple soccer leagues — all from Pinnacle theories that had been deployed as part of the prediction-market expansion. All 22 soccer-specific theories were deactivated. Six 2-way leagues (NBA, MLB, NHL, Euroleague, CBA, Turkey BSL) were retained as their moneyline markets genuinely have two outcomes.
 
-### Fix Requirements
+### Fix Implementation
 
-The fix requires approximately 200 lines of code across three system layers:
+The fix required changes across three system layers:
 
-1. **3-way devig function** — extend the multiplicative devig formula to handle three outcomes instead of two. The math is straightforward (same principle, three variables instead of two).
-2. **Tracker compute path** — the `tracker.py` evaluation loop assumes 2-sided Over/Under pairs. A new branch is needed for 3-way markets that evaluates Home, Draw, and Away independently.
-3. **Poller mapping** — the OpticOdds poller must map all three outcomes from the `moneyline` market_id instead of dropping the Draw.
+1. **3-way devig function** — extended the multiplicative devig formula to handle three outcomes instead of two. The math is straightforward (same principle, three variables instead of two).
+2. **Tracker compute path** — the `tracker.py` evaluation loop was branched for 3-way markets to evaluate Home, Draw, and Away independently instead of the Over/Under pair assumption.
+3. **Poller mapping** — the OpticOdds poller was updated to map all three outcomes from the `moneyline` market_id instead of dropping the Draw.
 
-Until this fix is deployed, all soccer theories remain deactivated to prevent phantom picks from contaminating the dashboard and backtest data.
+The 3-way devig was deployed on 2026-04-16 (Session 22:35), eliminating the phantom 40%+ EVs on soccer moneylines. However, initial deployment exposed a dashboard rendering bug: the 3-way devig code path triggered a JS render crash that was caught by a broad `try/catch` block wrapping both Supabase fetch AND render logic, causing the error to display as "Supabase Error" instead of identifying the render crash. The fix was to wrap the render logic in its own error boundary, separating fetch failures from render failures.
+
+With the 3-way devig deployed, soccer theories can be re-evaluated for re-activation once forward validation confirms the corrected devig produces accurate EV signals.
 
 ### Broader Pattern
 
@@ -64,4 +66,4 @@ This is the third distinct case of a devig method not matching the market's actu
 
 ## Sources
 
-- [[daily/lcash/2026-04-16.md]] - Soccer moneyline picks at 20-41% EV were phantom — 3-way market (Home/Draw/Away) parsed as 2-way (Over/Under), dropping Draw; 3-way devig on sample showed zero edge; 22 soccer theories deactivated, 30 picks voided; 6 genuine 2-way leagues retained; fix requires ~200 LOC (Sessions 16:30, 20:38)
+- [[daily/lcash/2026-04-16.md]] - Soccer moneyline picks at 20-41% EV were phantom — 3-way market (Home/Draw/Away) parsed as 2-way (Over/Under), dropping Draw; 3-way devig on sample showed zero edge; 22 soccer theories deactivated, 30 picks voided; 6 genuine 2-way leagues retained (Sessions 16:30, 20:38). 3-way devig implemented and deployed; initial render crash misattributed as "Supabase Error" due to broad catch block; render error boundary added (Session 22:35)

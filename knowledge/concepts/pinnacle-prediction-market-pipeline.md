@@ -99,6 +99,20 @@ Adding game-line markets (moneyline, run_line, total_runs) to the mini PC's core
 
 See [[concepts/sse-display-tracking-market-separation]] for the full architectural pattern.
 
+### Virtual Pill Rendering Architecture (2026-04-16)
+
+The Pinnacle virtual sport pill's rendering was refined in Session 22:35 after discovering that the initial dual-path approach (client-side computed picks from SSE + server-tracked picks from Supabase) produced incorrect results for the virtual pill specifically. The problem was twofold:
+
+1. **NBA contamination:** The dashboard's `computeEVPicks()` function ran against SSE data (which contains NBA player props from the mini PC). Since the Pinnacle pill isn't sport-specific, the client-side computation produced NBA prop picks evaluated against prediction market soft books — conflating Pinnacle-specific analysis with the main NBA prop pipeline. The result was NBA picks appearing in the Pinnacle view.
+
+2. **Race condition on pill switch:** When switching between sport pills (e.g., NBA → Pinnacle), stale `_storedEVPicks` and theory data from the previous pill persisted in client state. The `ilike.*Pinnacle*` PostgREST filter correctly fetched Pinnacle-specific picks from Supabase, but the stale client-side state rendered first, briefly showing NBA data.
+
+The resolution was to **skip live client-side computation entirely for the Pinnacle virtual pill** and rely exclusively on server-tracked stored picks from Supabase. This is architecturally clean: niche-league and game-line picks are only available via the tracker (they're never in the SSE stream), so the virtual pill was always going to need the stored-picks path. Removing the live computation path eliminates the NBA contamination and simplifies the rendering.
+
+The race condition was fixed by clearing `_storedEVPicks` and cached theories immediately on pill switch, ensuring a clean slate before the new pill's data loads.
+
+A related debugging lesson: the dashboard's `renderStats()` and `renderEV()` functions both independently called `computeEVPicks()`. Fixing the computation logic in one function but not the other left the bug visible through the unfixed path. This "multiple render paths calling the same computation" pattern requires fixing all call sites simultaneously — a single-point fix is insufficient when multiple entry points exist.
+
 ## Related Concepts
 
 - [[concepts/value-betting-theory-system]] - The theory system that the Pinnacle pipeline extends with a new sharp/soft pairing
@@ -114,4 +128,4 @@ See [[concepts/sse-display-tracking-market-separation]] for the full architectur
 ## Sources
 
 - [[daily/lcash/2026-04-15.md]] - Pinnacle theory committed (9a0b19d, +177/-28 lines): prediction market book IDs (Kalshi 950, Polymarket 970, DraftKings Predictions 971, Underdog 980, Crypto.com 981/982), virtual sport pill, sportSupabaseFilter helper; pipeline verified end-to-end (Polymarket 348, Kalshi 168, Pinnacle 402 markets); zero picks correct (outside 3h window); stash/restore pattern for branch isolation (Sessions 22:03, 22:36)
-- [[daily/lcash/2026-04-16.md]] - NHL viable (3 game-line markets, ~400 LOC for game-line support); MLB non-viable (0 prediction market coverage on OpticOdds); soccer deactivated (22 theories, 30 phantom picks voided — 3-way devig needed); Pinnacle prop-type variance: Threes +27.9%, Assists -50.4%; min_ev 5→1; trail capture SOFT_IDS gap fixed; all theories set to 3h window; SSE payload bloated to 6-9MB from game-line expansion (MLB 2K→5,040 markets), fixed by VPS-side Pinnacle pollers with restricted book set and SSE push disabled (Sessions 13:04, 13:38, 16:30, 20:38, 21:31)
+- [[daily/lcash/2026-04-16.md]] - NHL viable (3 game-line markets, ~400 LOC for game-line support); MLB non-viable (0 prediction market coverage on OpticOdds); soccer deactivated (22 theories, 30 phantom picks voided — 3-way devig needed); Pinnacle prop-type variance: Threes +27.9%, Assists -50.4%; min_ev 5→1; trail capture SOFT_IDS gap fixed; all theories set to 3h window; SSE payload bloated to 6-9MB from game-line expansion (MLB 2K→5,040 markets), fixed by VPS-side Pinnacle pollers with restricted book set and SSE push disabled (Sessions 13:04, 13:38, 16:30, 20:38, 21:31). Virtual pill rendering: skipped live computation entirely, only stored picks; cleared _storedEVPicks on pill switch to fix race condition; multiple render paths (renderStats/renderEV) both calling computeEVPicks independently (Session 22:35)
