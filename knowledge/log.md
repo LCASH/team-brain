@@ -104,3 +104,10 @@
 - Note: Incremental recompile — Sessions 11:56 through 22:35 were compiled in prior passes; this pass covers Session 23:12 (niche league tracker pipeline bottlenecks: ACTIVE_SPORTS, freshness cutoff, SSE filter compound)
 - Articles created: [[concepts/niche-league-tracker-pipeline-bottlenecks]]
 - Articles updated: [[concepts/pinnacle-prediction-market-pipeline]] (added niche league pipeline unblocking: three compound bottlenecks fixed, post-fix 0 picks confirmed correct)
+
+## [2026-04-16T23:44:11+10:00] compile | daily/lcash/2026-04-16.md (incremental)
+- Source: daily/lcash/2026-04-16.md
+- Developer: lcash
+- Note: Incremental recompile — Sessions 11:56 through 23:12 were compiled in prior passes; this pass covers Session 23:44 (game-line dashboard display normalization: team names, prop_type format mismatch, empty player_name)
+- Articles created: [[concepts/game-line-display-normalization]]
+- Articles updated: (none)

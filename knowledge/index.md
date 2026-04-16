@@ -62,3 +62,4 @@
 | [[connections/devig-method-market-structure-mismatch]] | Soccer 3-way, AFL one-sided, AFL circular devig all share root cause: devig method assumptions ≠ market structure | daily/lcash/2026-04-16.md | 2026-04-16 |
 | [[concepts/sse-display-tracking-market-separation]] | SSE payload >5MB causes browser timeout; separate display markets (SSE, props) from tracking-only markets (state, game lines) | daily/lcash/2026-04-16.md | 2026-04-16 |
 | [[concepts/niche-league-tracker-pipeline-bottlenecks]] | Three compound bottlenecks (ACTIVE_SPORTS, 30s freshness, SSE filter) silently killed niche league picks; fixed with auto-merge, 120s cutoff, tracker snapshot bypass | daily/lcash/2026-04-16.md | 2026-04-16 |
+| [[concepts/game-line-display-normalization]] | Game-line markets (moneyline/spread) need team names not Over/Under; prop_type format mismatch; empty player_name on game totals | daily/lcash/2026-04-16.md | 2026-04-16 |
