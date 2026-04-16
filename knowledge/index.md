@@ -51,7 +51,7 @@
 | [[concepts/dashboard-client-server-ev-divergence]] | Dashboard computes EV against all soft books ignoring theory restrictions; `loadTheories()` bug fix deployed | daily/lcash/2026-04-15.md | 2026-04-15 |
 | [[connections/ws-viability-sport-rendering-divergence]] | Racing WS works (per-participant render registration) but NBA prop WS doesn't (bulk BB wizard fetch); dual-architecture needed | daily/lcash/2026-04-15.md | 2026-04-15 |
 | [[concepts/bet365-nba-coupon-endpoint]] | Dual-capture via BB wizard + coupon endpoint with I99/I0 alternation; 332 odds/game, 5-15s freshness improvement | daily/lcash/2026-04-15.md | 2026-04-15 |
-| [[concepts/pinnacle-prediction-market-pipeline]] | Pinnacle as sharp reference vs prediction market soft books; NHL viable, MLB/soccer non-viable, prop-type variance discovered | daily/lcash/2026-04-15.md, daily/lcash/2026-04-16.md | 2026-04-16 |
+| [[concepts/pinnacle-prediction-market-pipeline]] | Pinnacle as sharp reference vs prediction market soft books; NHL viable, MLB/soccer non-viable, prop-type variance; SSE display/tracking split | daily/lcash/2026-04-15.md, daily/lcash/2026-04-16.md | 2026-04-16 |
 | [[concepts/watchdog-environment-stripping]] | Windows watchdog relaunches with bare `cmd /c python` stripping all env vars; third config drift vector beyond manual launch and batch file | daily/lcash/2026-04-15.md, daily/lcash/2026-04-16.md | 2026-04-16 |
 | [[concepts/soccer-three-way-devig-phantom-ev]] | Soccer moneyline 3-way (Home/Draw/Away) parsed as 2-way produces 20-41% phantom EVs; 22 theories deactivated | daily/lcash/2026-04-16.md | 2026-04-16 |
 | [[concepts/pinnacle-prop-type-sharpness-variance]] | Pinnacle sharpness varies by prop type: Threes +27.9% ROI vs Assists -50.4%; Brier 0.2695 on props | daily/lcash/2026-04-16.md | 2026-04-16 |
@@ -60,3 +60,4 @@
 | [[concepts/trail-capture-soft-ids-gap]] | Phase B trail capture hardcodes SOFT_IDS excluding prediction market books; 0% trail coverage until IDs added | daily/lcash/2026-04-16.md | 2026-04-16 |
 | [[concepts/ev-pipeline-dropout-logging]] | Per-stage dropout logging pattern for EV theory funnels; distinguishes "pipeline broken" from "market efficient" | daily/lcash/2026-04-16.md | 2026-04-16 |
 | [[connections/devig-method-market-structure-mismatch]] | Soccer 3-way, AFL one-sided, AFL circular devig all share root cause: devig method assumptions ≠ market structure | daily/lcash/2026-04-16.md | 2026-04-16 |
+| [[concepts/sse-display-tracking-market-separation]] | SSE payload >5MB causes browser timeout; separate display markets (SSE, props) from tracking-only markets (state, game lines) | daily/lcash/2026-04-16.md | 2026-04-16 |

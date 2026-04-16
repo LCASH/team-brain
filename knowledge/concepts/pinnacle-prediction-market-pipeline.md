@@ -88,6 +88,17 @@ On 2026-04-16, lcash investigated expanding the Pinnacle pipeline beyond NBA to 
 
 **All 6 Pinnacle theories set to 3-hour pre-game window** (was 24h).
 
+### SSE Payload Bloat and Display/Tracking Split (2026-04-16)
+
+Adding game-line markets (moneyline, run_line, total_runs) to the mini PC's core sport pollers caused the SSE payload to balloon from ~2MB to 6-9MB, causing browser parsing timeouts. MLB alone grew from ~2K to 5,040 markets because game lines were pulled across all 52 books instead of the 7 books relevant to the Pinnacle strategy. The fix introduced a permanent architectural separation:
+
+- **Game-line markets reverted from core sport configs** — mini PC stays on player props only, keeping the SSE payload manageable
+- **Separate VPS-side Pinnacle pollers** added for NBA/MLB/NHL game lines with a restricted 7-book set (Pinnacle + 6 prediction market platforms)
+- **SSE push disabled for ALL Pinnacle pollers** (niche leagues AND core game lines) — they write to state for the tracker but never bloat the SSE stream
+- The Pinnacle dashboard pill shows: (1) client-side computed picks from SSE player-prop data, (2) server-tracked picks from Supabase for niche leagues and game lines
+
+See [[concepts/sse-display-tracking-market-separation]] for the full architectural pattern.
+
 ## Related Concepts
 
 - [[concepts/value-betting-theory-system]] - The theory system that the Pinnacle pipeline extends with a new sharp/soft pairing
@@ -98,8 +109,9 @@ On 2026-04-16, lcash investigated expanding the Pinnacle pipeline beyond NBA to 
 - [[concepts/pinnacle-prop-type-sharpness-variance]] - Pinnacle sharpness varies by prop type; Threes sharp, Assists weak
 - [[concepts/trail-capture-soft-ids-gap]] - Trail capture gap for prediction-market book IDs
 - [[concepts/ev-pipeline-dropout-logging]] - The diagnostic tool used to validate pipeline correctness
+- [[concepts/sse-display-tracking-market-separation]] - SSE bloat from game-line expansion forced display/tracking split with VPS-side pollers
 
 ## Sources
 
 - [[daily/lcash/2026-04-15.md]] - Pinnacle theory committed (9a0b19d, +177/-28 lines): prediction market book IDs (Kalshi 950, Polymarket 970, DraftKings Predictions 971, Underdog 980, Crypto.com 981/982), virtual sport pill, sportSupabaseFilter helper; pipeline verified end-to-end (Polymarket 348, Kalshi 168, Pinnacle 402 markets); zero picks correct (outside 3h window); stash/restore pattern for branch isolation (Sessions 22:03, 22:36)
-- [[daily/lcash/2026-04-16.md]] - NHL viable (3 game-line markets, ~400 LOC for game-line support); MLB non-viable (0 prediction market coverage on OpticOdds); soccer deactivated (22 theories, 30 phantom picks voided — 3-way devig needed); Pinnacle prop-type variance: Threes +27.9%, Assists -50.4%; min_ev 5→1; trail capture SOFT_IDS gap fixed; all theories set to 3h window (Sessions 13:04, 13:38, 16:30, 20:38)
+- [[daily/lcash/2026-04-16.md]] - NHL viable (3 game-line markets, ~400 LOC for game-line support); MLB non-viable (0 prediction market coverage on OpticOdds); soccer deactivated (22 theories, 30 phantom picks voided — 3-way devig needed); Pinnacle prop-type variance: Threes +27.9%, Assists -50.4%; min_ev 5→1; trail capture SOFT_IDS gap fixed; all theories set to 3h window; SSE payload bloated to 6-9MB from game-line expansion (MLB 2K→5,040 markets), fixed by VPS-side Pinnacle pollers with restricted book set and SSE push disabled (Sessions 13:04, 13:38, 16:30, 20:38, 21:31)

@@ -83,3 +83,10 @@
 - Developer: lcash
 - Articles created: [[concepts/soccer-three-way-devig-phantom-ev]], [[concepts/pinnacle-prop-type-sharpness-variance]], [[concepts/dd-td-resolver-bias]], [[concepts/bet365-coupon-pm-id-mismatch]], [[concepts/trail-capture-soft-ids-gap]], [[concepts/ev-pipeline-dropout-logging]], [[connections/devig-method-market-structure-mismatch]]
 - Articles updated: [[concepts/pinnacle-prediction-market-pipeline]] (added NHL/MLB viability, soccer deactivation, prop-type variance, trail capture gap fix, 3h window), [[concepts/watchdog-environment-stripping]] (added 2026-04-16 recurrence: 7.2h without bet365 data, same root cause), [[concepts/bet365-racing-adapter-architecture]] (added multi-fixture Dell+VPS production deployment, coupon-PM ID mismatch fix, runner map all-fixture iteration, CPU impact, schtasks persistence), [[concepts/pick-dedup-multi-theory-limitation]] (added DD/TD analytics inflation: 768→291 unique, 62% duplicates, 2.6x inflation from soft_book_id)
+
+## [2026-04-16T21:31:43+10:00] compile | daily/lcash/2026-04-16.md (incremental)
+- Source: daily/lcash/2026-04-16.md
+- Developer: lcash
+- Note: Incremental recompile — Sessions 11:56 through 20:38 were compiled in prior pass; this pass covers Session 21:31 (SSE payload bloat from game-line expansion, display/tracking market separation)
+- Articles created: [[concepts/sse-display-tracking-market-separation]]
+- Articles updated: [[concepts/pinnacle-prediction-market-pipeline]] (added SSE bloat discovery, VPS-side Pinnacle pollers, display/tracking split architecture)
