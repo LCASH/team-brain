@@ -5,8 +5,9 @@ tags: [value-betting, dashboard, bug, architecture]
 sources:
   - "daily/lcash/2026-04-15.md"
   - "daily/lcash/2026-04-16.md"
+  - "daily/lcash/2026-04-17.md"
 created: 2026-04-15
-updated: 2026-04-16
+updated: 2026-04-17
 ---
 
 # Dashboard Client-Server EV Divergence
@@ -67,7 +68,20 @@ Additionally, a "Supabase Error" message displayed on the Pinnacle pill was trac
 - [[connections/operational-compound-failures]] - The silent field-dropping + no monitoring chain echoes the compound failure pattern
 - [[concepts/pinnacle-prediction-market-pipeline]] - The Pinnacle pipeline whose verification exposed this bug; commit `9a0b19d` includes both the bug fix and prediction market book IDs
 
+### Dashboard HTML Loss on VPS Restart (2026-04-17)
+
+On 2026-04-17, lcash discovered that the dashboard HTML is lost on VPS restart because it is stored in-memory only. After any VPS restart, the dashboard must be re-pushed from the mini PC. The deploy script handles this automatically, but can fail if the VPS isn't fully booted when the push executes. This is a deployment fragility — the dashboard's rendered state is not persisted to disk, creating a dependency on the deploy script's timing relative to VPS boot sequence.
+
+### Merge Conflict Artifacts (2026-04-17)
+
+During a git rebase to sync local Pinnacle work with 10 remote commits, merge conflict resolution in `dashboard/index.html` left orphaned code blocks: a `books is not defined` JS error from duplicate filter bar code (inline HTML referencing variables not in scope) and an undefined `contentEl` variable (another merge artifact requiring `document.getElementById('td-content')`). This reinforces a general lesson: after resolving merge conflicts, always check for dangling references from the deleted branch — conflict markers show what was replaced, but don't flag code that referenced the deleted content from elsewhere in the file.
+
+### Large Payload Browser Timeout (2026-04-17)
+
+The Data tab loaded 60 days of resolved picks (21K picks, 11MB, 25 seconds) causing browser timeouts. Supabase returned the data successfully across 22 paginated pages (22 × 1000 rows), but browser-side JavaScript choked parsing the aggregated result. The fix reduced the default range to 7 days (~3 second load). This is a general pattern: large API responses that succeed at the network layer can fail at the browser parsing layer — server-side aggregation or tighter default ranges are needed when datasets grow beyond ~5MB.
+
 ## Sources
 
 - [[daily/lcash/2026-04-15.md]] - Pinnacle theory showing AU soft books instead of prediction markets; `loadTheories()` dropping 6 fields via JS destructuring; client-side EV ≠ server-side EV divergence; fix deployed; zero Pinnacle picks correct (games outside 3h window); deploy killed all workers requiring manual restart; NRL scheduled task re-enable needed (Session 22:03/16:20+)
 - [[daily/lcash/2026-04-16.md]] - Multiple render paths (`renderStats()` + `renderEV()`) both calling `computeEVPicks()` independently — fixing one left bug visible through the other; "Supabase Error" was actually a JS render crash misattributed by broad catch block wrapping fetch+render; error boundary separation deployed (Session 22:35)
+- [[daily/lcash/2026-04-17.md]] - Dashboard HTML lost on VPS restart (in-memory only, re-push required); merge conflict artifacts leaving orphaned JS code (`books is not defined`, undefined `contentEl`); 21K picks / 11MB / 25s timeout → 7-day default range; deploy git sync guard blocks on uncommitted changes (Sessions 11:06, 16:09, 21:11)

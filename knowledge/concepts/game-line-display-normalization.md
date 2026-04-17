@@ -4,8 +4,9 @@ aliases: [team-name-display, moneyline-labels, game-line-dashboard, side-label-t
 tags: [value-betting, dashboard, ui, data-quality, game-lines]
 sources:
   - "daily/lcash/2026-04-16.md"
+  - "daily/lcash/2026-04-17.md"
 created: 2026-04-16
-updated: 2026-04-16
+updated: 2026-04-17
 ---
 
 # Game-Line Display Normalization
@@ -40,6 +41,24 @@ For moneyline picks, "Over" means the home team wins and "Under" means the away 
 
 The three bugs share a root cause: the scanner's data model and display layer were designed around player props, where every pick has a player, Over/Under is semantically meaningful, and prop types follow a consistent format. Game-line markets break all three assumptions: no player, Over/Under needs translation to team names, and prop types may use different formatting. As game-line coverage expands (NHL game lines planned for the Pinnacle pipeline — see [[concepts/pinnacle-prediction-market-pipeline]]), any code path that assumes player-prop structure will need similar adaptation.
 
+### Resolver Expansion for Game-Line Markets (2026-04-17)
+
+On 2026-04-17, the display normalization work was complemented by resolver expansion to handle game-line outcomes. Three new resolution methods were added:
+
+1. **`_resolve_game_line()`** — resolves Run Line (baseball) and Puck Line (hockey) spread picks by comparing the actual game margin against the line value. A team favored at -1.5 wins the bet if they win by 2+ runs/goals.
+
+2. **`_resolve_game_total()`** — resolves total runs/goals/points picks by comparing the combined game score against the line. Over/Under retains its standard meaning for totals markets.
+
+3. **Draw moneyline resolution** — for soccer 3-way moneyline markets: Draw wins when scores are tied, Draw loses otherwise. Home/Away resolution uses the standard win/loss outcome.
+
+Fixture score fetching was expanded beyond just moneylines to include game-line and game-total prop types, ensuring the resolver has access to final scores for all market types that need them.
+
+The prop_type format mismatch (spaces vs underscores) that affected display also affected the resolver — "Run Line" stored in the database matched neither "run_line" nor "Run_Line" in the code. The normalization fix applies to both the display and resolution code paths.
+
+### Pinnacle League Audit (2026-04-17)
+
+A full audit of all leagues in the Pinnacle pill confirmed 28 leagues active across all sports: 4 basketball leagues, 1 baseball, 1 hockey, and 22 soccer leagues. Monitoring was set up to verify that picks flow for all leagues as games enter the 24-hour pre-game window.
+
 ## Related Concepts
 
 - [[concepts/fixture-name-canonicalization]] - The "vs" format fixture name that provides the team name extraction source
@@ -50,3 +69,4 @@ The three bugs share a root cause: the scanner's data model and display layer we
 ## Sources
 
 - [[daily/lcash/2026-04-16.md]] - Moneyline/spread picks showing "Over"/"Under" instead of team names; team name extraction from fixture_name; prop_type format mismatch ("Run Line" vs "run_line"); empty player_name hitting NOT NULL on game-total markets; color coding green=home/red=away/yellow=Draw; totals retain Over/Under (Session 23:44)
+- [[daily/lcash/2026-04-17.md]] - Resolver expanded: `_resolve_game_line()` for spreads, `_resolve_game_total()` for totals, Draw moneyline resolution for soccer; fixture score fetching expanded; prop_type format mismatch also affected resolver; 28 Pinnacle leagues audited (4 basketball, 1 baseball, 1 hockey, 22 soccer) (Session 11:06)

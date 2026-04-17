@@ -1,62 +1,83 @@
 ---
-title: "DD/TD Resolver Bias and Opacity"
-aliases: [double-double-resolver, triple-double-resolver, dd-td-over-bias, opticodds-encoded-stats]
-tags: [value-betting, resolver, data-quality, bias, opticodds]
+title: "DD/TD Resolver Encoded Stat Bug"
+aliases: [double-double-resolver, triple-double-resolver, dd-td-mis-grading, opticodds-encoded-stats, dd-td-resolver-bug]
+tags: [value-betting, resolver, data-quality, bug, opticodds]
 sources:
   - "daily/lcash/2026-04-16.md"
+  - "daily/lcash/2026-04-17.md"
 created: 2026-04-16
-updated: 2026-04-16
+updated: 2026-04-17
 ---
 
-# DD/TD Resolver Bias and Opacity
+# DD/TD Resolver Encoded Stat Bug
 
-The value betting scanner's Double Double (DD) and Triple Double (TD) resolution trusts OpticOdds' `player_double_double` stat entirely — no local verification against individual stat lines (points, rebounds, assists, steals, blocks). The `actual_stat` values from OpticOdds are opaque encoded floats (e.g., `1.402040003`), not clean 0/1 binary. Despite the encoding, the `> 0.5` comparison produces correct results. However, DD/TD shows a striking bias: Over has a 100% win rate (106-0) while Under has a 0% win rate (0-10), even after deduplication.
+The value betting scanner's Double Double (DD) and Triple Double (TD) resolver was trusting OpticOdds' `player_double_double` stat field, which is NOT a binary 0/1 flag but an encoded stat-line concatenation (e.g., `1.280707` = 28 points, 7 rebounds, 7 assists). The `> 0.5` comparison against this field produced incorrect resolution for **645 of 773 picks** (83.4% mis-grading rate). The fix computes DD/TD from individual stat primitives (`player_points`, `player_rebounds`, `player_assists`, `player_steals`, `player_blocks`), counting categories ≥ 10.
 
 ## Key Points
 
-- The resolver uses OpticOdds' `player_double_double` stat directly — it does NOT compute DD/TD from individual stats (points, rebounds, assists, steals, blocks)
-- `actual_stat` values are non-binary encoded floats (e.g., `1.402040003`) — opaque encoding, but the `> 0.5` comparison produces correct win/loss results
-- DD/TD Over: **100% win rate** (106 wins, 0 losses); DD/TD Under: **0% win rate** (0 wins, 10 losses) — pattern holds after deduplication
-- 768 total resolved DD/TD picks collapse to only 291 unique `(player, prop, side, game)` combos — **62% are duplicates** from soft_book_id in the pick hash
-- No verification layer exists: if OpticOdds returns a wrong DD/TD value, the resolver has no cross-check mechanism
+- OpticOdds' `player_double_double` field is an encoded stat-line concatenation (format: `1.PPRRAA` where PP=points, RR=rebounds, AA=assists), NOT a binary 0/1 indicator
+- The `> 0.5` comparison against this encoded float produced incorrect win/loss grades for 645 of 773 picks — the 100% Over / 0% Under "bias" was actually a mis-grading bug
+- Fix: compute DD/TD from primitives — count `(pts, reb, ast, stl, blk)` categories with value ≥ 10; DD = count ≥ 2, TD = count ≥ 3 — at `server/resolver.py:546-570`
+- Full audit of all other prop types confirmed DD/TD was the ONLY resolver defect — combo props (PRA, PR, PA, RA) cross-verified against individual stat sums with zero mismatches across 49 spot-checks
+- 111 picks couldn't be re-resolved due to player name matching failures — nulled out for production resolver retry after deployment
+- 768 total DD/TD picks collapse to 291 unique `(player, prop, side, game)` combos — 62% duplicates from soft_book_id in the pick hash
 
 ## Details
 
-### Opaque Encoding
+### The Encoding Discovery (2026-04-17)
 
-OpticOdds provides player prop resolution data via its `player_double_double` stat field. Conventional expectation is that a Double Double stat would be binary — `1` (achieved) or `0` (not achieved). Instead, OpticOdds returns encoded float values like `1.402040003`. These values appear to encode additional information beyond the binary outcome (possibly indicating which stat categories were involved, e.g., points+rebounds vs. points+assists), but the encoding scheme is undocumented and opaque.
+On 2026-04-17, lcash investigated the 100% Over / 0% Under win rate anomaly flagged on 2026-04-16 and discovered the root cause: OpticOdds' `player_double_double` field is not a binary flag but an encoded stat-line concatenation. The encoding pattern packs stat digits as a decimal number: the first digit is always `1`, followed by pairs of digits representing each stat category. For example, `1.280707` decodes to 28 points, 7 rebounds, 7 assists — clearly NOT a Double Double (only one category ≥ 10).
 
-The scanner's resolver simply checks `actual_stat > 0.5` — values above 0.5 count as "achieved" (Over wins), values below as "not achieved" (Under wins). This works correctly for resolution purposes because the encoding consistently produces values >1.0 for achieved Double Doubles and presumably <0.5 for not achieved. But the opacity means the resolver cannot extract which stat categories contributed to the Double Double, limiting diagnostic capability.
+The resolver's `actual_stat > 0.5` comparison treated ANY value above 0.5 as "DD achieved." Since the encoding always produces values ≥ 1.0 when any stats are present (the leading `1.` is part of the format), virtually every pick resolved as "Over wins" regardless of whether the player actually achieved a Double Double. This explains the 100% Over win rate: it was not a market bias or sampling artifact — it was a systematic mis-grading bug where every player with any stats was counted as having achieved a DD.
 
-### The Over/Under Asymmetry
+Re-resolution using the correct methodology (computing DD from individual stat primitives) showed that 645 of 773 picks had been graded incorrectly — an 83.4% error rate. The previous article's hypotheses about sampling bias, market structure, and small Under samples were all wrong; the asymmetry was entirely caused by the encoding assumption.
 
-The 100% Over / 0% Under split across 116 deduplicated picks (106 Over wins, 10 Under losses) is extreme and warrants investigation across several hypotheses:
+### The Correct Resolution Method
 
-1. **Sampling bias:** The scanner may be systematically selecting DD Over picks because of how odds are structured — books typically offer more attractive odds on Over (which bettors prefer), creating apparent +EV that the scanner triggers on. Under picks may be less frequently triggered due to less favorable odds structure.
+The fix at `server/resolver.py:546-570` replaces the OpticOdds trust with local computation:
 
-2. **Resolution methodology:** If OpticOdds has any systematic error in DD/TD resolution (e.g., counting steals+blocks combinations differently than some books), it could affect one side more than the other.
+1. Fetch individual stats: `player_points`, `player_rebounds`, `player_assists`, `player_steals`, `player_blocks`
+2. Count how many categories have a value ≥ 10
+3. DD Over wins if count ≥ 2; TD Over wins if count ≥ 3
+4. Under wins if the count is below the threshold
 
-3. **Market structure:** DD Over bets have bounded downside (the player either gets a DD or doesn't) but the probability may be genuinely higher than the implied odds suggest for star players who consistently approach double-double stat lines. DD Under is the reverse — it may be correctly priced or even -EV when the scanner identifies it as +EV.
+This approach is immune to OpticOdds' encoding choices because it uses only the primitive integer stat fields (points=28, rebounds=7, etc.), which are clean and correct. The `player_double_double` field is no longer consulted.
 
-4. **Small sample on Under:** Only 10 deduplicated Under picks is too small for confident statistical conclusions. The 0% rate could be genuine bias or random variance at this scale.
+### Full Prop Type Audit
+
+The DD/TD discovery prompted a full audit of every prop type in the resolver. The audit confirmed that DD/TD was the **only** defective resolver path:
+
+- **Core NBA props** (Points, Rebounds, Assists, Threes, Steals, Blocks, Turnovers): Use clean integer stats from OpticOdds — correct
+- **Combo props** (PRA, PR, PA, RA): Cross-verified by summing individual stat fields — 49 spot-checks, zero mismatches
+- **MLB props** (Hits, RBIs, Strikeouts, Home Runs, Stolen Bases): Use clean integer stats — correct
+- **AFL props** (Disposals, Goals): Use clean integer stats — correct
+- **MLB rare events** (HR Over 9%, SB Over 9%, Triples Over 0%): Correctly graded but represent bad pick selection, not resolver bugs
+
+### Player Name Matching Failures
+
+111 of 773 DD/TD picks could not be re-resolved because OpticOdds' stat data uses slightly different player name formatting than the tracked picks (e.g., "De'Aaron Fox" vs "DeAaron Fox", or "P.J. Washington" vs "PJ Washington"). These picks were nulled out (`outcome = NULL`) rather than force-matched, allowing the production resolver's fuzzy matching logic to handle them automatically after the fix is deployed.
 
 ### Pick Deduplication Inflation
 
-The pick ID hash at `server/tracker.py:88-91` includes `soft_book_id`, so the same player+prop+game generates separate pick IDs per soft book. For DD/TD picks available across 3-4 soft books (Sportsbet, Neds, Ladbrokes AU, PointsBet AU) and triggered by multiple theories, a single market event becomes 4-6 rows in the database. This inflates apparent pick counts by approximately 2.6x (768 raw → 291 unique).
+The pick ID hash at `server/tracker.py:88-91` includes `soft_book_id`, so the same player+prop+game generates separate pick IDs per soft book. 768 total DD/TD picks collapse to 291 unique `(player, prop, side, game)` combos — 62% duplicates. The fix belongs in the analytics layer, not the tracker. See [[concepts/pick-dedup-multi-theory-limitation]] for the design principle.
 
-For betting execution tracking (where per-book picks are needed to know which book to bet at), the current design is correct. For performance analysis (win rate, ROI by prop type), the inflation distorts metrics. The fix belongs in the analytics layer (`server/analytics.py`), not the tracker — deduplication at query time by `(player, prop, side, game)` before calculating aggregate statistics.
+### Three Forward Rules
 
-### Potential Verification
+The DD/TD investigation codified three rules for future development:
 
-An optional verification layer (~15 lines of code) could cross-check OpticOdds' DD/TD resolution against individual stat lines: pull points, rebounds, assists for the same player+game, count categories ≥10, and compare against the `player_double_double` result. This would catch edge cases where the stat provider disagrees with individual stat lines (e.g., a player with 10 points, 10 rebounds, 0 assists counted as a DD via points+rebounds, but the stat provider encoding is ambiguous about steals+blocks contributions).
+1. **Never trust pre-computed derived stats from APIs — compute from primitives.** The encoded `player_double_double` field was the sole input to the resolver; cross-checking against individual stats would have immediately revealed the discrepancy.
+2. **Extreme win rates (>90% or <10% on 20+ picks) are a bug signal, not an edge.** 100% win rate on 350+ picks should have triggered an automatic sanity alert, not gone unnoticed for weeks.
+3. **Pick deduplication is needed at the analytics layer.** The 2.6x inflation obscures anomalies in the noise and makes manual audits harder.
 
 ## Related Concepts
 
-- [[concepts/opticodds-critical-dependency]] - DD/TD resolution depends entirely on OpticOdds with zero cross-check — amplifies the single-provider risk
-- [[concepts/pick-dedup-multi-theory-limitation]] - The pick dedup architecture that produces the 2.6x inflation; soft_book_id inclusion is by design
-- [[concepts/one-sided-consensus-structural-bias]] - Another Over/Under asymmetry (951:13) from a different root cause (structural method bug vs. market structure)
-- [[concepts/value-betting-theory-system]] - DD/TD theories should potentially exclude Under based on this 0% historical rate
+- [[concepts/opticodds-critical-dependency]] - The encoded stat field is an OpticOdds-specific data quality issue; trusting it without verification amplifies the single-provider risk
+- [[concepts/pick-dedup-multi-theory-limitation]] - The pick dedup architecture that produces the 2.6x inflation; analytics-layer dedup established as the correct fix location
+- [[concepts/one-sided-consensus-structural-bias]] - Another Over/Under asymmetry (951:13) from a different root cause (structural method bug vs. encoding assumption)
+- [[concepts/value-betting-theory-system]] - DD/TD theories need no configuration change — the resolver fix is sufficient
+- [[connections/silent-type-coercion-data-corruption]] - The broader pattern of implicit type/encoding assumptions producing plausible but wrong results
 
 ## Sources
 
-- [[daily/lcash/2026-04-16.md]] - DD/TD resolver uses OpticOdds `player_double_double` stat (encoded floats like 1.402040003, not binary); DD Over 106-0 (100% WR), DD Under 0-10 (0% WR); 768 picks → 291 unique (62% duplicates from soft_book_id in hash); no verification layer exists; dedup fix belongs in analytics.py (Session 14:45)
+- [[daily/lcash/2026-04-16.md]] - Initial DD/TD investigation: 100% Over / 0% Under win rate flagged; encoded floats like 1.402040003 noted; 768→291 dedup (62% inflation); resolution trusted OpticOdds entirely (Session 14:45)
+- [[daily/lcash/2026-04-17.md]] - Encoding decoded: `player_double_double` is stat-line concatenation (1.PPRRAA), NOT binary; 645/773 picks mis-graded (83.4%); fix: compute from primitives (pts, reb, ast, stl, blk ≥ 10); full audit confirmed DD/TD was ONLY resolver defect; combo props zero mismatches across 49 checks; 111 unresolvable nulled for production retry; three forward rules codified (Sessions 13:15, 13:56, 14:52)

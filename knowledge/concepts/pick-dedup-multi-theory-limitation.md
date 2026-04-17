@@ -5,8 +5,9 @@ tags: [value-betting, architecture, a-b-testing, tracker, deduplication]
 sources:
   - "daily/lcash/2026-04-14.md"
   - "daily/lcash/2026-04-16.md"
+  - "daily/lcash/2026-04-17.md"
 created: 2026-04-14
-updated: 2026-04-16
+updated: 2026-04-17
 ---
 
 # Pick Dedup Multi-Theory Limitation
@@ -65,6 +66,16 @@ Investigation of DD/TD (Double Double / Triple Double) picks on 2026-04-16 revea
 
 For betting execution, per-book rows are correct (the bettor needs to know which book to bet at). For performance analytics (win rate, ROI by prop type), the inflation distorts metrics approximately 2.6x. The fix belongs in the analytics layer (`server/analytics.py`), not the tracker — deduplication at query time by `(player, prop, side, game)` before calculating aggregate statistics. This is distinct from the theory attribution problem (alphabetical `triggered_by`) — even if only one theory existed, the soft_book_id multiplication would still inflate counts. See [[concepts/dd-td-resolver-bias]] for the DD/TD-specific findings.
 
+### Tracker-Level Dedup Revert and Design Principle (2026-04-17)
+
+On 2026-04-17, lcash attempted tracker-level deduplication — collapsing to one pick per `market_key` instead of per `(market_key, soft_book_id)`. This was reverted after discovering that it caused **pick_id instability**: when the "best" soft book for a market changed between tracker cycles (e.g., Sportsbet offered better odds in cycle 1, Ladbrokes in cycle 2), the deterministic pick ID changed, generating new rows and defeating the dedup purpose.
+
+The instability occurs because the pick ID hash includes the soft book identity. When dedup selects the "best" book and hashes only that book's data, the selected book can flip between cycles. Each flip produces a new UUID, which the tracker treats as a new pick — the opposite of deduplication.
+
+This experience established a firm design principle: **the tracker keeps granular per-book data (stable pick IDs), and the analytics layer collapses at query time by `(player, prop, side, line, date)` for ROI/WR reporting.** The per-book rows carry distinct, valuable data — different odds trails from different books — that would be destroyed by tracker-level dedup. The "duplicates" are not waste; they are separate odds observations from different bookmakers that enable per-book performance analysis.
+
+The analytics-layer dedup was verified working: raw 390 picks collapsed to 122 unique outcomes, showing 50.9% WR / +0.94% ROI on 110 resolved. A centralized `tdDedupeAndWindow()` pipeline was implemented so all dashboard analytics views (heatmap, summary, drilldown) use consistent dedup logic. See [[concepts/betting-window-roi-methodology]] for the full analytics methodology.
+
 ## Related Concepts
 
 - [[concepts/value-betting-theory-system]] - The theory system whose limitations this article describes
@@ -72,8 +83,10 @@ For betting execution, per-book rows are correct (the bettor needs to know which
 - [[concepts/afl-circular-devig-trap]] - The broader AFL devig problem that motivates testing alternative configurations
 - [[concepts/trail-data-temporal-resolution]] - Trail data quality is a prerequisite for offline replay to work
 - [[concepts/dd-td-resolver-bias]] - DD/TD investigation that quantified the analytics inflation (62% duplicates, 2.6x inflation)
+- [[concepts/betting-window-roi-methodology]] - The analytics methodology that implements `tdDedupeAndWindow()` for consistent dedup across all views
 
 ## Sources
 
 - [[daily/lcash/2026-04-14.md]] - Pick dedup architecture limits A/B testing; `triggered_by` records first alphabetical theory only; Option A (theory_evs JSONB column) + Option B (offline replay with 5 variants) adopted as belt-and-suspenders; net cast theory config: min_ev=1, multiplicative/poisson, books 900/901/903/908/911 (Sessions 13:49, 14:31, 16:02)
 - [[daily/lcash/2026-04-16.md]] - DD/TD investigation: 768 picks → 291 unique combos (62% duplicates from soft_book_id); 2.6x analytics inflation; fix belongs in analytics.py not tracker (Session 14:45)
+- [[daily/lcash/2026-04-17.md]] - Tracker-level dedup attempted and reverted: collapsing by market_key caused pick_id instability when "best" soft book changed between cycles; design principle established: tracker keeps granular per-book data, analytics collapses at query time; analytics dedup verified: 390→122 unique, 50.9% WR / +0.94% ROI; `tdDedupeAndWindow()` pipeline implemented (Session 15:32)

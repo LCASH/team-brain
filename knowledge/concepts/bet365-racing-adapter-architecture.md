@@ -9,8 +9,9 @@ sources:
   - "daily/lcash/2026-04-14.md"
   - "daily/lcash/2026-04-15.md"
   - "daily/lcash/2026-04-16.md"
+  - "daily/lcash/2026-04-17.md"
 created: 2026-04-11
-updated: 2026-04-16
+updated: 2026-04-17
 ---
 
 # bet365 Racing Adapter Architecture
@@ -116,6 +117,14 @@ On 2026-04-16, the adapter was deployed as `bet365_stream.py` to both Dell serve
 
 **Remaining issues:** Greyhound matching broken (0/7 matched — trap/box vs barrier numbering mismatch with Betfair). bet365 only sends odds for races close to jump time (~60 min window). If Dell gets CPU-overloaded, levers are: reduce drain interval (0.5s), increase push interval (15s→30s), or drop workers.
 
+### Stream Staleness Watchdog and Day-Change Handling (2026-04-17)
+
+On 2026-04-17, the stream survived overnight but went stale — it never re-discovered the new day's racing card because the supervisor only restarts on crash, not on "no data." The assumption that "no crash = healthy" is wrong for long-running WS streams when the upstream data source simply goes silent at the end of a day's racing and new fixtures are never subscribed.
+
+A **staleness watchdog** was added: 5 consecutive health check windows (~75 seconds total) of 0 odds updates raises a `STALE_STREAM` exception, which the supervisor catches and triggers a full restart with fresh discovery. This transforms the day-change problem from an indefinite silent stall into an automatic recovery within ~75 seconds of the stream going dry.
+
+The `schtasks` entry (`Bet365Racing`, ONSTART trigger) was registered on the Dell server so the stream survives SSH disconnects and reboots. The batch file was SCP'd from Mac because PowerShell here-strings don't survive SSH escaping well. An operations document (`docs/BET365_RACING_OPERATIONS.md`) was created for teammate reference covering architecture, commands, credentials, monitoring, and troubleshooting.
+
 ### Deployment Architecture
 
 The adapter runs locally against an AdsPower browser instance or headed Chrome on a desktop session. VPS deployment is blocked by Cloudflare — AdsPower with a residential proxy is needed. The `pstk` cookie and `cf_clearance` cookie are the key authentication tokens. The `x-net-sync-term` header rotates every ~55 seconds and must be refreshed from the page's JavaScript context. The Dell → VPS ingest pipeline uses HTTP POST with token authentication for production streaming.
@@ -144,3 +153,4 @@ The adapter runs locally against an AdsPower browser instance or headed Chrome o
 - [[daily/lcash/2026-04-14.md]] - Splash returns 0 meetings before ~09:00 AEST (timing dependency); WS cluster selection: premws vs pshudws, 1% coverage from wrong cluster; supervisor retry on discovery failure; runner map degradation and chunk-dropping still outstanding (Sessions 07:56, 10:00)
 - [[daily/lcash/2026-04-15.md]] - Dell server port: headless Chrome detection (zero WS traffic in headless mode), headed mode required, racecoupon HTTP preferred over CSS click runner map, Windows zombie Chrome/stdout buffering/cp1252 issues (Session 14:55)
 - [[daily/lcash/2026-04-16.md]] - Multi-fixture production deployment: Mac 502 participants/13 meetings, Dell 484/12 meetings; VPS ingest pipeline (23 races matched, bookies=2); build_runner_map patched for all fixtures per meeting; coupon-PM ID mismatch fixed with barrier-number fallback (23→46 matched); Dell CPU 66-94%; schtasks persistence; greyhound matching still broken (Sessions 12:26, 14:10, 15:16, 15:46)
+- [[daily/lcash/2026-04-17.md]] - Stream survived overnight but went stale (no day-change rediscovery); staleness watchdog added: 5 consecutive windows of 0 updates → STALE_STREAM → supervisor restart; schtasks entry registered; operations doc created; horses/harness 80-100% match, greyhounds 0/7 still broken (Session 16:44)

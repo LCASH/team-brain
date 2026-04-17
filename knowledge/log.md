@@ -111,3 +111,9 @@
 - Note: Incremental recompile — Sessions 11:56 through 23:12 were compiled in prior passes; this pass covers Session 23:44 (game-line dashboard display normalization: team names, prop_type format mismatch, empty player_name)
 - Articles created: [[concepts/game-line-display-normalization]]
 - Articles updated: (none)
+
+## [2026-04-17T21:11:31+10:00] compile | daily/lcash/2026-04-17.md
+- Source: daily/lcash/2026-04-17.md
+- Developer: lcash
+- Articles created: [[concepts/pick-id-float-int-hashing-bug]], [[concepts/betting-window-roi-methodology]], [[connections/silent-type-coercion-data-corruption]]
+- Articles updated: [[concepts/dd-td-resolver-bias]] (major rewrite: encoded stat concatenation decoded, 645/773 mis-graded, compute from primitives fix), [[concepts/pick-dedup-multi-theory-limitation]] (tracker-level dedup reverted, analytics-layer design principle established, tdDedupeAndWindow pipeline), [[concepts/bet365-racing-adapter-architecture]] (staleness watchdog for day-change handling, schtasks persistence, operations doc), [[concepts/game-line-display-normalization]] (resolver expanded: game-line, game-total, Draw; 28 Pinnacle leagues audited), [[concepts/dashboard-client-server-ev-divergence]] (VPS restart HTML loss, merge conflict artifacts, large payload browser timeout)
