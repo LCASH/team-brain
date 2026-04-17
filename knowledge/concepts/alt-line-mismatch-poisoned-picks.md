@@ -63,6 +63,14 @@ The per-line approach is critical because absolute gap thresholds don't scale: a
 
 Some NBA EVs remained elevated after this fix (e.g., 87% on LaMelo Ball Rebounds), suggesting further tightening may be needed for specific prop types. The long tail of alt-line interpolation noise appears to require ongoing calibration rather than a single threshold fix.
 
+### Prediction Market Line Structure Mismatch (2026-04-17)
+
+The alt-line interpolation problem extends beyond Australian soft books to prediction market platforms. Kalshi and Polymarket offer deep alternate lines on NBA player props — for example, LaMelo Ball Rebounds at line 9.5 — while Pinnacle's main line sits at 5.5. This 4-point gap produces the same class of unreliable interpolation as AU soft book alt lines, but from a fundamentally different source: prediction markets structure their line offerings differently from traditional sportsbooks, routinely publishing lines far from the consensus main.
+
+This variant is architecturally distinct from the AU soft book case. AU alt lines are a secondary offering from the same book that also prices the main line — the book has an internal view of the market. Prediction market alt lines reflect order-book liquidity at arbitrary strike prices set by participants, with no guaranteed relationship to the sharp consensus line. A Kalshi market at "Rebounds Over 9.5" prices the probability of a specific threshold, not an offset from the main line. Devigging this against Pinnacle's main line of 5.5 treats a 4-point structural gap as if it were a minor line disagreement — fundamentally unreliable interpolation.
+
+The MAX_LINE_GAP tightening and per-line proportional rules partially address this (a 4-point gap on a 5.5 line exceeds the 15% high-count threshold), but extreme prediction market lines can still slip through. The 50% EV hard cap serves as the final safety net, rejecting the most egregious interpolation artifacts. Monitoring whether the current thresholds catch all prediction market line mismatches is an ongoing calibration concern.
+
 ## Related Concepts
 
 - [[concepts/trail-data-temporal-resolution]] - Trail data cleanup performed in the same session as poisoned pick deletion
@@ -71,8 +79,9 @@ Some NBA EVs remained elevated after this fix (e.g., 87% on LaMelo Ball Rebounds
 - [[concepts/betstamp-bet365-scraper-migration]] - AU soft books from the game scraper are a primary source of alt-line data
 - [[concepts/betting-window-roi-methodology]] - Alt-line extreme odds (e.g., 36.00) contaminate heatmap analysis even after the interpolation fix; the EV hard cap helps but doesn't catch all cases
 - [[connections/silent-type-coercion-data-corruption]] - Alt-line interpolation is one of three "plausible wrong output" patterns producing zero error signals
+- [[concepts/pinnacle-prediction-market-pipeline]] - Prediction market platforms (Kalshi, Polymarket) introduce a distinct alt-line mismatch variant with structural line divergence from Pinnacle main lines
 
 ## Sources
 
 - [[daily/lcash/2026-04-13.md]] - Morning: 1,611+393 picks deleted with triggered_ev > 50%; 10 new poisoned picks appeared within hours; root cause identified as alt-line/main-line mismatch in `server/tracker.py` line-gap logic (e.g., LeBron Rebounds Over 11.5 vs main 8.5 producing 153.7% EV); interpolation fix deployed; evening verification: 0 new poisoned picks, last pick at 1.72% EV (Sessions 08:50, 16:31, 22:50)
-- [[daily/lcash/2026-04-17.md]] - Second tightening: MAX_LINE_GAP 2.0→1.0, per-line rules (Threes/Steals ≤5 max 0.5 gap, high-count 15%), 50% EV hard cap; triggered by Royce O'Neale Threes at 36.00 producing 1,349% EV; some elevated EVs remain (LaMelo Ball Rebounds 87%) suggesting ongoing calibration needed (Session 21:43)
+- [[daily/lcash/2026-04-17.md]] - Second tightening: MAX_LINE_GAP 2.0→1.0, per-line rules (Threes/Steals ≤5 max 0.5 gap, high-count 15%), 50% EV hard cap; triggered by Royce O'Neale Threes at 36.00 producing 1,349% EV; some elevated EVs remain (LaMelo Ball Rebounds 87%) suggesting ongoing calibration needed (Session 21:43). Prediction market line structure mismatch identified: Kalshi Rebounds line 9.5 vs Pinnacle main 5.5 producing unreliable interpolation across fundamentally different line structures (Session 22:16)

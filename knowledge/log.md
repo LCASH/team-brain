@@ -124,3 +124,10 @@
 - Note: Incremental recompile — Sessions 11:06 through 21:11 were compiled in prior pass; this pass covers Session 21:43 (3-way devig root cause: draw_key code path bug, alt-line MAX_LINE_GAP tightening and EV hard cap)
 - Articles created: (none)
 - Articles updated: [[concepts/soccer-three-way-devig-phantom-ev]] (added residual code path bug: draw_key only from _over keys, _under fell through to 2-way; Motor Lublin example: -12.7% → +18.1% phantom; 31st pick voided), [[concepts/alt-line-mismatch-poisoned-picks]] (added second tightening: MAX_LINE_GAP 2.0→1.0, per-line proportional rules for Threes/Steals/high-count, 50% EV hard cap; triggered by 1,349% EV on Royce O'Neale Threes at 36.00)
+
+## [2026-04-17T22:16:24+10:00] compile | daily/lcash/2026-04-17.md (incremental)
+- Source: daily/lcash/2026-04-17.md
+- Developer: lcash
+- Note: Incremental recompile — Sessions 11:06 through 21:43 were compiled in prior passes; this pass covers Session 22:16 (prediction market line structure mismatch, early resolved pick profitability)
+- Articles created: (none)
+- Articles updated: [[concepts/alt-line-mismatch-poisoned-picks]] (added prediction market line structure mismatch: Kalshi Rebounds 9.5 vs Pinnacle 5.5 as distinct variant from AU soft book alt lines), [[concepts/pinnacle-prop-type-sharpness-variance]] (added early resolved pick profitability: 110 picks +0.8% ROI, Threes on Sportsbet +28.7% n=19; edge may be prop/book-specific)

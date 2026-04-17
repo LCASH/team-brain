@@ -4,8 +4,9 @@ aliases: [pinnacle-sharpness, prop-type-edge, pinnacle-brier, per-prop-calibrati
 tags: [value-betting, pinnacle, methodology, calibration, prediction-markets]
 sources:
   - "daily/lcash/2026-04-16.md"
+  - "daily/lcash/2026-04-17.md"
 created: 2026-04-16
-updated: 2026-04-16
+updated: 2026-04-17
 ---
 
 # Pinnacle Prop-Type Sharpness Variance
@@ -62,6 +63,17 @@ The discovery that sharpness varies by prop type has direct implications for the
 3. **Alternative sharp references**: For prop types where Pinnacle is weak, traditional sharps (BetRivers, Hard Rock) via OpticOdds may be better references than Pinnacle
 4. **min_ev=1 trail data**: The lowered threshold captures marginal edges for ongoing calibration analysis, allowing per-prop-type performance to be tracked over time
 
+### Early Resolved Pick Profitability (2026-04-17)
+
+On 2026-04-17, a profitability deep dive on 110 resolved Pinnacle picks provided the first forward validation of the prop-type variance hypothesis. Overall ROI was +0.8% — roughly breakeven, consistent with the -4.2% figure from the 169-pick sample (small sample variance). The per-prop breakdown confirmed the Threes signal:
+
+- **Threes on Sportsbet**: **+28.7% ROI** (n=19) — the strongest individual prop/book combination, consistent with the earlier +27.9% figure and now validated against resolved outcomes rather than just devigged EV estimates
+- **Other prop/book combinations**: no statistically significant signal in either direction at the current sample size
+
+The Sportsbet Threes signal is notable because it suggests the edge is not just Pinnacle-specific but book-specific: Sportsbet (book 900) appears to misprice Threes props more than other AU soft books relative to Pinnacle's sharp line. This is consistent with the AFL circular devig analysis (see [[concepts/afl-circular-devig-trap]]) where Sportsbet had the best calibration (50.7% WR) — the implication is that Sportsbet prices different markets with different quality, being accurate on some (AFL Disposals) and exploitable on others (NBA Threes).
+
+With only 110 resolved picks, these results are directional, not conclusive. The recommended threshold for strategy-level conclusions is 400+ resolved picks. The edge may prove to exist only in specific prop/book combinations (Threes on Sportsbet) rather than as a broad Pinnacle-vs-prediction-market phenomenon. Ongoing trail collection at min_ev=1 will provide the data for this determination.
+
 ## Related Concepts
 
 - [[concepts/pinnacle-prediction-market-pipeline]] - The pipeline that exposed prop-type variance when it produced 0 picks at min_ev=5
@@ -69,7 +81,10 @@ The discovery that sharpness varies by prop type has direct implications for the
 - [[concepts/afl-circular-devig-trap]] - Another case where "sharp" book calibration varied dramatically (Bet Right 34% WR vs Sportsbet 50.7%)
 - [[concepts/value-betting-theory-system]] - The theory system that needs per-prop-type sharp configuration
 - [[concepts/opticodds-critical-dependency]] - Pinnacle data flows through OpticOdds; prop-type weakness adds a quality dimension beyond availability risk
+- [[concepts/betting-window-roi-methodology]] - The analytics methodology used to compute the resolved pick profitability figures
+- [[concepts/alt-line-mismatch-poisoned-picks]] - Prediction market alt-line mismatches inflate some prop EVs; must be controlled for before drawing profitability conclusions
 
 ## Sources
 
 - [[daily/lcash/2026-04-16.md]] - Pinnacle NBA props -4.2% ROI overall; Threes +27.9%, Assists -45.7% to -50.4%; Brier 0.2695; dropout analysis 2456→0 at min_ev=5; min_ev lowered to 1 for trail capture; traditional sharps (BetRivers, Hard Rock) outperform on props; NHL identified as next viable sport but only game-line overlap (Sessions 13:04, 13:38, 16:30, 20:38)
+- [[daily/lcash/2026-04-17.md]] - 110 resolved Pinnacle picks: +0.8% ROI overall; Threes on Sportsbet +28.7% (n=19) is only clear signal; need 400+ picks before strategy-level conclusions; edge may be prop/book-specific not broad (Session 22:16)
