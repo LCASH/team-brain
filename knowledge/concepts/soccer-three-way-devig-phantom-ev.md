@@ -4,13 +4,14 @@ aliases: [3-way-devig, soccer-phantom-ev, three-way-market, draw-probability-red
 tags: [value-betting, devig, soccer, bug, methodology]
 sources:
   - "daily/lcash/2026-04-16.md"
+  - "daily/lcash/2026-04-17.md"
 created: 2026-04-16
-updated: 2026-04-16
+updated: 2026-04-17
 ---
 
 # Soccer Three-Way Devig Phantom EV
 
-Soccer moneyline markets have three outcomes (Home/Draw/Away), but the value betting scanner's parser mapped them as two-way (Home→Over, Away→Under), dropping the Draw entirely. This redistributed the Draw probability (~23%) across both sides, producing phantom EVs of 20-41% on soccer fixtures. When properly 3-way devigged, a sample fixture showed zero edge. All 22 soccer Pinnacle theories were deactivated and 30 phantom picks voided on 2026-04-16. A 3-way devig implementation was deployed the same day, eliminating the phantom EVs — though initial deployment exposed a JS render crash misattributed as a "Supabase Error" in the dashboard.
+Soccer moneyline markets have three outcomes (Home/Draw/Away), but the value betting scanner's parser mapped them as two-way (Home→Over, Away→Under), dropping the Draw entirely. This redistributed the Draw probability (~23%) across both sides, producing phantom EVs of 20-41% on soccer fixtures. When properly 3-way devigged, a sample fixture showed zero edge. All 22 soccer Pinnacle theories were deactivated and 31 phantom picks voided across 2026-04-16 and 2026-04-17. A 3-way devig implementation was deployed on 2026-04-16, but a residual code path bug (`draw_key` only constructed from `_over` keys) caused `_under` markets to still fall through to 2-way devig, requiring a second fix on 2026-04-17.
 
 ## Key Points
 
@@ -18,8 +19,9 @@ Soccer moneyline markets have three outcomes (Home/Draw/Away), but the value bet
 - The Draw probability (~23%) was redistributed across Home and Away, inflating both sides' implied probabilities and producing 20-41% phantom EVs
 - OpticOdds returns all 3 outcomes under `moneyline` market_id (not a separate `moneyline_3-way`) — the data is correct, the parser is wrong
 - When properly 3-way devigged, a sample fixture showed zero edge — confirming the EVs were entirely phantom
-- 22 soccer Pinnacle theories deactivated, 30 phantom picks voided; 6 genuine 2-way leagues retained (NBA, MLB, NHL, Euroleague, CBA, Turkey BSL)
+- 22 soccer Pinnacle theories deactivated, 31 phantom picks voided; 6 genuine 2-way leagues retained (NBA, MLB, NHL, Euroleague, CBA, Turkey BSL)
 - The telltale diagnostic sign: implied probabilities summing to ~77% instead of >100%
+- Root cause traced to `tracker.py:563`: `draw_key` was only constructed from `_over` keys, so `_under` markets had `draw_key = None`, `is_3way = False`, and fell through to 2-way devig
 
 ## Details
 
@@ -49,7 +51,15 @@ The fix required changes across three system layers:
 
 The 3-way devig was deployed on 2026-04-16 (Session 22:35), eliminating the phantom 40%+ EVs on soccer moneylines. However, initial deployment exposed a dashboard rendering bug: the 3-way devig code path triggered a JS render crash that was caught by a broad `try/catch` block wrapping both Supabase fetch AND render logic, causing the error to display as "Supabase Error" instead of identifying the render crash. The fix was to wrap the render logic in its own error boundary, separating fetch failures from render failures.
 
-With the 3-way devig deployed, soccer theories can be re-evaluated for re-activation once forward validation confirms the corrected devig produces accurate EV signals.
+### Residual Code Path Bug (2026-04-17)
+
+The initial 3-way devig fix on 2026-04-16 did not fully resolve the issue. On 2026-04-17, lcash investigated persistent phantom soccer EVs and traced the root cause to `tracker.py:563`: the `draw_key` variable was only constructed when the loop encountered an `_over` key (`key.endswith("_over")`). When the evaluation loop processed `_under` markets, `draw_key` was `None`, causing `is_3way` to evaluate to `False`, and the code fell through to the standard 2-way devig path — exactly the bug the fix was supposed to eliminate.
+
+A concrete example illustrates the magnitude: Motor Lublin's true probability was 27% (fair odds 3.76) when properly 3-way devigged. The 2-way devig inflated this to 36% (apparent odds 2.77) by absorbing the ~27% Draw probability. Against a soft book at Pinnacle's actual line of 3.610, this turned a genuine -12.7% EV into a phantom +18.1% EV — a 30.8 percentage point swing from a single code path bug.
+
+The fix ensured `draw_key` is constructed regardless of which side (`_over` or `_under`) the loop is currently processing. An additional 1 phantom pick was voided (bringing the total to 31), and forward monitoring confirmed no new phantom soccer moneyline picks appeared after the fix.
+
+With the 3-way devig fully deployed, soccer theories can be re-evaluated for re-activation once forward validation confirms the corrected devig produces accurate EV signals.
 
 ### Broader Pattern
 
@@ -67,3 +77,4 @@ This is the third distinct case of a devig method not matching the market's actu
 ## Sources
 
 - [[daily/lcash/2026-04-16.md]] - Soccer moneyline picks at 20-41% EV were phantom — 3-way market (Home/Draw/Away) parsed as 2-way (Over/Under), dropping Draw; 3-way devig on sample showed zero edge; 22 soccer theories deactivated, 30 picks voided; 6 genuine 2-way leagues retained (Sessions 16:30, 20:38). 3-way devig implemented and deployed; initial render crash misattributed as "Supabase Error" due to broad catch block; render error boundary added (Session 22:35)
+- [[daily/lcash/2026-04-17.md]] - Residual 3-way devig bug: `draw_key` only constructed from `_over` keys, so `_under` markets fell through to 2-way devig at tracker.py:563; Motor Lublin example: true 27% (3.76) inflated to 36% (2.77), turning -12.7% EV into +18.1% phantom; 31st pick voided; code path fix ensured draw_key built for both sides (Session 21:43)
