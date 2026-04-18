@@ -10,8 +10,9 @@ sources:
   - "daily/lcash/2026-04-15.md"
   - "daily/lcash/2026-04-16.md"
   - "daily/lcash/2026-04-17.md"
+  - "daily/lcash/2026-04-18.md"
 created: 2026-04-11
-updated: 2026-04-17
+updated: 2026-04-18
 ---
 
 # bet365 Racing Adapter Architecture
@@ -117,6 +118,16 @@ On 2026-04-16, the adapter was deployed as `bet365_stream.py` to both Dell serve
 
 **Remaining issues:** Greyhound matching broken (0/7 matched — trap/box vs barrier numbering mismatch with Betfair). bet365 only sends odds for races close to jump time (~60 min window). If Dell gets CPU-overloaded, levers are: reduce drain interval (0.5s), increase push interval (15s→30s), or drop workers.
 
+### Dell CPU Throttling (2026-04-18)
+
+On 2026-04-18, the Dell server's bet365 racing worker was hitting 99% CPU during the runner map build phase. Three throttling fixes were deployed:
+
+1. **Longer settle times**: First fixture settle time increased from 3s to 5s, subsequent fixtures from 2s to 3s — gives Chrome more time to stabilize between fixture navigations
+2. **Chrome GPU flags disabled**: `--disable-gpu` and related flags prevent Chrome from attempting GPU-accelerated rendering, reducing CPU overhead on a headless server
+3. **BELOW_NORMAL process priority**: Windows process priority set to `BELOW_NORMAL_PRIORITY_CLASS` so the bet365 worker yields CPU to NBA/MLB workers when they need it
+
+The tradeoff is a ~1 minute slower runner map build (the full discovery + runner map phase). A subsequent diagnosis run confirmed the fix: Dell CPU dropped from ~99% to 70.6%.
+
 ### Stream Staleness Watchdog and Day-Change Handling (2026-04-17)
 
 On 2026-04-17, the stream survived overnight but went stale — it never re-discovered the new day's racing card because the supervisor only restarts on crash, not on "no data." The assumption that "no crash = healthy" is wrong for long-running WS streams when the upstream data source simply goes silent at the end of a day's racing and new fixtures are never subscribed.
@@ -154,3 +165,4 @@ The adapter runs locally against an AdsPower browser instance or headed Chrome o
 - [[daily/lcash/2026-04-15.md]] - Dell server port: headless Chrome detection (zero WS traffic in headless mode), headed mode required, racecoupon HTTP preferred over CSS click runner map, Windows zombie Chrome/stdout buffering/cp1252 issues (Session 14:55)
 - [[daily/lcash/2026-04-16.md]] - Multi-fixture production deployment: Mac 502 participants/13 meetings, Dell 484/12 meetings; VPS ingest pipeline (23 races matched, bookies=2); build_runner_map patched for all fixtures per meeting; coupon-PM ID mismatch fixed with barrier-number fallback (23→46 matched); Dell CPU 66-94%; schtasks persistence; greyhound matching still broken (Sessions 12:26, 14:10, 15:16, 15:46)
 - [[daily/lcash/2026-04-17.md]] - Stream survived overnight but went stale (no day-change rediscovery); staleness watchdog added: 5 consecutive windows of 0 updates → STALE_STREAM → supervisor restart; schtasks entry registered; operations doc created; horses/harness 80-100% match, greyhounds 0/7 still broken (Session 16:44)
+- [[daily/lcash/2026-04-18.md]] - Dell CPU throttling: runner map build hitting 99% CPU; three fixes deployed — settle time increased (3→5s first fixture, 2→3s subsequent), Chrome GPU flags disabled (`--disable-gpu`), BELOW_NORMAL process priority; expected peak drop from ~99% to ~70-80%; tradeoff is ~1 min slower runner map build; validated at 70.6% CPU in subsequent diagnosis run (Sessions 13:36, 15:54)

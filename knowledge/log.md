@@ -131,3 +131,9 @@
 - Note: Incremental recompile — Sessions 11:06 through 21:43 were compiled in prior passes; this pass covers Session 22:16 (prediction market line structure mismatch, early resolved pick profitability)
 - Articles created: (none)
 - Articles updated: [[concepts/alt-line-mismatch-poisoned-picks]] (added prediction market line structure mismatch: Kalshi Rebounds 9.5 vs Pinnacle 5.5 as distinct variant from AU soft book alt lines), [[concepts/pinnacle-prop-type-sharpness-variance]] (added early resolved pick profitability: 110 picks +0.8% ROI, Threes on Sportsbet +28.7% n=19; edge may be prop/book-specific)
+
+## [2026-04-18T21:07:52+10:00] compile | daily/lcash/2026-04-18.md
+- Source: daily/lcash/2026-04-18.md
+- Developer: lcash
+- Articles created: [[concepts/crypto-edge-non-pinnacle-strategy]], [[concepts/opticodds-sse-streaming-scaling]], [[concepts/tabtouch-domain-migration-mqtt]], [[concepts/sharp-clv-theory-ranking]], [[concepts/trail-preseeding-coverage-bug]], [[concepts/fixture-cache-silent-market-dropout]]
+- Articles updated: [[concepts/alt-line-mismatch-poisoned-picks]] (added Poisson model for count props + cross-validation gate; Pinnacle 5.5→Kalshi 9.5 line gap example), [[concepts/bet365-racing-adapter-architecture]] (added Dell CPU throttling: settle time, GPU flags, BELOW_NORMAL priority; 99%→70.6%), [[concepts/pinnacle-prediction-market-pipeline]] (added Crypto Edge expansion, REST-to-SSE scaling migration, 215 picks across 14 leagues), [[concepts/pinnacle-prop-type-sharpness-variance]] (added sharp CLV theory ranking: AltLine-V1 +28.4%, MLB Calibrated/Conservative +6.4-6.5%)

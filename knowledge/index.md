@@ -66,3 +66,9 @@
 | [[concepts/pick-id-float-int-hashing-bug]] | `_generate_pick_id()` produces different hashes for int vs float line values; silently broke trail collection for all moneyline picks | daily/lcash/2026-04-17.md | 2026-04-17 |
 | [[concepts/betting-window-roi-methodology]] | ROI from closing_odds, 3h betting window filter, dedup pipeline; 107/819 picks in window → 45.8% WR, +24.32% ROI | daily/lcash/2026-04-17.md | 2026-04-17 |
 | [[connections/silent-type-coercion-data-corruption]] | Float/int hashing, DD/TD encoding, alt-line interpolation share pattern: plausible wrong output with zero error signal | daily/lcash/2026-04-17.md | 2026-04-17 |
+| [[concepts/crypto-edge-non-pinnacle-strategy]] | New pill targeting prediction market gaps where Pinnacle has no coverage; MLB goldmine (1,354 markets); DK/Novig/FD as sharps | daily/lcash/2026-04-18.md | 2026-04-18 |
+| [[concepts/opticodds-sse-streaming-scaling]] | SSE streaming endpoint replaces REST polling; ~15 connections cover 491+ leagues vs 28 pollers; 459KB/15s tested | daily/lcash/2026-04-18.md | 2026-04-18 |
+| [[concepts/tabtouch-domain-migration-mqtt]] | tabtouch.mobi dead (NXDOMAIN); new tabtouch.com.au uses SSR + Knockout.js + AWS IoT MQTT; no proxy needed | daily/lcash/2026-04-18.md | 2026-04-18 |
+| [[concepts/sharp-clv-theory-ranking]] | Sharp CLV as primary metric; AltLine-V1 +28.4% CLV (sharpest); Aggressive-Wide -9.3% (no edge despite 62% WR) | daily/lcash/2026-04-18.md | 2026-04-18 |
+| [[concepts/trail-preseeding-coverage-bug]] | VPS pre-seeds tracker cache from Supabase, preventing Phase B baseline trail writes; 5.9% coverage; fix: don't pre-seed | daily/lcash/2026-04-18.md | 2026-04-18 |
+| [[concepts/fixture-cache-silent-market-dropout]] | Fixture cache API limit=100 silently drops markets beyond 100th fixture; 495/2,400 SSE entries lost | daily/lcash/2026-04-18.md | 2026-04-18 |

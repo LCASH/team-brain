@@ -5,8 +5,9 @@ tags: [value-betting, pinnacle, methodology, calibration, prediction-markets]
 sources:
   - "daily/lcash/2026-04-16.md"
   - "daily/lcash/2026-04-17.md"
+  - "daily/lcash/2026-04-18.md"
 created: 2026-04-16
-updated: 2026-04-17
+updated: 2026-04-18
 ---
 
 # Pinnacle Prop-Type Sharpness Variance
@@ -88,3 +89,4 @@ With only 110 resolved picks, these results are directional, not conclusive. The
 
 - [[daily/lcash/2026-04-16.md]] - Pinnacle NBA props -4.2% ROI overall; Threes +27.9%, Assists -45.7% to -50.4%; Brier 0.2695; dropout analysis 2456→0 at min_ev=5; min_ev lowered to 1 for trail capture; traditional sharps (BetRivers, Hard Rock) outperform on props; NHL identified as next viable sport but only game-line overlap (Sessions 13:04, 13:38, 16:30, 20:38)
 - [[daily/lcash/2026-04-17.md]] - 110 resolved Pinnacle picks: +0.8% ROI overall; Threes on Sportsbet +28.7% (n=19) is only clear signal; need 400+ picks before strategy-level conclusions; edge may be prop/book-specific not broad (Session 22:16)
+- [[daily/lcash/2026-04-18.md]] - Sharp CLV theory ranking across 7,724 resolved picks: AltLine-V1 +28.4% CLV (sharpest), Conservative 72.7% CLV>0 rate (most consistent), Aggressive-Wide -9.3% (no edge despite 62% WR); MLB Calibrated +6.4% CLV and MLB Conservative +6.5% CLV confirmed as sharpest MLB theories; sharp CLV validated as superior to soft CLV (~0% for AU books) (Sessions 17:04, 17:35, 21:07)

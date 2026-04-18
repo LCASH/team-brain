@@ -5,8 +5,9 @@ tags: [value-betting, data-quality, bug, tracker, interpolation]
 sources:
   - "daily/lcash/2026-04-13.md"
   - "daily/lcash/2026-04-17.md"
+  - "daily/lcash/2026-04-18.md"
 created: 2026-04-13
-updated: 2026-04-17
+updated: 2026-04-18
 ---
 
 # Alt-Line Mismatch Poisoned Picks
@@ -63,6 +64,18 @@ The per-line approach is critical because absolute gap thresholds don't scale: a
 
 Some NBA EVs remained elevated after this fix (e.g., 87% on LaMelo Ball Rebounds), suggesting further tightening may be needed for specific prop types. The long tail of alt-line interpolation noise appears to require ongoing calibration rather than a single threshold fix.
 
+### Poisson Interpolation and Cross-Validation Gate (2026-04-18)
+
+The MAX_LINE_GAP and per-line threshold approach proved insufficient for prediction market line gaps. On 2026-04-18, NBA player prop interpolation was bridging a 4-point line gap (Pinnacle main 5.5 → Kalshi 9.5) — all books clustered at line 5.5 with no intermediate lines to build a curve. The standard logit interpolation produced 15.6% true probability at 9.5, while Kalshi's own price implied 7.5% — a massive divergence indicating unreliable interpolation.
+
+Two methodological fixes were deployed:
+
+1. **Poisson model for count props**: For count-based player props (rebounds, assists, points, threes), the Poisson distribution models the probability of achieving a count threshold more accurately than logit interpolation across large line gaps. At Pinnacle's line of 5.5, the Poisson model produces 4.2% true probability at line 9.5 — far more realistic than logit's 15.6%. The Poisson model is used for all count props regardless of line gap size, replacing logit as the default interpolation method for this prop class.
+
+2. **Cross-validation gate**: Before accepting an interpolated true probability, the system now compares it against the soft book's own devigged price. If the soft book's implied probability and the interpolated true probability disagree by more than 5 percentage points, the pick is skipped entirely. This catches cases where the interpolation model (even Poisson) produces unreliable estimates — the soft book's own pricing serves as a sanity check. In the Kalshi 9.5 example, Kalshi's own devigged price of 7.5% disagreed with logit's 15.6% by 8.1pp, which would have been caught by the gate.
+
+The 50% EV hard cap and tightened MAX_LINE_GAP remain as additional safety layers. The Poisson model and cross-validation gate address the root cause (unreliable interpolation methodology) rather than the symptoms (extreme EV values).
+
 ### Prediction Market Line Structure Mismatch (2026-04-17)
 
 The alt-line interpolation problem extends beyond Australian soft books to prediction market platforms. Kalshi and Polymarket offer deep alternate lines on NBA player props — for example, LaMelo Ball Rebounds at line 9.5 — while Pinnacle's main line sits at 5.5. This 4-point gap produces the same class of unreliable interpolation as AU soft book alt lines, but from a fundamentally different source: prediction markets structure their line offerings differently from traditional sportsbooks, routinely publishing lines far from the consensus main.
@@ -85,3 +98,4 @@ The MAX_LINE_GAP tightening and per-line proportional rules partially address th
 
 - [[daily/lcash/2026-04-13.md]] - Morning: 1,611+393 picks deleted with triggered_ev > 50%; 10 new poisoned picks appeared within hours; root cause identified as alt-line/main-line mismatch in `server/tracker.py` line-gap logic (e.g., LeBron Rebounds Over 11.5 vs main 8.5 producing 153.7% EV); interpolation fix deployed; evening verification: 0 new poisoned picks, last pick at 1.72% EV (Sessions 08:50, 16:31, 22:50)
 - [[daily/lcash/2026-04-17.md]] - Second tightening: MAX_LINE_GAP 2.0→1.0, per-line rules (Threes/Steals ≤5 max 0.5 gap, high-count 15%), 50% EV hard cap; triggered by Royce O'Neale Threes at 36.00 producing 1,349% EV; some elevated EVs remain (LaMelo Ball Rebounds 87%) suggesting ongoing calibration needed (Session 21:43). Prediction market line structure mismatch identified: Kalshi Rebounds line 9.5 vs Pinnacle main 5.5 producing unreliable interpolation across fundamentally different line structures (Session 22:16)
+- [[daily/lcash/2026-04-18.md]] - Poisson model replacing logit for count props (4.2% vs 15.6% true prob at 4-point gap); cross-validation gate: skip pick if soft book's own devigged price disagrees with interpolation by >5pp; Pinnacle 5.5 → Kalshi 9.5 line gap concrete example; all books clustered at 5.5, no intermediate lines available (Session 11:48)

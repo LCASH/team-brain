@@ -5,8 +5,9 @@ tags: [value-betting, pinnacle, prediction-markets, dashboard, integration]
 sources:
   - "daily/lcash/2026-04-15.md"
   - "daily/lcash/2026-04-16.md"
+  - "daily/lcash/2026-04-18.md"
 created: 2026-04-15
-updated: 2026-04-16
+updated: 2026-04-18
 ---
 
 # Pinnacle Prediction Market Pipeline
@@ -123,6 +124,16 @@ Session 23:12 revealed that the Pinnacle pipeline was producing ~10 picks despit
 
 After all three fixes, zero picks was confirmed as correct behavior — all niche league games were 27-124 hours away, outside the 24-hour pre-game window. Picks will appear automatically as games enter the window. See [[concepts/niche-league-tracker-pipeline-bottlenecks]] for full analysis.
 
+### Crypto Edge Expansion (2026-04-18)
+
+On 2026-04-18, the prediction market strategy was expanded with a complementary "Crypto Edge" pill that targets markets where prediction markets exist but Pinnacle has no coverage — the inverse of the original Pinnacle pipeline. An OpticOdds scan found 1,535 such markets (1,433 with other sharp books available), with MLB as the goldmine (1,354 markets: Pinnacle doesn't list Hits or HRIs at all). The Crypto Edge pill uses DraftKings/Novig/FanDuel as sharps instead of Pinnacle. See [[concepts/crypto-edge-non-pinnacle-strategy]] for the full strategy.
+
+Combined, the Pinnacle pipeline and Crypto Edge pipeline now generate 215 picks across 14 leagues (NBA 95, MLB 89, plus niche leagues including Japan J1, Korea K1, MLS).
+
+### REST-to-SSE Scaling Migration (2026-04-18)
+
+The pipeline's expansion to 491+ leagues exposed a fundamental REST polling limitation: ~10K API calls/minute would exceed OpticOdds rate limits. The discovery of OpticOdds' SSE streaming endpoint (`/stream/odds/{sport}`) provides a path to cover all leagues per sport with ~15 persistent connections instead of 28+ REST pollers. The scanner was only polling 23 of 491 Kalshi leagues (~5% actual coverage). See [[concepts/opticodds-sse-streaming-scaling]] for the migration plan.
+
 ## Related Concepts
 
 - [[concepts/value-betting-theory-system]] - The theory system that the Pinnacle pipeline extends with a new sharp/soft pairing
@@ -135,8 +146,11 @@ After all three fixes, zero picks was confirmed as correct behavior — all nich
 - [[concepts/ev-pipeline-dropout-logging]] - The diagnostic tool used to validate pipeline correctness
 - [[concepts/sse-display-tracking-market-separation]] - SSE bloat from game-line expansion forced display/tracking split with VPS-side pollers
 - [[concepts/niche-league-tracker-pipeline-bottlenecks]] - Three compound bottlenecks silently killing niche league picks: ACTIVE_SPORTS, freshness cutoff, SSE filter
+- [[concepts/crypto-edge-non-pinnacle-strategy]] - The complementary strategy targeting non-Pinnacle prediction market gaps
+- [[concepts/opticodds-sse-streaming-scaling]] - SSE streaming migration to scale from 23 to 491+ leagues
 
 ## Sources
 
 - [[daily/lcash/2026-04-15.md]] - Pinnacle theory committed (9a0b19d, +177/-28 lines): prediction market book IDs (Kalshi 950, Polymarket 970, DraftKings Predictions 971, Underdog 980, Crypto.com 981/982), virtual sport pill, sportSupabaseFilter helper; pipeline verified end-to-end (Polymarket 348, Kalshi 168, Pinnacle 402 markets); zero picks correct (outside 3h window); stash/restore pattern for branch isolation (Sessions 22:03, 22:36)
 - [[daily/lcash/2026-04-16.md]] - NHL viable (3 game-line markets, ~400 LOC for game-line support); MLB non-viable (0 prediction market coverage on OpticOdds); soccer deactivated (22 theories, 30 phantom picks voided — 3-way devig needed); Pinnacle prop-type variance: Threes +27.9%, Assists -50.4%; min_ev 5→1; trail capture SOFT_IDS gap fixed; all theories set to 3h window; SSE payload bloated to 6-9MB from game-line expansion (MLB 2K→5,040 markets), fixed by VPS-side Pinnacle pollers with restricted book set and SSE push disabled (Sessions 13:04, 13:38, 16:30, 20:38, 21:31). Virtual pill rendering: skipped live computation entirely, only stored picks; cleared _storedEVPicks on pill switch to fix race condition; multiple render paths (renderStats/renderEV) both calling computeEVPicks independently (Session 22:35). Niche league pipeline unblocked: three compound bottlenecks (ACTIVE_SPORTS iteration, 30s→120s sharp freshness, SSE filter hiding tracker view) silently killed niche league output; post-fix 0 picks confirmed correct (games 27-124h away) (Session 23:12)
+- [[daily/lcash/2026-04-18.md]] - Crypto Edge pill launched (1,535 non-Pinnacle markets, MLB 1,354); 215 picks across 14 leagues; only polling 23/491 Kalshi leagues (~5%); SSE streaming endpoint discovered (459KB/15s all leagues per sport); 5-phase REST-to-SSE migration plan; fixture cache limit=100 silently dropped 495/2,400 SSE markets (Sessions 12:31, 13:31, 14:39)
