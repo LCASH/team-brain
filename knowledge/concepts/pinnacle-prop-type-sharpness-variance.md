@@ -75,6 +75,16 @@ The Sportsbet Threes signal is notable because it suggests the edge is not just 
 
 With only 110 resolved picks, these results are directional, not conclusive. The recommended threshold for strategy-level conclusions is 400+ resolved picks. The edge may prove to exist only in specific prop/book combinations (Threes on Sportsbet) rather than as a broad Pinnacle-vs-prediction-market phenomenon. Ongoing trail collection at min_ev=1 will provide the data for this determination.
 
+### NHL AU Book Efficiency (2026-04-18)
+
+On 2026-04-18, NHL was added to the dashboard as part of the Pinnacle pipeline expansion. Investigation of 381 NHL markets with sharp data revealed that **Australian soft books are efficient on NHL** — unlike NBA/MLB where AU books lag behind sharp lines, Sportsbet prices NHL props tightly against sharps, producing near-zero exploitable edges at a 2% EV threshold.
+
+Of 354 NHL markets with both sharp and soft book data, only 3 passed the +EV threshold, and all 3 were false positives from line mismatches (not genuine value). This contrasts sharply with NBA and MLB, where hundreds of picks pass the same threshold.
+
+A separate limitation was identified for NHL: **one-sided props (NHL Goals = Over-only) cannot be devigged** with the standard Over/Under pair method used in the dashboard's JavaScript. 168 NHL markets were unpaired because Goals props are inherently one-sided (booking the Under on "Player Scores 0.5+ Goals" is rarely offered). A dedicated one-sided consensus devig method exists server-side but is not yet implemented in the dashboard JS, leaving these markets unevaluable on the client side.
+
+This finding extends the sharpness variance principle from per-prop-type to **per-sport**: market efficiency in AU soft books varies not just by what is being bet (Threes vs Assists) but by which sport is being bet (NBA/MLB exploitable, NHL efficient). The implication is that theory configurations should not assume uniform exploitability across sports, even when using the same sharp-vs-soft pairing methodology.
+
 ## Related Concepts
 
 - [[concepts/pinnacle-prediction-market-pipeline]] - The pipeline that exposed prop-type variance when it produced 0 picks at min_ev=5
@@ -85,8 +95,11 @@ With only 110 resolved picks, these results are directional, not conclusive. The
 - [[concepts/betting-window-roi-methodology]] - The analytics methodology used to compute the resolved pick profitability figures
 - [[concepts/alt-line-mismatch-poisoned-picks]] - Prediction market alt-line mismatches inflate some prop EVs; must be controlled for before drawing profitability conclusions
 
+- [[concepts/tracker-optimistic-id-poisoning]] - NHL game-line expansion triggered the staged IDs bug when game-total markets had empty player_name
+- [[concepts/one-sided-consensus-structural-bias]] - One-sided consensus devig is the correct method for NHL Goals (Over-only) but is not yet implemented in the dashboard JS
+
 ## Sources
 
 - [[daily/lcash/2026-04-16.md]] - Pinnacle NBA props -4.2% ROI overall; Threes +27.9%, Assists -45.7% to -50.4%; Brier 0.2695; dropout analysis 2456→0 at min_ev=5; min_ev lowered to 1 for trail capture; traditional sharps (BetRivers, Hard Rock) outperform on props; NHL identified as next viable sport but only game-line overlap (Sessions 13:04, 13:38, 16:30, 20:38)
 - [[daily/lcash/2026-04-17.md]] - 110 resolved Pinnacle picks: +0.8% ROI overall; Threes on Sportsbet +28.7% (n=19) is only clear signal; need 400+ picks before strategy-level conclusions; edge may be prop/book-specific not broad (Session 22:16)
-- [[daily/lcash/2026-04-18.md]] - Sharp CLV theory ranking across 7,724 resolved picks: AltLine-V1 +28.4% CLV (sharpest), Conservative 72.7% CLV>0 rate (most consistent), Aggressive-Wide -9.3% (no edge despite 62% WR); MLB Calibrated +6.4% CLV and MLB Conservative +6.5% CLV confirmed as sharpest MLB theories; sharp CLV validated as superior to soft CLV (~0% for AU books) (Sessions 17:04, 17:35, 21:07)
+- [[daily/lcash/2026-04-18.md]] - Sharp CLV theory ranking across 7,724 resolved picks: AltLine-V1 +28.4% CLV (sharpest), Conservative 72.7% CLV>0 rate (most consistent), Aggressive-Wide -9.3% (no edge despite 62% WR); MLB Calibrated +6.4% CLV and MLB Conservative +6.5% CLV confirmed as sharpest MLB theories; sharp CLV validated as superior to soft CLV (~0% for AU books) (Sessions 17:04, 17:35, 21:07). NHL AU book efficiency: 381 markets, 354 with both sharp+soft, only 3 +EV (all false positives); Sportsbet prices NHL tightly; 168 one-sided Goals markets unevaluable without one-sided devig in dashboard JS (Session 22:20)

@@ -144,3 +144,11 @@
 - Note: Incremental recompile — Sessions 11:48 through 21:07 were compiled in prior pass; this pass covers Session 21:50 (dashboard theory name exclusion overreach, display vs computation filtering, sharp data age threshold)
 - Articles created: (none)
 - Articles updated: [[concepts/dashboard-client-server-ev-divergence]] (added theory name exclusion bug: NHL both theories excluded → 0 picks, MLB partial exclusion; critical distinction between display filtering and computation filtering; VPS sharp data age 60s→120s; single-stream architecture diagnostic principle)
+
+## [2026-04-18T23:15:00+10:00] compile | daily/lcash/2026-04-18.md (incremental)
+- Source: daily/lcash/2026-04-18.md
+- Developer: lcash
+- Note: Incremental recompile — Sessions 11:48 through 21:50 were compiled in prior passes; this pass covers Session 22:20 (staged IDs anti-pattern, NHL AU book efficiency, one-sided prop devig gap) and fixes index date inconsistencies from prior passes
+- Articles created: [[concepts/tracker-optimistic-id-poisoning]]
+- Articles updated: [[concepts/pinnacle-prop-type-sharpness-variance]] (added NHL AU book efficiency: 381 markets, only 3 +EV all false positives; Sportsbet prices NHL tightly; 168 one-sided Goals markets unevaluable; sport-level market efficiency variance principle), [[concepts/trail-preseeding-coverage-bug]] (added cross-reference to sibling staged IDs bug)
+- Index fixes: Updated dates for [[concepts/bet365-racing-adapter-architecture]], [[concepts/alt-line-mismatch-poisoned-picks]], [[concepts/pinnacle-prediction-market-pipeline]], [[concepts/pinnacle-prop-type-sharpness-variance]] to reflect 2026-04-18 updates from prior compilation passes

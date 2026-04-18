@@ -51,6 +51,7 @@ The 5.9% coverage figure was the diagnostic signal — at steady state with a he
 
 ## Related Concepts
 
+- [[concepts/tracker-optimistic-id-poisoning]] - A sibling tracker ID management bug discovered in the same daily log: `_tracked_ids.add()` before confirmed insert causes cascading NOT NULL errors when game-line inserts fail
 - [[concepts/trail-capture-soft-ids-gap]] - Another silent trail coverage failure: SOFT_IDS excluded prediction market book IDs, causing 0% trail coverage for Pinnacle picks
 - [[concepts/pick-id-float-int-hashing-bug]] - Another silent trail failure: float/int type coercion in pick ID hash caused Phase B to miss all moneyline trails
 - [[concepts/trail-data-temporal-resolution]] - Trail data quality depends on trails being written at all; this bug prevented even baseline entries
