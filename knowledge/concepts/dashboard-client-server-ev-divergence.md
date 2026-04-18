@@ -1,13 +1,14 @@
 ---
 title: "Dashboard Client-Server EV Divergence"
-aliases: [client-side-ev, server-side-ev, ev-computation-mismatch, loadtheories-bug-fix]
+aliases: [client-side-ev, server-side-ev, ev-computation-mismatch, loadtheories-bug-fix, theory-name-exclusion]
 tags: [value-betting, dashboard, bug, architecture]
 sources:
   - "daily/lcash/2026-04-15.md"
   - "daily/lcash/2026-04-16.md"
   - "daily/lcash/2026-04-17.md"
+  - "daily/lcash/2026-04-18.md"
 created: 2026-04-15
-updated: 2026-04-17
+updated: 2026-04-18
 ---
 
 # Dashboard Client-Server EV Divergence
@@ -21,7 +22,7 @@ The value betting dashboard's "+EV Picks" tab computes EV live in the browser ag
 - The Pinnacle theory appeared to work (showing EV against Ladbrokes, PointsBet AU) but should have been showing EV against prediction markets (Kalshi, Polymarket)
 - Root cause: `loadTheories()` JS destructuring silently dropped `soft_books`, `prop_filter`, `max_line_gap`, `line_gap_penalty`, `max_line`, and `excluded_props` when mapping Supabase rows to JS objects
 - Fix deployed 2026-04-15 as part of Pinnacle commit `9a0b19d` (5 files, +177/-28 lines): all theory columns now explicitly mapped in `loadTheories()`
-- Deploy on mini PC killed all workers (push worker, AFL, MLB, NRL) but only restarted NBA — required manual restart of all services
+- A recurring pattern: theory name-based exclusion for virtual pills (Pinnacle/Crypto Edge) was applied to the EV computation engine instead of only to the display layer, zeroing out NHL picks entirely and reducing MLB picks
 
 ## Details
 
@@ -67,6 +68,9 @@ Additionally, a "Supabase Error" message displayed on the Pinnacle pill was trac
 - [[concepts/configuration-drift-manual-launch]] - Deploy-kills-all-workers is a deployment variant of the config drift pattern
 - [[connections/operational-compound-failures]] - The silent field-dropping + no monitoring chain echoes the compound failure pattern
 - [[concepts/pinnacle-prediction-market-pipeline]] - The Pinnacle pipeline whose verification exposed this bug; commit `9a0b19d` includes both the bug fix and prediction market book IDs
+- [[concepts/crypto-edge-non-pinnacle-strategy]] - The Crypto Edge theories whose name-based exclusion compounded with Pinnacle exclusion to zero out NHL picks
+- [[concepts/sse-display-tracking-market-separation]] - The display/tracking separation pattern; the theory exclusion bug is a related display-layer filtering issue
+- [[concepts/niche-league-tracker-pipeline-bottlenecks]] - Parallel pattern: sharp freshness cutoff (30s→120s) mirrors the VPS sharp data age threshold (60s→120s)
 
 ### Dashboard HTML Loss on VPS Restart (2026-04-17)
 
@@ -80,8 +84,23 @@ During a git rebase to sync local Pinnacle work with 10 remote commits, merge co
 
 The Data tab loaded 60 days of resolved picks (21K picks, 11MB, 25 seconds) causing browser timeouts. Supabase returned the data successfully across 22 paginated pages (22 × 1000 rows), but browser-side JavaScript choked parsing the aggregated result. The fix reduced the default range to 7 days (~3 second load). This is a general pattern: large API responses that succeed at the network layer can fail at the browser parsing layer — server-side aggregation or tighter default ranges are needed when datasets grow beyond ~5MB.
 
+### Theory Name Exclusion Overreach (2026-04-18)
+
+On 2026-04-18, lcash discovered that multiple sport pills (MLB, AFL, NHL) were showing zero +EV picks despite SSE data flowing correctly (7,330 MLB markets, 611 AFL, 96 NHL — all at 17s freshness with both sharp and soft data). The root cause was an overly aggressive theory name exclusion filter in the dashboard's theory loading logic.
+
+The dashboard excluded any theory with "Pinnacle" or "Crypto Edge" in the name from regular sport pills — intended to prevent duplicate picks between the virtual Pinnacle/Crypto Edge pills and the per-sport pills. However, for NHL, BOTH active theories ("NHL Pinnacle" and "NHL Crypto Edge") matched the exclusion, so **zero theories were loaded**, producing zero EV computations and zero picks. For MLB, "MLB Pinnacle" was excluded, reducing the available theories and lowering pick volume.
+
+This exposed a critical architectural distinction: **display filtering vs. computation filtering**. Excluding theories from the picks *display* (to avoid showing the same pick on both the Pinnacle pill and the NHL pill) is legitimate and necessary. Excluding theories from the EV *computation engine's* theory loading prevents picks from ever being computed in the first place — a fundamentally different effect. The exclusion was applied at the wrong layer: it should only filter the display query (`triggeredByMatch` for stored picks), not the theory loading that drives `computeEVForTheory()`.
+
+The rejected alternative was renaming theories (e.g., "NHL Pinnacle" → "NHL-P") to avoid matching the exclusion pattern. This would have broken the Pinnacle pill's `triggeredByMatch: 'Pinnacle'` filter, which relies on the theory name containing "Pinnacle" to select stored picks for the virtual pill. The correct fix was to remove theory name exclusion from the EV computation engine entirely, applying it only at the display layer.
+
+A related finding in the same session: the VPS sharp data age threshold was raised from 60s to 120s. The mini PC's OpticOdds poller runs every ~60 seconds, so data arriving at the VPS was ~57s old — just below the previous 60s threshold. Slight timing variance caused some cycles to arrive at 61-63s and be silently discarded as stale. The 120s threshold accommodates the polling interval with comfortable margin.
+
+Additionally, NRL showed zero markets across the SSE stream — either the NRL season is between rounds or the mini PC's NRL server (port 8801) is down. The VPS serves ALL sports on port 8802 via a single SSE stream; `switchSport` only changes client-side filtering, not the SSE connection. This single-stream architecture means sport pill bugs are always client-side filtering issues, never data availability issues — a useful diagnostic principle.
+
 ## Sources
 
 - [[daily/lcash/2026-04-15.md]] - Pinnacle theory showing AU soft books instead of prediction markets; `loadTheories()` dropping 6 fields via JS destructuring; client-side EV ≠ server-side EV divergence; fix deployed; zero Pinnacle picks correct (games outside 3h window); deploy killed all workers requiring manual restart; NRL scheduled task re-enable needed (Session 22:03/16:20+)
 - [[daily/lcash/2026-04-16.md]] - Multiple render paths (`renderStats()` + `renderEV()`) both calling `computeEVPicks()` independently — fixing one left bug visible through the other; "Supabase Error" was actually a JS render crash misattributed by broad catch block wrapping fetch+render; error boundary separation deployed (Session 22:35)
 - [[daily/lcash/2026-04-17.md]] - Dashboard HTML lost on VPS restart (in-memory only, re-push required); merge conflict artifacts leaving orphaned JS code (`books is not defined`, undefined `contentEl`); 21K picks / 11MB / 25s timeout → 7-day default range; deploy git sync guard blocks on uncommitted changes (Sessions 11:06, 16:09, 21:11)
+- [[daily/lcash/2026-04-18.md]] - Theory name exclusion too aggressive: NHL had both theories excluded → 0 picks; MLB "MLB Pinnacle" excluded → fewer computations; critical distinction between display filtering and computation filtering; fix: exclude only from display query, not EV engine theory loading; sharp data age threshold 60s→120s for mini PC polling interval; VPS single-stream architecture confirmed (all sports on port 8802) (Session 21:50)

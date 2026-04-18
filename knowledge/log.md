@@ -137,3 +137,10 @@
 - Developer: lcash
 - Articles created: [[concepts/crypto-edge-non-pinnacle-strategy]], [[concepts/opticodds-sse-streaming-scaling]], [[concepts/tabtouch-domain-migration-mqtt]], [[concepts/sharp-clv-theory-ranking]], [[concepts/trail-preseeding-coverage-bug]], [[concepts/fixture-cache-silent-market-dropout]]
 - Articles updated: [[concepts/alt-line-mismatch-poisoned-picks]] (added Poisson model for count props + cross-validation gate; Pinnacle 5.5→Kalshi 9.5 line gap example), [[concepts/bet365-racing-adapter-architecture]] (added Dell CPU throttling: settle time, GPU flags, BELOW_NORMAL priority; 99%→70.6%), [[concepts/pinnacle-prediction-market-pipeline]] (added Crypto Edge expansion, REST-to-SSE scaling migration, 215 picks across 14 leagues), [[concepts/pinnacle-prop-type-sharpness-variance]] (added sharp CLV theory ranking: AltLine-V1 +28.4%, MLB Calibrated/Conservative +6.4-6.5%)
+
+## [2026-04-18T22:30:00+10:00] compile | daily/lcash/2026-04-18.md (incremental)
+- Source: daily/lcash/2026-04-18.md
+- Developer: lcash
+- Note: Incremental recompile — Sessions 11:48 through 21:07 were compiled in prior pass; this pass covers Session 21:50 (dashboard theory name exclusion overreach, display vs computation filtering, sharp data age threshold)
+- Articles created: (none)
+- Articles updated: [[concepts/dashboard-client-server-ev-divergence]] (added theory name exclusion bug: NHL both theories excluded → 0 picks, MLB partial exclusion; critical distinction between display filtering and computation filtering; VPS sharp data age 60s→120s; single-stream architecture diagnostic principle)
