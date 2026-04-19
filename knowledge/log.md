@@ -165,3 +165,10 @@
 - Note: Incremental recompile — Sessions 07:26 through 20:07 were compiled in prior pass; this pass covers Session 20:38 (crash-loop quantification, subprocess JSON file locking, unique Chrome profile implemented, Windows process persistence)
 - Articles created: (none)
 - Articles updated: [[concepts/game-scraper-chrome-crash-recovery]] (added crash-loop quantification: 14 game scraper/~50 direct scraper restarts per day; subprocess JSON file locking via Path.replace(); unique Chrome profile per session implemented as fix; file write retry loop; Chrome ActorSafetyLists/ directory lock; start /b vs schtasks on SSH disconnect; 15 orphaned Chrome processes), [[connections/browser-automation-reliability-cost]] (added crash-loop quantification evidence: 14+ restarts/day confirms continuous reliability overhead, not occasional flakiness)
+
+## [2026-04-19T21:36:07+10:00] compile | daily/lcash/2026-04-19.md (incremental)
+- Source: daily/lcash/2026-04-19.md
+- Developer: lcash
+- Note: Incremental recompile — Sessions 07:26 through 20:38 were compiled in prior passes; this pass covers Session 21:36 (pre-game odds timing, trail health monitoring cron, trail pipeline wiring confirmation)
+- Articles created: (none)
+- Articles updated: [[concepts/game-scraper-chrome-crash-recovery]] (added pre-game odds timing: Bet365 props static until ~2-3h before tipoff, zero trails during off-hours is expected; trail health monitoring cron commit 31eaf5da deployed, auto-expires 7 days), [[concepts/value-betting-operational-assessment]] (added first automated monitoring: hourly trail health cron addressing weakness #2; added daily/lcash/2026-04-19.md as source)

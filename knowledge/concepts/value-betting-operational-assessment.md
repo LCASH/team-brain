@@ -5,8 +5,9 @@ tags: [value-betting, operations, architecture, assessment, infrastructure]
 sources:
   - "daily/lcash/2026-04-12.md"
   - "daily/lcash/2026-04-15.md"
+  - "daily/lcash/2026-04-19.md"
 created: 2026-04-12
-updated: 2026-04-15
+updated: 2026-04-19
 ---
 
 # Value Betting System Operational Assessment
@@ -31,7 +32,7 @@ The system's core strengths are in its logic and architecture: the EV calculatio
 
 **1. OpticOdds single point of failure.** OpticOdds provides all sharp book odds and is the sole data source for 3 of 4 sports. If they change pricing, rate-limit, or go down, the entire system is blind. With the Betstamp removal (see [[concepts/betstamp-bet365-scraper-migration]]), the only independent EV cross-check is lost. See [[concepts/opticodds-critical-dependency]] for full analysis.
 
-**2. No monitoring or alerting.** NBA ran for hours with 3 scrapers missing and nobody noticed until a manual check. There is no automated health-check cron, no expected-vs-actual comparison, no webhook notification. Degraded states persist indefinitely until someone SSH's in and looks. A simple script comparing expected scraper counts against actual running tasks would catch regressions in minutes.
+**2. No monitoring or alerting.** NBA ran for hours with 3 scrapers missing and nobody noticed until a manual check. There is no automated health-check cron, no expected-vs-actual comparison, no webhook notification. Degraded states persist indefinitely until someone SSH's in and looks. A simple script comparing expected scraper counts against actual running tasks would catch regressions in minutes. *Partial fix (2026-04-19):* An hourly trail health monitoring cron was deployed for the Bet365 game scraper (commit `31eaf5da`) — the first automated monitoring in the system. It checks scraper liveness, odds-change-vs-trail-write consistency, and data freshness. Auto-expires after 7 days as a validation tool for the Chrome crash auto-recovery fix (see [[concepts/game-scraper-chrome-crash-recovery]]).
 
 **3. Configuration drift.** Production config is spread across `.env` files, batch files, manual command-line flags, and `sport_config.py`. No single source of truth exists. The `start_nba.bat` incident (see [[concepts/configuration-drift-manual-launch]]) is a pattern, not a one-off. Every restart from a batch file after a manual session risks the same class of regression.
 
@@ -72,3 +73,4 @@ The weaknesses are characteristic of a system that grew organically from experim
 
 - [[daily/lcash/2026-04-12.md]] - Full system assessment prompted by lcash after fixing config drift + silent failures: 7 weaknesses identified, 4 prioritized fixes recommended; core math validated as solid, all weaknesses operational/infrastructure (Session 21:51)
 - [[daily/lcash/2026-04-15.md]] - VPS/mini PC write topology clarified: mini PC writes picks directly to Supabase, VPS outage only affects dashboard/relay/push — picks still tracked (Session 07:14)
+- [[daily/lcash/2026-04-19.md]] - First automated monitoring deployed: hourly trail health cron (commit 31eaf5da) for Bet365 game scraper, checking liveness + odds-vs-trail consistency + freshness; auto-expires 7 days (Session 21:36)
