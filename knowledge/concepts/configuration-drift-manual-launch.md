@@ -5,8 +5,9 @@ tags: [deployment, operations, gotcha, windows, value-betting]
 sources:
   - "daily/lcash/2026-04-12.md"
   - "daily/lcash/2026-04-15.md"
+  - "daily/lcash/2026-04-19.md"
 created: 2026-04-12
-updated: 2026-04-15
+updated: 2026-04-19
 ---
 
 # Configuration Drift from Manual Launch
@@ -50,6 +51,20 @@ The three drift vectors are now: (1) manual launch with ad-hoc env vars (origina
 
 The root prevention is ensuring that all production launch configuration lives in committed, version-controlled startup scripts — never in manual command-line invocations. When adding a new feature flag or environment variable during development, the startup script should be updated in the same change. Critically, all launch paths — manual, scheduled task, and watchdog — must go through the same startup script. A secondary defense is health check automation that compares expected task counts against actual running tasks, catching drift at restart time rather than waiting for a user to notice degraded output.
 
+### Fourth Drift Vector: VPS Systemd Config Layering (2026-04-19)
+
+On 2026-04-19, lcash discovered a Linux-specific configuration drift vector on the VPS. When adding NHL to `ACTIVE_SPORTS`, updating the `.env` file alone was insufficient — the VPS service uses `systemctl`, which reads environment variables from the systemd unit file's `Environment=` directive, NOT from `.env`.
+
+Three layers of environment configuration can override each other, with later layers taking precedence:
+
+1. **Code defaults** — hardcoded values in the Python source (lowest priority)
+2. **`.env` file** — loaded by `python-dotenv` at runtime
+3. **systemd `Environment=` directive** — set in the service unit file (highest priority on VPS)
+
+The systemd directive takes precedence because it injects variables into the process environment before Python starts, and `python-dotenv` does not override existing environment variables by default. When `ACTIVE_SPORTS` was set in the systemd unit file (without NHL), updating `.env` to include NHL had no effect — the systemd value was already present in `os.environ`, so `dotenv` skipped it.
+
+The fix required updating all three layers: (1) code default to include NHL, (2) `.env` on VPS, (3) systemd service `Environment=` line, followed by `systemctl daemon-reload && systemctl restart`. This is the Linux equivalent of the Windows batch file problem — both are cases where the actual launch mechanism bypasses the developer's expected configuration source.
+
 ## Related Concepts
 
 - [[concepts/opticodds-critical-dependency]] - The key rotation event that triggered the restart and exposed the drift
@@ -62,3 +77,4 @@ The root prevention is ensuring that all production launch configuration lives i
 
 - [[daily/lcash/2026-04-12.md]] - `start_nba.bat` missing ENABLE_* flags since Apr 8 commit; manual launch on Apr 10 masked the gap; restart during key rotation exposed regression (4/9 tasks, 3/8 soft books); fixed by adding flags to batch file (Session 21:15). Second layer: API keys in `.env` but not in batch file; workers launched but silently failed; required third restart to fully resolve (Session 21:51)
 - [[daily/lcash/2026-04-15.md]] - Third drift vector: watchdog restarts with bare `cmd /c python -m server.main` stripping all env vars; bet365_game went dark; stale `nba_out.log` from dead process misdirected diagnosis; fixed via full kill + `schtasks /Run /TN NBA_Server` (Session 23:17)
+- [[daily/lcash/2026-04-19.md]] - Fourth drift vector (Linux/VPS): systemd `Environment=` directive overrides `.env` file. Three-layer precedence: code defaults < `.env` file < systemd `Environment=`. Adding NHL to ACTIVE_SPORTS required updating all three layers; `systemctl restart` reads the systemd unit file env vars, NOT `.env` — fixing `.env` alone was insufficient (Session 07:57)

@@ -6,8 +6,9 @@ sources:
   - "daily/lcash/2026-04-16.md"
   - "daily/lcash/2026-04-17.md"
   - "daily/lcash/2026-04-18.md"
+  - "daily/lcash/2026-04-19.md"
 created: 2026-04-16
-updated: 2026-04-18
+updated: 2026-04-19
 ---
 
 # Pinnacle Prop-Type Sharpness Variance
@@ -85,6 +86,12 @@ A separate limitation was identified for NHL: **one-sided props (NHL Goals = Ove
 
 This finding extends the sharpness variance principle from per-prop-type to **per-sport**: market efficiency in AU soft books varies not just by what is being bet (Threes vs Assists) but by which sport is being bet (NBA/MLB exploitable, NHL efficient). The implication is that theory configurations should not assume uniform exploitability across sports, even when using the same sharp-vs-soft pairing methodology.
 
+### NHL Dashboard Integration Confirmation (2026-04-19)
+
+On 2026-04-19, NHL dashboard integration was fully validated. Of 381 NHL markets with sharp data, 309 had no soft book match at all, and the 3 that passed the +EV threshold were all false positives from line mismatches (100%+ EV — a clear interpolation artifact, not genuine value). Most NHL Goals markets are unpaired (Over-only) and require `one_sided_consensus` devig method, which is not yet implemented in the dashboard JS — this explains why the NHL pill shows only 2 dashboard picks.
+
+Adding `nhl` to `ACTIVE_SPORTS` required updating three config layers on the VPS: (1) code defaults, (2) `.env` file, (3) systemd `Environment=` directive. The systemd layer takes highest precedence and was the actual blocker — see [[concepts/configuration-drift-manual-launch]] for the full config precedence analysis. SSE-discovered leagues (auto-appended during `_sse_startup()`) do not need manual addition to ACTIVE_SPORTS, but core sports like NHL do.
+
 ## Related Concepts
 
 - [[concepts/pinnacle-prediction-market-pipeline]] - The pipeline that exposed prop-type variance when it produced 0 picks at min_ev=5
@@ -97,9 +104,11 @@ This finding extends the sharpness variance principle from per-prop-type to **pe
 
 - [[concepts/tracker-optimistic-id-poisoning]] - NHL game-line expansion triggered the staged IDs bug when game-total markets had empty player_name
 - [[concepts/one-sided-consensus-structural-bias]] - One-sided consensus devig is the correct method for NHL Goals (Over-only) but is not yet implemented in the dashboard JS
+- [[concepts/resolver-sequential-sport-bottleneck]] - NHL was added to ACTIVE_SPORTS on 2026-04-19, which affects both tracker evaluation and resolver scheduling
 
 ## Sources
 
 - [[daily/lcash/2026-04-16.md]] - Pinnacle NBA props -4.2% ROI overall; Threes +27.9%, Assists -45.7% to -50.4%; Brier 0.2695; dropout analysis 2456→0 at min_ev=5; min_ev lowered to 1 for trail capture; traditional sharps (BetRivers, Hard Rock) outperform on props; NHL identified as next viable sport but only game-line overlap (Sessions 13:04, 13:38, 16:30, 20:38)
 - [[daily/lcash/2026-04-17.md]] - 110 resolved Pinnacle picks: +0.8% ROI overall; Threes on Sportsbet +28.7% (n=19) is only clear signal; need 400+ picks before strategy-level conclusions; edge may be prop/book-specific not broad (Session 22:16)
 - [[daily/lcash/2026-04-18.md]] - Sharp CLV theory ranking across 7,724 resolved picks: AltLine-V1 +28.4% CLV (sharpest), Conservative 72.7% CLV>0 rate (most consistent), Aggressive-Wide -9.3% (no edge despite 62% WR); MLB Calibrated +6.4% CLV and MLB Conservative +6.5% CLV confirmed as sharpest MLB theories; sharp CLV validated as superior to soft CLV (~0% for AU books) (Sessions 17:04, 17:35, 21:07). NHL AU book efficiency: 381 markets, 354 with both sharp+soft, only 3 +EV (all false positives); Sportsbet prices NHL tightly; 168 one-sided Goals markets unevaluable without one-sided devig in dashboard JS (Session 22:20)
+- [[daily/lcash/2026-04-19.md]] - NHL dashboard integration confirmed: 309/381 markets had no soft book match; 3 that passed +EV were false positives (100%+ EV from line mismatches); NHL Goals Over-only markets need `one_sided_consensus` devig method (not yet implemented as dashboard-side theory); NHL doesn't warrant special +EV attention — AU soft books too sharp; `nhl` added to ACTIVE_SPORTS across code defaults, .env, and systemd service (Sessions 07:26, 07:57)

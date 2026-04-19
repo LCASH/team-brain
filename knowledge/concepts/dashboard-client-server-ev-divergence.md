@@ -7,6 +7,7 @@ sources:
   - "daily/lcash/2026-04-16.md"
   - "daily/lcash/2026-04-17.md"
   - "daily/lcash/2026-04-18.md"
+  - "daily/lcash/2026-04-19.md"
 created: 2026-04-15
 updated: 2026-04-18
 ---
@@ -98,9 +99,20 @@ A related finding in the same session: the VPS sharp data age threshold was rais
 
 Additionally, NRL showed zero markets across the SSE stream — either the NRL season is between rounds or the mini PC's NRL server (port 8801) is down. The VPS serves ALL sports on port 8802 via a single SSE stream; `switchSport` only changes client-side filtering, not the SSE connection. This single-stream architecture means sport pill bugs are always client-side filtering issues, never data availability issues — a useful diagnostic principle.
 
+### True-Odds Display Inconsistency Across Soft Books (2026-04-19)
+
+On 2026-04-19, lcash spotted the same bet (LOUD vs MIBR esports moneyline) showing different true odds on two soft books under the same Pinnacle theory: 4.44 on Kalshi vs 5.33 on Polymarket. Both are evaluated against Pinnacle's sharp line, so the true probability should be identical — yet the dashboard displayed different values.
+
+The root cause is the dashboard's per-theory per-soft-book EV computation: `computeEVForTheory()` runs independently for each soft book row, devigging against whatever sharp data is freshest at the moment of that specific render cycle. If sharp data freshness varies between successive calls (e.g., Pinnacle's odds for this market were updated between the Kalshi and Polymarket render passes), different sharp book lines can be selected, producing different devigged true probabilities for the same underlying market.
+
+Critically, trail data is completely unaffected by this display inconsistency. Trails store raw odds, and the server-side resolver devigs consistently using a single snapshot. The separation between the dashboard's ephemeral JavaScript computation (subject to render-cycle timing) and the server-side trail/resolver pipeline (persistent, consistent) is an architectural strength — the display may flicker, but the data of record is correct.
+
+If this inconsistency becomes frequent, a fix would cache the devigged true probability per market (keyed by fixture + prop type + side + line) so all soft book rows reference the same computed value within a render cycle.
+
 ## Sources
 
 - [[daily/lcash/2026-04-15.md]] - Pinnacle theory showing AU soft books instead of prediction markets; `loadTheories()` dropping 6 fields via JS destructuring; client-side EV ≠ server-side EV divergence; fix deployed; zero Pinnacle picks correct (games outside 3h window); deploy killed all workers requiring manual restart; NRL scheduled task re-enable needed (Session 22:03/16:20+)
 - [[daily/lcash/2026-04-16.md]] - Multiple render paths (`renderStats()` + `renderEV()`) both calling `computeEVPicks()` independently — fixing one left bug visible through the other; "Supabase Error" was actually a JS render crash misattributed by broad catch block wrapping fetch+render; error boundary separation deployed (Session 22:35)
 - [[daily/lcash/2026-04-17.md]] - Dashboard HTML lost on VPS restart (in-memory only, re-push required); merge conflict artifacts leaving orphaned JS code (`books is not defined`, undefined `contentEl`); 21K picks / 11MB / 25s timeout → 7-day default range; deploy git sync guard blocks on uncommitted changes (Sessions 11:06, 16:09, 21:11)
 - [[daily/lcash/2026-04-18.md]] - Theory name exclusion too aggressive: NHL had both theories excluded → 0 picks; MLB "MLB Pinnacle" excluded → fewer computations; critical distinction between display filtering and computation filtering; fix: exclude only from display query, not EV engine theory loading; sharp data age threshold 60s→120s for mini PC polling interval; VPS single-stream architecture confirmed (all sports on port 8802) (Session 21:50)
+- [[daily/lcash/2026-04-19.md]] - True-odds display inconsistency: same bet (LOUD vs MIBR moneyline) showing different true odds (4.44 vs 5.33) on Kalshi vs Polymarket under the same Pinnacle theory; cause: sharp data freshness varies between render cycles → different sharp books selected for same market → different devigged true probability displayed; confirmed trail data unaffected (trails store raw odds, resolver devigs server-side consistently); separation between ephemeral dashboard JS computation and persistent server-side pipeline is an architectural strength (Session 07:26)

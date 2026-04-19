@@ -152,3 +152,9 @@
 - Articles created: [[concepts/tracker-optimistic-id-poisoning]]
 - Articles updated: [[concepts/pinnacle-prop-type-sharpness-variance]] (added NHL AU book efficiency: 381 markets, only 3 +EV all false positives; Sportsbet prices NHL tightly; 168 one-sided Goals markets unevaluable; sport-level market efficiency variance principle), [[concepts/trail-preseeding-coverage-bug]] (added cross-reference to sibling staged IDs bug)
 - Index fixes: Updated dates for [[concepts/bet365-racing-adapter-architecture]], [[concepts/alt-line-mismatch-poisoned-picks]], [[concepts/pinnacle-prediction-market-pipeline]], [[concepts/pinnacle-prop-type-sharpness-variance]] to reflect 2026-04-18 updates from prior compilation passes
+
+## [2026-04-19T20:07:04+10:00] compile | daily/lcash/2026-04-19.md
+- Source: daily/lcash/2026-04-19.md
+- Developer: lcash
+- Articles created: [[concepts/resolver-sequential-sport-bottleneck]], [[concepts/afltables-player-stats-fallback]], [[concepts/game-scraper-chrome-crash-recovery]], [[connections/resolver-fallback-data-source-chain]]
+- Articles updated: [[concepts/pinnacle-prop-type-sharpness-variance]] (added NHL dashboard integration confirmation: 309/381 no soft match, 3 false positive +EV, NHL Goals need one_sided_consensus, ACTIVE_SPORTS triple-layer config), [[concepts/dashboard-client-server-ev-divergence]] (added true-odds display inconsistency: same market different true odds on Kalshi vs Polymarket from sharp freshness variance between render cycles), [[concepts/configuration-drift-manual-launch]] (added fourth drift vector: VPS systemd Environment= overrides .env; three-layer precedence code < .env < systemd), [[concepts/worker-status-observability]] (added game scraper "streaming" with 3.7h stale data; 0.0ms scrape time diagnostic; status must verify data freshness not just process liveness)
