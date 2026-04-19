@@ -22,7 +22,7 @@
 | [[concepts/playwright-evaluate-uncancellable]] | Playwright page.evaluate() blocks asyncio event loop; not cancellable by asyncio.wait_for when browser JS is unresponsive | daily/lcash/2026-04-12.md | 2026-04-12 |
 | [[concepts/async-global-timeout-partial-results]] | Global timeout + mutable containers pattern to preserve partial work when individual async ops hang | daily/lcash/2026-04-12.md | 2026-04-12 |
 | [[concepts/opticodds-critical-dependency]] | OpticOdds as sole sharp odds provider — single point of failure for devigging and 3/4 sports | daily/lcash/2026-04-12.md | 2026-04-12 |
-| [[connections/browser-automation-reliability-cost]] | Browser-mediated architecture introduces JS hangs, stale sessions, and hours-long warmup latency after restart | daily/lcash/2026-04-12.md, daily/lcash/2026-04-13.md | 2026-04-15 |
+| [[connections/browser-automation-reliability-cost]] | Browser-mediated architecture introduces JS hangs, stale sessions, hours-long warmup latency, and continuous crash-loop overhead (14+ restarts/day) | daily/lcash/2026-04-12.md, daily/lcash/2026-04-13.md, daily/lcash/2026-04-19.md | 2026-04-19 |
 | [[concepts/betstamp-bet365-scraper-migration]] | Removing Betstamp adapter, consolidating Bet365 scraping under game scraper with book_id 366→365 | daily/lcash/2026-04-12.md | 2026-04-12 |
 | [[concepts/configuration-drift-manual-launch]] | Batch file missing flags and API keys that were set manually; restart via script causes silent feature regression; watchdog and systemd add third/fourth drift vectors | daily/lcash/2026-04-12.md, daily/lcash/2026-04-15.md, daily/lcash/2026-04-19.md | 2026-04-19 |
 | [[connections/scraper-consolidation-provider-dependency]] | Betstamp removal deepens OpticOdds single-provider dependency by eliminating independent EV cross-check | daily/lcash/2026-04-12.md | 2026-04-12 |
@@ -75,5 +75,5 @@
 | [[concepts/tracker-optimistic-id-poisoning]] | `_tracked_ids.add()` before confirmed insert poisons tracker; cascading NOT NULL errors from game-line markets with no player_name | daily/lcash/2026-04-18.md | 2026-04-18 |
 | [[concepts/resolver-sequential-sport-bottleneck]] | Resolver processes sports sequentially; NRL slow fallback blocks AFL and 485+ SSE leagues; 4,019 pick backlog | daily/lcash/2026-04-19.md | 2026-04-19 |
 | [[concepts/afltables-player-stats-fallback]] | AFL resolver fallback via AFLTables HTML scraping for Disposals and Goals; two-table parsing trap | daily/lcash/2026-04-19.md | 2026-04-19 |
-| [[concepts/game-scraper-chrome-crash-recovery]] | Chrome pipe breaks cause stale cached odds; 0.0ms scrape time diagnostic; auto-recovery after 5 failures | daily/lcash/2026-04-19.md | 2026-04-19 |
+| [[concepts/game-scraper-chrome-crash-recovery]] | Chrome pipe breaks cause stale cached odds; 0.0ms scrape time diagnostic; auto-recovery after 5 failures; unique profile per session + file write retry for Windows locking | daily/lcash/2026-04-19.md | 2026-04-19 |
 | [[connections/resolver-fallback-data-source-chain]] | OpticOdds player stat gaps → sport-specific HTML fallbacks → sequential resolver amplifies slow fallback cost | daily/lcash/2026-04-19.md | 2026-04-19 |

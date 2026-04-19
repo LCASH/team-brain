@@ -20,6 +20,9 @@ The Bet365 game scraper (NBA and MLB) was silently serving stale cached odds for
 - Auto-recovery: after 5 consecutive `refresh()` failures (~25 seconds of dead Chrome), trigger full `stop() → start()` cycle to spawn a fresh Chrome instance
 - Both NBA and MLB game scrapers had the identical vulnerability — same code pattern, same fix applied to both
 - Soft trail data confirmed the staleness: all trails had only 1 entry each (the initial capture), with batch-like timestamps (all at 00:27:42) indicating a single snapshot followed by hours of stale cache
+- Crash-loop severity quantified: game scraper had 14 restarts in a single day, direct scraper ~50 — Chrome instability is systemic, not a one-off
+- Two additional file locking root causes beyond profile directory: (1) `Path.replace()` on `.bet365_game_live.json` fails when server has it open, (2) Chrome `ActorSafetyLists/` subdirectory resists `shutil.rmtree`
+- Fix: unique Chrome profile per session (implemented) + file write retry loop with short delay for the JSON data file
 
 ## Details
 
@@ -58,7 +61,27 @@ The user correctly challenged the initial "between slates" explanation for spars
 
 ### Windows File Lock Complication
 
-The Windows file lock issue (`[WinError 5] Access is denied`) on the Chrome profile directory is a secondary complication. When Chrome crashes but its process lingers as a zombie, the profile directory remains locked. The current auto-recovery's `stop()` must forcefully terminate the Chrome process tree before cleanup can proceed. A future improvement would use unique temporary directories per Chrome session (e.g., `bet365_game_profile_{timestamp}`) to avoid the lock entirely — each restart gets a fresh directory without needing to clean up the old one.
+The Windows file lock issue (`[WinError 5] Access is denied`) on the Chrome profile directory is a secondary complication. When Chrome crashes but its process lingers as a zombie, the profile directory remains locked — specifically, the `ActorSafetyLists/` subdirectory within the Chrome profile resists `shutil.rmtree`, blocking the next Chrome launch. The current auto-recovery's `stop()` must forcefully terminate the Chrome process tree before cleanup can proceed.
+
+The fix (deployed in Session 20:38) uses **unique Chrome profile directories per session** (e.g., `bet365_game_profile_{timestamp}`) so each restart gets a fresh directory without needing to clean up the old one. This eliminates the locked-file conflict entirely — the old directory can be cleaned up later when the zombie Chrome process eventually releases it.
+
+### Subprocess JSON File Locking
+
+A second file locking issue was identified beyond the Chrome profile directory. The Bet365 game scraper architecture uses a **decoupled subprocess model**: a separate Chrome-driving subprocess writes scraped odds to a JSON file (`.bet365_game_live.json`), and the main server process reads that file to serve odds data. This decoupling is intentional — it isolates Chrome crashes from the server process.
+
+However, the file handoff creates a Windows-specific locking issue. The subprocess uses `Path.replace()` (atomic rename) to update the JSON file, but Windows `replace()` fails with `[WinError 5] Access is denied` when the server process has the target file open for reading. Unlike Unix (where atomic rename succeeds regardless of readers), Windows file locks prevent the rename.
+
+The fix adds a **file write retry loop** with a short delay: if `replace()` fails due to a file lock, the subprocess retries after a brief pause (e.g., 100ms). This handles the window where the server is mid-read. The retry loop is bounded to prevent indefinite blocking.
+
+### Crash-Loop Severity
+
+The 2026-04-19 investigation revealed that the Chrome instability was far more severe than initially diagnosed. The game scraper had **14 restarts** in a single day, while the direct scraper had approximately **50 restarts**. This quantifies the crash-loop: Chrome was dying and restarting frequently, not just occasionally. Each restart cycle produces a window of stale data (until the new Chrome instance warms up and begins scraping), creating repeated gaps in odds freshness that compound over the day.
+
+The crash-loop also leaves orphaned Chrome processes — Session 20:38 found that 15 orphaned Chrome processes were still running from previous crashes, holding port and profile directory resources hostage. These orphans accumulate because the `stop()` cleanup in the auto-recovery didn't always successfully terminate the entire process tree on Windows. The unique-profile-per-session fix reduces the impact of orphans (they don't block new sessions), but orphan cleanup is still needed to prevent resource exhaustion over extended operation.
+
+### Windows Process Persistence
+
+A deployment lesson from the same session: `start /b` processes (launched via background command) die when the SSH session disconnects on Windows. This means deploying a fix via SSH and launching the scraper with `start /b python ...` creates a process that dies as soon as the operator disconnects. The correct persistence mechanism is `schtasks` — Windows scheduled tasks survive SSH disconnection and system reboots. When restarting a server on Windows, the old process must be explicitly killed first, or the new one fails with "port already in use."
 
 ## Related Concepts
 
@@ -70,4 +93,4 @@ The Windows file lock issue (`[WinError 5] Access is denied`) on the Chrome prof
 
 ## Sources
 
-- [[daily/lcash/2026-04-19.md]] - Bet365 2.0 data 3.7h stale; `0.0ms` scrape time diagnostic; root cause: page timeout → EPIPE → Windows file lock → cached data forever; `refresh()` silently swallowed failures; auto-recovery: 5 consecutive failures → full stop/start cycle; applied to both NBA and MLB scrapers; trail evidence: 1 entry per pick, batch timestamps; user correctly rejected "between slates" explanation; Windows unique temp dir noted as future improvement (Sessions 14:57, 20:07)
+- [[daily/lcash/2026-04-19.md]] - Bet365 2.0 data 3.7h stale; `0.0ms` scrape time diagnostic; root cause: page timeout → EPIPE → Windows file lock → cached data forever; `refresh()` silently swallowed failures; auto-recovery: 5 consecutive failures → full stop/start cycle; applied to both NBA and MLB scrapers; trail evidence: 1 entry per pick, batch timestamps; user correctly rejected "between slates" explanation (Sessions 14:57, 20:07). Crash-loop quantified: 14 game scraper restarts, ~50 direct scraper restarts in one day; two additional file locking issues: `.bet365_game_live.json` `Path.replace()` fails when server reads, Chrome `ActorSafetyLists/` resists rmtree; fixes: unique Chrome profile per session (implemented), file write retry loop; subprocess JSON architecture documented; `start /b` dies on SSH disconnect, schtasks is correct persistence; 15 orphaned Chrome processes found (Session 20:38)

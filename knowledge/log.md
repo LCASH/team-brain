@@ -158,3 +158,10 @@
 - Developer: lcash
 - Articles created: [[concepts/resolver-sequential-sport-bottleneck]], [[concepts/afltables-player-stats-fallback]], [[concepts/game-scraper-chrome-crash-recovery]], [[connections/resolver-fallback-data-source-chain]]
 - Articles updated: [[concepts/pinnacle-prop-type-sharpness-variance]] (added NHL dashboard integration confirmation: 309/381 no soft match, 3 false positive +EV, NHL Goals need one_sided_consensus, ACTIVE_SPORTS triple-layer config), [[concepts/dashboard-client-server-ev-divergence]] (added true-odds display inconsistency: same market different true odds on Kalshi vs Polymarket from sharp freshness variance between render cycles), [[concepts/configuration-drift-manual-launch]] (added fourth drift vector: VPS systemd Environment= overrides .env; three-layer precedence code < .env < systemd), [[concepts/worker-status-observability]] (added game scraper "streaming" with 3.7h stale data; 0.0ms scrape time diagnostic; status must verify data freshness not just process liveness)
+
+## [2026-04-19T21:30:00+10:00] compile | daily/lcash/2026-04-19.md (incremental)
+- Source: daily/lcash/2026-04-19.md
+- Developer: lcash
+- Note: Incremental recompile — Sessions 07:26 through 20:07 were compiled in prior pass; this pass covers Session 20:38 (crash-loop quantification, subprocess JSON file locking, unique Chrome profile implemented, Windows process persistence)
+- Articles created: (none)
+- Articles updated: [[concepts/game-scraper-chrome-crash-recovery]] (added crash-loop quantification: 14 game scraper/~50 direct scraper restarts per day; subprocess JSON file locking via Path.replace(); unique Chrome profile per session implemented as fix; file write retry loop; Chrome ActorSafetyLists/ directory lock; start /b vs schtasks on SSH disconnect; 15 orphaned Chrome processes), [[connections/browser-automation-reliability-cost]] (added crash-loop quantification evidence: 14+ restarts/day confirms continuous reliability overhead, not occasional flakiness)

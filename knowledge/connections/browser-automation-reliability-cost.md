@@ -9,8 +9,9 @@ sources:
   - "daily/lcash/2026-04-12.md"
   - "daily/lcash/2026-04-11.md"
   - "daily/lcash/2026-04-13.md"
+  - "daily/lcash/2026-04-19.md"
 created: 2026-04-12
-updated: 2026-04-15
+updated: 2026-04-19
 ---
 
 # Connection: Browser Automation Reliability Cost
@@ -43,6 +44,12 @@ These failures are a direct consequence of the architectural choice documented o
 
 A further reliability cost was observed on 2026-04-13: browser-mediated scrapers in the value betting scanner (Bet365 2.0, PointsBet AU) took **hours** to warm up after a restart. Following a full system restart the previous evening, NBA soft book coverage was only 3/8 by midnight but recovered to 5/8 by the next morning check. The warmup delay is not a bug but an inherent property of browser-mediated scraping: the browser must establish sessions, pass Cloudflare challenges, navigate through SPA initialization flows, and accumulate market subscriptions before data begins flowing. This adds a third failure dimension beyond JS hangs and stale sessions: **slow recovery time** means that even when problems are fixed promptly, the system operates in a degraded state for an extended period afterward. Operators should not panic if soft book counts are low immediately post-restart — the expected pattern is gradual recovery over hours, not immediate full coverage.
 
+### Crash-Loop Quantification (2026-04-19)
+
+The game scraper's Chrome crash-recovery investigation on 2026-04-19 quantified the reliability cost: **14 game scraper restarts** and approximately **50 direct scraper restarts** in a single day. This is not occasional flakiness — it is a systemic pattern where Chrome dies frequently due to EPIPE broken pipes from bet365 page timeouts, and Windows file locks (on both the Chrome profile directory and the subprocess JSON data file) compound the recovery difficulty. Each crash-restart cycle produces a window of stale data, and orphaned Chrome processes (15 found in one investigation) accumulate over extended operation. See [[concepts/game-scraper-chrome-crash-recovery]] for the auto-recovery and unique-profile-per-session fixes deployed.
+
+The crash-loop evidence confirms the broader thesis: browser-mediated architectures don't just have occasional failure modes — they have **continuous reliability overhead** that requires active mitigation (auto-recovery, crash detection, orphan cleanup) to maintain acceptable uptime.
+
 ## Related Concepts
 
 - [[concepts/playwright-evaluate-uncancellable]] - The specific uncancellable failure mode
@@ -51,3 +58,4 @@ A further reliability cost was observed on 2026-04-13: browser-mediated scrapers
 - [[concepts/bet365-racing-adapter-architecture]] - The adapter where these reliability issues manifest
 - [[connections/anti-scraping-driven-architecture]] - The defenses that forced the browser-mediated architecture in the first place
 - [[concepts/cdp-browser-data-interception]] - CDP-level access that also fails to work around JS context hangs
+- [[concepts/game-scraper-chrome-crash-recovery]] - Crash-loop quantification: 14 restarts/day for game scraper, ~50 for direct scraper
