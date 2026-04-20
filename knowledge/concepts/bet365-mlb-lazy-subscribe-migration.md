@@ -4,8 +4,9 @@ aliases: [mlb-api-migration, bb-wizard-to-lazy-subscribe, bet365-mlb-v3, lazy-su
 tags: [bet365, mlb, scraping, api-migration, value-betting]
 sources:
   - "daily/lcash/2026-04-14.md"
+  - "daily/lcash/2026-04-20.md"
 created: 2026-04-14
-updated: 2026-04-14
+updated: 2026-04-20
 ---
 
 # bet365 MLB Lazy-Subscribe API Migration
@@ -60,6 +61,12 @@ An initial attempt to capture MLB prop data via WebSocket frame dumps was abando
 
 This migration is sport-specific: NBA player props continue to work on the BB wizard endpoint as of April 14, 2026. However, there is a risk that bet365 will apply the same lazy-subscribe migration to NBA, which would break the NBA game scraper in the same way. Monitoring for this regression is recommended.
 
+### Bet365 AU MLB Prop Content Timing (2026-04-20)
+
+On 2026-04-20, lcash investigated the MLB game scraper and confirmed it correctly discovers games and navigates to the Props tabs (Batter Props + Pitcher Props). However, bet365 AU returned zero prop data — both tabs were empty. This is NOT a code bug or a v3 regression — it is a content availability issue: bet365 AU appears to only publish MLB player props during a pre-game window, not continuously. The scraper was running when no live or near-live games were in progress, so the prop content was simply not served.
+
+This is distinct from the lazy-subscribe migration issue (which was about API endpoint changes). The v3 hybrid scraper's click/scroll/retain logic works correctly when props are available; the limitation is upstream: bet365 AU does not serve MLB prop data outside the pre-game window. Validation requires running the scraper during tomorrow's pre-game window when props should be populated.
+
 ## Related Concepts
 
 - [[concepts/bet365-racing-adapter-architecture]] - A different bet365 scraper facing similar SPA interaction challenges
@@ -70,3 +77,4 @@ This migration is sport-specific: NBA player props continue to work on the BB wi
 ## Sources
 
 - [[daily/lcash/2026-04-14.md]] - WS frame dumps showed cross-sport noise not MLB props; git archaeology confirmed v1 had click/scroll triggers dropped in v2; v3 hybrid built merging v1 interactions with v2 parser; bet365 uses intersection observers for lazy-load; NBA still on BB wizard (Session 10:44)
+- [[daily/lcash/2026-04-20.md]] - MLB scraper correctly discovers games and navigates to Props tabs, but bet365 AU returns zero prop data (Batter Props + Pitcher Props tabs empty); confirmed as content timing issue — props only available pre-game, not a code bug (Session 14:57)

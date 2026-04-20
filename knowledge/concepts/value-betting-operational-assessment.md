@@ -6,8 +6,9 @@ sources:
   - "daily/lcash/2026-04-12.md"
   - "daily/lcash/2026-04-15.md"
   - "daily/lcash/2026-04-19.md"
+  - "daily/lcash/2026-04-20.md"
 created: 2026-04-12
-updated: 2026-04-19
+updated: 2026-04-20
 ---
 
 # Value Betting System Operational Assessment
@@ -60,6 +61,15 @@ The assessment recommends four improvements in priority order:
 
 The weaknesses are characteristic of a system that grew organically from experimentation to 24/7 production use. The mathematical and logical foundation is sound; the gaps are in operational maturity — monitoring, configuration management, failure modes, and redundancy. This is a normal evolution path, and the fixes are well-understood infrastructure practices rather than fundamental architectural changes.
 
+### Emerging Weakness: Deploy Validation Gap (2026-04-20)
+
+On 2026-04-20, a syntax error on `tracker.py:1370` from a bad deploy silently killed the VPS tracker. The error was only discovered during manual investigation, at which point three components were simultaneously down: the tracker (syntax error), SSE streams (startup hang — see [[concepts/sse-startup-theory-creation-hang]]), and the MLB scraper (content timing issue). The triple-failure scenario reinforced two existing weaknesses:
+
+- **Weakness #2 (no monitoring):** The operator couldn't determine from the dashboard which specific components were dead. A per-component health dashboard (tracker: DEAD, SSE: HUNG, MLB: IDLE, NBA: STREAMING) would have immediately localized the problem.
+- **New sub-weakness: no deploy validation.** `python -m py_compile tracker.py` before pushing would have caught the syntax error in under 1 second. The deploy process has no pre-push compilation check, no post-deploy health verification, and no automatic rollback.
+
+See [[concepts/deploy-syntax-validation-gap]] for the full analysis of the triple-failure scenario and recommended prevention layers.
+
 ## Related Concepts
 
 - [[concepts/opticodds-critical-dependency]] - Weakness #1: the single-provider risk
@@ -68,9 +78,11 @@ The weaknesses are characteristic of a system that grew organically from experim
 - [[connections/browser-automation-reliability-cost]] - Weakness #5: browser-mediated architecture fragility
 - [[concepts/betstamp-bet365-scraper-migration]] - Context for deepening OpticOdds dependency
 - [[connections/operational-compound-failures]] - How weaknesses #2, #3, and #4 compound together
+- [[concepts/deploy-syntax-validation-gap]] - The deploy validation gap exposed by the 2026-04-20 triple-failure scenario
 
 ## Sources
 
 - [[daily/lcash/2026-04-12.md]] - Full system assessment prompted by lcash after fixing config drift + silent failures: 7 weaknesses identified, 4 prioritized fixes recommended; core math validated as solid, all weaknesses operational/infrastructure (Session 21:51)
 - [[daily/lcash/2026-04-15.md]] - VPS/mini PC write topology clarified: mini PC writes picks directly to Supabase, VPS outage only affects dashboard/relay/push — picks still tracked (Session 07:14)
 - [[daily/lcash/2026-04-19.md]] - First automated monitoring deployed: hourly trail health cron (commit 31eaf5da) for Bet365 game scraper, checking liveness + odds-vs-trail consistency + freshness; auto-expires 7 days (Session 21:36)
+- [[daily/lcash/2026-04-20.md]] - Triple simultaneous failure (tracker dead from syntax error + SSE startup hung + MLB idle): exposed deploy validation gap and need for per-component health dashboard; `python -m py_compile` recommended as pre-deploy guard (Session 14:57)

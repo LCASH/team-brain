@@ -8,8 +8,9 @@ connects:
 sources:
   - "daily/lcash/2026-04-12.md"
   - "daily/lcash/2026-04-15.md"
+  - "daily/lcash/2026-04-20.md"
 created: 2026-04-12
-updated: 2026-04-15
+updated: 2026-04-20
 ---
 
 # Connection: Configuration Drift, Silent Failures, and Missing Monitoring
@@ -42,6 +43,18 @@ The full chain played out on 2026-04-12 across three sessions:
 
 The NBA server had been running correctly since Apr 10 with all 9 tasks — two full days where the batch file's incompleteness was invisible because the process was launched manually. The configuration drift was a time bomb that only detonated on restart.
 
+### 2026-04-20 — Triple Simultaneous Failure
+
+A second compound failure incident occurred on 2026-04-20, this time involving three independent failures with three different root causes:
+
+1. **Tracker dead** — syntax error on `tracker.py:1370` from a bad deploy crashed the tracker on import
+2. **SSE startup hung** — `_sse_startup()` completed theory creation (299 leagues) but silently stopped before launching streams or fixture cache
+3. **MLB scraper idle** — bet365 AU returned zero prop data (content timing issue, not a code bug)
+
+Unlike the 2026-04-12 chain (sequential discovery of layered config issues), these were three fully independent failures that happened to coexist. The compound effect was worse than any individual failure: the operator saw "zero picks, stale data" but couldn't determine whether it was one component or all of them. Fixing the tracker (redeploy) didn't produce picks because SSE streams were also down. Restarting SSE didn't produce MLB data because it was a content timing issue.
+
+This scenario reveals a variant of the compound failure pattern: **independent failures compound diagnosis difficulty**. Each failure masks the others, and fixing one doesn't produce visible improvement because the remaining failures are still active. A per-component health dashboard (tracker: DEAD, SSE: HUNG, MLB: IDLE, NBA: STREAMING) would have immediately localized all three problems in parallel rather than requiring sequential investigation. See [[concepts/deploy-syntax-validation-gap]] for the full analysis.
+
 ## Related Concepts
 
 - [[concepts/configuration-drift-manual-launch]] - Link 1: the root cause that produced the degraded launch
@@ -49,3 +62,5 @@ The NBA server had been running correctly since Apr 10 with all 9 tasks — two 
 - [[concepts/value-betting-operational-assessment]] - The broader assessment that identified this compound pattern
 - [[concepts/opticodds-critical-dependency]] - The trigger event (key rotation) that activated the chain
 - [[concepts/betstamp-bet365-scraper-migration]] - Part of the NBA scraper ecosystem where the compound failure occurred
+- [[concepts/deploy-syntax-validation-gap]] - The 2026-04-20 triple-failure scenario: syntax error + SSE hang + MLB content timing
+- [[concepts/sse-startup-theory-creation-hang]] - The SSE startup hang that was part of the 2026-04-20 compound failure

@@ -172,3 +172,9 @@
 - Note: Incremental recompile — Sessions 07:26 through 20:38 were compiled in prior passes; this pass covers Session 21:36 (pre-game odds timing, trail health monitoring cron, trail pipeline wiring confirmation)
 - Articles created: (none)
 - Articles updated: [[concepts/game-scraper-chrome-crash-recovery]] (added pre-game odds timing: Bet365 props static until ~2-3h before tipoff, zero trails during off-hours is expected; trail health monitoring cron commit 31eaf5da deployed, auto-expires 7 days), [[concepts/value-betting-operational-assessment]] (added first automated monitoring: hourly trail health cron addressing weakness #2; added daily/lcash/2026-04-19.md as source)
+
+## [2026-04-20T18:47:45+10:00] compile | daily/lcash/2026-04-20.md
+- Source: daily/lcash/2026-04-20.md
+- Developer: lcash
+- Articles created: [[concepts/claude-code-cron-idle-constraint]], [[concepts/sse-startup-theory-creation-hang]], [[concepts/deploy-syntax-validation-gap]]
+- Articles updated: [[concepts/game-scraper-chrome-crash-recovery]] (added post-fix validation: 5,290 fresh odds, trail smoking gun from resolved picks, Kalshi/Polymarket smoke test pattern), [[concepts/opticodds-critical-dependency]] (added esports coverage audit: 9 leagues listed, only LoL has odds), [[concepts/value-betting-operational-assessment]] (added deploy validation gap as emerging weakness, triple-failure scenario), [[concepts/bet365-mlb-lazy-subscribe-migration]] (added Bet365 AU MLB prop content timing: zero props outside pre-game window), [[connections/operational-compound-failures]] (added 2026-04-20 triple simultaneous failure: tracker syntax error + SSE startup hang + MLB content timing)

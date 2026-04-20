@@ -4,8 +4,9 @@ aliases: [chrome-crash-recovery, epipe-broken-pipe, zero-ms-scrape-diagnostic, g
 tags: [value-betting, scraping, bet365, chrome, reliability, operations]
 sources:
   - "daily/lcash/2026-04-19.md"
+  - "daily/lcash/2026-04-20.md"
 created: 2026-04-19
-updated: 2026-04-19
+updated: 2026-04-20
 ---
 
 # Game Scraper Chrome Crash Auto-Recovery
@@ -93,6 +94,18 @@ This is a critical diagnostic distinction: when the game scraper shows sparse or
 
 To validate the auto-recovery fix and monitor trail data integrity, an hourly cron was deployed (commit `31eaf5da`, fires at :17 past each hour) that checks: (1) scraper process liveness, (2) whether odds changes are producing corresponding trail writes, (3) data freshness. The cron auto-expires after 7 days — it is a temporary validation tool, not permanent monitoring infrastructure. This was the first automated monitoring deployed for the game scraper, partially addressing weakness #2 from the [[concepts/value-betting-operational-assessment]].
 
+### Post-Fix Validation (2026-04-20)
+
+On 2026-04-20, the auto-recovery fixes (unique Chrome profile, file write retry, auto-restart on failures) were confirmed working: 5,290 fresh odds streamed across 8 NBA games with the scraper showing live data freshness. However, extended monitoring revealed a trail validation gap: most tracked picks showed only 1 trail entry (opening odds == current odds), with zero odds changes observed across 2,687+ markets over 10+ minutes.
+
+Investigation confirmed this was Bet365 behavior, not a trail bug: games were 13-19 hours from tipoff, well outside the ~2-3 hour window when Bet365 adjusts pre-game prop lines. A 3.5-hour VPS-side monitor (2,118 markets, 10s polling) produced zero Bet365 odds changes — reinforcing the pre-game timing pattern documented above.
+
+The trail pipeline was proven working through an alternative smoke test: Kalshi and Polymarket trail entries (100 soft trails in the last hour on VPS) demonstrated that the Phase B `_should_append_soft` logic correctly writes trail entries when odds change. The Bet365 trail gap was an absence of input changes, not a pipeline failure.
+
+A critical diagnostic from resolved picks further validated the fix deployment: NBA picks resolved that day (e.g., Kuminga 1.893→1.769) had only 1-2 trail entries each despite real odds movement. This proved the scraper had been dead during the critical pre-game window (when odds actually moved), not that the trail system was broken. The auto-recovery fixes deployed on 2026-04-19 should prevent this pattern going forward — tomorrow's games are the true validation test.
+
+Note: the 5-minute cron (`31eaf5da`) was still active but never fired during the debugging session because Claude Code crons only trigger when the REPL is idle (see [[concepts/claude-code-cron-idle-constraint]]). It will continue checking between sessions.
+
 ## Related Concepts
 
 - [[concepts/worker-status-observability]] - The game scraper reported "streaming" status with 3.7h old data — a more severe version of the hardcoded status problem: the scraper wasn't lying about its state, it genuinely believed it was streaming
@@ -104,3 +117,4 @@ To validate the auto-recovery fix and monitor trail data integrity, an hourly cr
 ## Sources
 
 - [[daily/lcash/2026-04-19.md]] - Bet365 2.0 data 3.7h stale; `0.0ms` scrape time diagnostic; root cause: page timeout → EPIPE → Windows file lock → cached data forever; `refresh()` silently swallowed failures; auto-recovery: 5 consecutive failures → full stop/start cycle; applied to both NBA and MLB scrapers; trail evidence: 1 entry per pick, batch timestamps; user correctly rejected "between slates" explanation (Sessions 14:57, 20:07). Crash-loop quantified: 14 game scraper restarts, ~50 direct scraper restarts in one day; two additional file locking issues: `.bet365_game_live.json` `Path.replace()` fails when server reads, Chrome `ActorSafetyLists/` resists rmtree; fixes: unique Chrome profile per session (implemented), file write retry loop; subprocess JSON architecture documented; `start /b` dies on SSH disconnect, schtasks is correct persistence; 15 orphaned Chrome processes found (Session 20:38). Pre-game prop odds confirmed static until ~2-3h before tipoff — zero trail entries during off-hours is expected, not a bug; hourly trail health monitoring cron deployed (commit 31eaf5da, auto-expires 7 days) to validate auto-recovery and detect odds-change-vs-trail-write mismatches (Session 21:36)
+- [[daily/lcash/2026-04-20.md]] - Post-fix validation: 5,290 fresh odds across 8 NBA games confirmed auto-recovery working; zero odds changes across 2,687+ markets over 10+ min (games 13-19h away — expected); 3.5h VPS monitor (2,118 markets) zero Bet365 changes; trail pipeline proven via Kalshi/Polymarket smoke test (100 soft trails/hour); resolved picks had 1-2 trails with real movement (Kuminga 1.893→1.769) proving scraper was dead during critical window; cron didn't fire during active session due to idle-only constraint (Sessions 08:09, 08:28, 11:54, 16:29, 18:47)

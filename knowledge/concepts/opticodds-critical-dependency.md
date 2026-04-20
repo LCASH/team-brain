@@ -4,8 +4,9 @@ aliases: [opticodds, opticodds-api, sharp-odds-provider]
 tags: [value-betting, infrastructure, dependency, odds-data, single-point-of-failure]
 sources:
   - "daily/lcash/2026-04-12.md"
+  - "daily/lcash/2026-04-20.md"
 created: 2026-04-12
-updated: 2026-04-12
+updated: 2026-04-20
 ---
 
 # OpticOdds Critical Dependency
@@ -46,13 +47,19 @@ The single-provider dependency on OpticOdds represents a classic availability ri
 
 The planned removal of the Betstamp adapter (see [[concepts/betstamp-bet365-scraper-migration]]) further concentrates the dependency on OpticOdds. Betstamp provided an independent EV calculation (`betstamp_ev`) derived from its own true line — a cross-check against the OpticOdds-based devigging pipeline. With Betstamp's service discontinued and its adapter being removed, this independent signal is permanently lost. The system's data pipeline now flows through exactly two sources: OpticOdds (sharp + Australian soft books) and the in-house Bet365 game scraper (NBA soft books only). See [[connections/scraper-consolidation-provider-dependency]] for the full analysis.
 
+### Esports Coverage Gap (2026-04-20)
+
+An OpticOdds esports audit on 2026-04-20 revealed significant coverage gaps: while 9 esports leagues are listed as available (CS2, Call of Duty, Dota 2, Kings of Glory, League of Legends, MLBB, Rainbow Six Siege, Rocket League, Valorant), only **League of Legends** has actual odds from any book (Pinnacle, Kalshi, Polymarket). The remaining 8 esports leagues have fixtures but zero odds entries from any bookmaker. This means the OpticOdds SSE streaming expansion (see [[concepts/opticodds-sse-streaming-scaling]]) will stream fixture events for these leagues but the scanner cannot evaluate them without odds data. Esports markets are thin across the industry — OpticOdds' gap reflects the broader market, not a provider-specific limitation.
+
 ## Related Concepts
 
 - [[concepts/bet365-racing-adapter-architecture]] - Bet365 scrapers are the only odds source independent of OpticOdds
 - [[concepts/parlay-ev-calculation]] - EV calculations depend on true odds derived from sharp book data (via OpticOdds)
 - [[concepts/betstamp-bet365-scraper-migration]] - Betstamp removal that deepens the single-provider dependency
 - [[connections/scraper-consolidation-provider-dependency]] - Analysis of how scraper consolidation interacts with provider dependency
+- [[concepts/opticodds-sse-streaming-scaling]] - SSE streaming expansion depends on OpticOdds having actual odds data per league, not just fixture listings
 
 ## Sources
 
 - [[daily/lcash/2026-04-12.md]] - OpticOdds key expiry exposed full dependency scope: NRL/AFL/MLB 100% dependent, NBA partially resilient via Bet365 scrapers; key rotated across 3 environments; Windows `taskkill /F /PID` gotcha; port mappings documented (Session 20:15). Betstamp removal analysis confirmed deepening dependency (Session 21:15)
+- [[daily/lcash/2026-04-20.md]] - Esports coverage audit: 9 leagues listed but only League of Legends has odds from any book (Pinnacle, Kalshi, Polymarket); CS2, Valorant, Dota 2, CoD, and 4 others have fixtures but zero odds (Sessions 14:57, 16:29)

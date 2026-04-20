@@ -1,0 +1,66 @@
+---
+title: "SSE Startup Theory Creation Hang"
+aliases: [sse-startup-hang, theory-creation-bottleneck, sequential-supabase-gets, sse-stream-launch-block]
+tags: [value-betting, operations, sse, supabase, scaling, bug]
+sources:
+  - "daily/lcash/2026-04-20.md"
+created: 2026-04-20
+updated: 2026-04-20
+---
+
+# SSE Startup Theory Creation Hang
+
+The value betting scanner's `_sse_startup()` function performs auto-discovery of leagues and creates Supabase theories for each new league via sequential GET requests — approximately 299 individual database calls. This sequential theory creation phase can silently hang, blocking the SSE stream launch and fixture cache initialization phases that follow it. The system shows the SSE task as "alive" but zero streams are actually running, producing no data for the tracker.
+
+## Key Points
+
+- `_sse_startup()` auto-discovers ~299 leagues and creates Supabase theory rows via sequential GETs (~0.2s each = ~60s total, but can hang indefinitely)
+- The hang occurs AFTER theory creation completes but BEFORE SSE streams or fixture cache launch — the function silently stops progressing with no error logged
+- System health checks show the SSE startup task as "alive" — the failure is invisible without inspecting whether streams are actually running
+- The fix on 2026-04-20 was a full VPS service restart, which brought 18/18 SSE streams online cleanly
+- On 2026-04-18, the same bottleneck was identified: 0.2s × 462 theories = ~90s of serial Supabase GETs (see [[concepts/fixture-cache-silent-market-dropout]])
+- Multiple restart attempts were needed before streams came online cleanly, suggesting the hang may be non-deterministic
+
+## Details
+
+### The Failure Mode
+
+The SSE startup sequence has three phases that execute in order:
+
+1. **Auto-discovery + theory creation** — calls `/leagues/active` to discover all available leagues, then checks/creates a Supabase theory row for each new league via individual GET requests
+2. **Fixture cache initialization** — fetches active fixtures for all sports to build the fixture-to-team mapping cache
+3. **SSE stream launch** — opens ~18 persistent SSE connections to OpticOdds for real-time odds streaming
+
+When phase 1 hangs, phases 2 and 3 never execute. The system has auto-discovered leagues and created theories, but no streams are running to receive odds data, and no fixture cache exists to map incoming data to fixtures. The tracker has no data to evaluate, and the dashboard shows stale or empty state.
+
+The failure is particularly insidious because the SSE startup task itself shows as "alive" in process monitoring. The task is running — it's just stuck after phase 1 with no progress indicator or timeout. An operator checking process health sees "SSE: alive" and assumes streams are running.
+
+### Discovery on 2026-04-20
+
+On 2026-04-20, lcash investigated why the VPS was not producing picks and discovered the tracker had been killed by a syntax error (see [[concepts/deploy-syntax-validation-gap]]) and the SSE startup had hung after theory creation. After fixing the syntax error and restarting the service, the SSE startup completed successfully: auto-discovery found 299 leagues, created 2 new Pinnacle theories, and launched 18/18 SSE streams with the fixture cache alive.
+
+However, reaching this clean state required multiple restart attempts. The first restart may have triggered the same hang before streams came online. This suggests the hang is non-deterministic — possibly related to Supabase connection pool exhaustion after 299 sequential requests, or a race condition in the startup sequence.
+
+### Scaling Context
+
+The sequential theory creation pattern was previously identified as a scaling concern in [[concepts/fixture-cache-silent-market-dropout]]: 0.2s × 462 theories = ~90s of serial Supabase GET requests on first deployment. On subsequent starts, the check is instant because theories are cached. But the first deployment after adding new leagues (or after a database migration) is painful.
+
+The SSE startup hang is a more severe manifestation: not just slow, but potentially indefinitely stuck. The serial request pattern creates two risks: (1) total latency scales linearly with league count, and (2) any single request that hangs (network timeout, Supabase rate limit, connection pool exhaustion) blocks all subsequent initialization.
+
+### Recommended Fixes
+
+1. **Batch theory checking** — replace 299 individual GETs with a single query (`SELECT name FROM theories WHERE name IN (...)`) to check existence, followed by a single bulk insert for missing theories
+2. **Timeout on `_sse_startup()`** — add a global timeout so the system can detect and recover from hangs rather than waiting indefinitely
+3. **Parallelization** — if individual GETs must be retained, run them concurrently with `asyncio.gather()` bounded by a semaphore to respect rate limits
+4. **Phase separation** — decouple theory creation from stream launch so that a theory creation failure doesn't block streaming
+
+## Related Concepts
+
+- [[concepts/fixture-cache-silent-market-dropout]] - Identified the same serial Supabase GET bottleneck (0.2s × 462 = ~90s); the SSE hang is the failure mode when this bottleneck becomes indefinite
+- [[concepts/niche-league-tracker-pipeline-bottlenecks]] - Three compound bottlenecks (ACTIVE_SPORTS, freshness, SSE filter) produced zero output similarly; SSE startup hang adds a fourth potential bottleneck upstream of all three
+- [[concepts/value-betting-operational-assessment]] - Weakness #2 (no monitoring): the SSE hang was invisible because the task showed "alive" — health checks need to verify stream count, not just task status
+- [[concepts/opticodds-sse-streaming-scaling]] - The SSE streaming architecture that depends on `_sse_startup()` completing successfully
+
+## Sources
+
+- [[daily/lcash/2026-04-20.md]] - SSE startup hung after theory creation, blocking stream launch and fixture cache; 299 leagues auto-discovered, 2 new theories created; 18/18 streams came online after restart; multiple restart attempts needed; task showed "alive" despite zero streams running (Sessions 14:57, 16:29, 18:47)
