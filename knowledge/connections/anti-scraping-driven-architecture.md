@@ -10,8 +10,9 @@ sources:
   - "daily/lcash/2026-04-13.md"
   - "daily/lcash/2026-04-14.md"
   - "daily/lcash/2026-04-15.md"
+  - "daily/lcash/2026-04-21.md"
 created: 2026-04-12
-updated: 2026-04-15
+updated: 2026-04-21
 ---
 
 # Connection: Anti-Scraping Defenses Drive Adapter Architecture
@@ -25,7 +26,7 @@ Every major architectural pivot in the bet365 racing adapter was forced by a spe
 The non-obvious insight is that bet365's anti-scraping operates at **six independent layers**, and each layer independently invalidates a different standard scraping approach:
 
 1. **Cloudflare (network layer):** Blocks datacenter IPs and headless browser fingerprints → forces use of AdsPower with residential proxy. Confirmed on 2026-04-14 from VPS testing: DigitalOcean Sydney ASN (`170.64.213.223`) gets `__cf_bm` cookie + 403 challenge on every request including raw curl with Chrome 146 UA; `curl_cffi` with chrome146/131/124/120 impersonation all 403'd; block is IP-reputation at ASN level, not TLS fingerprint. The WS endpoint (`wss://premws-pt1.365lpodds.com/zap/`) is behind the same Cloudflare edge (CNAME → `cdn.cloudflare.net`) and also 403s from datacenter IPs — WS is NOT a shortcut around the IP block
-2. **Headless detection (application layer):** bet365 detects `--headless=new` Chrome and serves degraded/inert SPA content — page loads, JS runs, WS wrapper injects, but zero WS traffic arrives. Discovered on 2026-04-15 during Dell server port: four Chrome configs tested, only headed (visible) mode receives data. This is distinct from Cloudflare — it operates within the SPA itself, not at the network level. See [[concepts/bet365-headless-detection]]
+2. **Headless detection + CDP artifact detection (application layer):** bet365 detects `--headless=new` Chrome and serves degraded/inert SPA content — page loads, JS runs, WS wrapper injects, but zero WS traffic arrives. Discovered on 2026-04-15 during Dell server port: four Chrome configs tested, only headed (visible) mode receives data. This is distinct from Cloudflare — it operates within the SPA itself, not at the network level. See [[concepts/bet365-headless-detection]]. On 2026-04-21, a further refinement was discovered: bet365 also detects CDP (Chrome DevTools Protocol) artifacts even in headed mode with `--disable-blink-features=AutomationControlled`. The SPA sidebar loads normally, but game content areas render blank — network API responses still flow, but DOM rendering is blocked. This means headed mode is necessary but not sufficient for full SPA interaction; native Playwright clicks (not hash navigation or synthetic JS clicks) are required to trigger API calls. See [[concepts/spa-navigation-state-api-access]]
 3. **SPA navigation state (application layer):** API returns empty unless browser has followed expected navigation flow → forces real browser navigation, not HTTP clients
 4. **SPA internal caching (client layer):** After ~15 navigations, stops making HTTP requests → forces navigate-away trick and periodic reloads
 5. **WebSocket authentication (transport layer):** Rejects non-browser WS connections with 403 → forces piggybacking on browser's authenticated connection

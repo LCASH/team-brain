@@ -4,8 +4,9 @@ aliases: [source-captured-at, odds-drift, staleness-causes, layer-a-diagnostic, 
 tags: [value-betting, data-quality, latency, dashboard, diagnosis]
 sources:
   - "daily/lcash/2026-04-15.md"
+  - "daily/lcash/2026-04-22.md"
 created: 2026-04-15
-updated: 2026-04-15
+updated: 2026-04-22
 ---
 
 # Odds Staleness Pipeline Diagnosis
@@ -73,6 +74,16 @@ The 30s hash-skip blackout in `server/main.py` was identified as the single bigg
 
 A latent timezone bug was discovered during implementation: `datetime.utcnow()` returns a naive datetime (no timezone info). When `.timestamp()` is called on a naive datetime, Python assumes it's in the local timezone, not UTC. On a server in AEST (UTC+10), this produces timestamps 10 hours off. The fix is `datetime.now(timezone.utc)`, which returns a timezone-aware datetime whose `.timestamp()` correctly converts to Unix epoch.
 
+### Seventh Cause: VPS `captured_at` Override (2026-04-22)
+
+On 2026-04-22, lcash discovered a seventh cause of odds drift — and the most damaging. At `state.py:2115`, the VPS ingest code overwrote `captured_at` with `time.time()` on every push cycle. This single line made every market appear ~5 seconds old regardless of when the scraper actually observed the odds. The dashboard's 5-minute staleness filter (`MAX_SOFT_ODDS_AGE_S = 300`) compared current time against this constantly-refreshed timestamp, so it never triggered — even when sharp data was **111 minutes stale**.
+
+This was the same problem documented above ("The existing `captured_at` field was re-stamped with `now()` at each pipeline layer") — but the VPS-ingest override had survived the earlier `source_captured_at` work and remained active in production. The fix removed the `time.time()` override, preserving original scraper-side timestamps through the VPS ingest layer.
+
+An additional gap was identified: the dashboard's staleness filter only checks **soft book** age, not **sharp book** age. Picks computed from 2-hour-old sharp data still display with confident EV% because the soft book odds are fresh. A sharp staleness check is needed — without it, the user sees phantom EV from stale sharp reference data.
+
+See [[concepts/dashboard-pick-flashing-stale-odds]] for the full analysis of the five stacking bugs discovered in this session.
+
 ## Related Concepts
 
 - [[concepts/server-side-snapshot-cache]] - The push cycle optimization that reduced one component of snapshot lag
@@ -81,7 +92,9 @@ A latent timezone bug was discovered during implementation: `datetime.utcnow()` 
 - [[connections/push-latency-trail-quality-cascade]] - A related cascade where pipeline latency degraded data quality
 - [[concepts/value-betting-operational-assessment]] - The broader operational assessment context
 - [[concepts/bet365-nba-coupon-endpoint]] - The dual-capture optimization built as part of the HTTP-poll reinstatement
+- [[concepts/dashboard-pick-flashing-stale-odds]] - The 2026-04-22 multi-bug session where the VPS `captured_at` override was finally identified and removed
 
 ## Sources
 
 - [[daily/lcash/2026-04-15.md]] - 6 causes of odds drift identified; `source_captured_at` end-to-end plumbing with ratchet-only logic; `datetime.utcnow()` tz bug; `captured_at` re-stamped at each layer; 30s hash-skip as biggest quick-win; SSE ghost markets; Layer A reverted for WS commitment then recommended for reinstatement after WS probe; color-coded age display; Layer A + coupon endpoint dual-capture organized into 3-commit feature branch awaiting deploy (Sessions 13:06, 13:38, 14:17, 16:20, 22:36)
+- [[daily/lcash/2026-04-22.md]] - Seventh cause discovered: VPS `captured_at: time.time()` override at state.py:2115 made every market appear 5s old; 5-min staleness filter never triggered; sharp data 111 minutes stale; dashboard lacks sharp book staleness check — only checks soft book age; override removed (Session 11:06)

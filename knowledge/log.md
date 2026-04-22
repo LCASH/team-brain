@@ -178,3 +178,15 @@
 - Developer: lcash
 - Articles created: [[concepts/claude-code-cron-idle-constraint]], [[concepts/sse-startup-theory-creation-hang]], [[concepts/deploy-syntax-validation-gap]]
 - Articles updated: [[concepts/game-scraper-chrome-crash-recovery]] (added post-fix validation: 5,290 fresh odds, trail smoking gun from resolved picks, Kalshi/Polymarket smoke test pattern), [[concepts/opticodds-critical-dependency]] (added esports coverage audit: 9 leagues listed, only LoL has odds), [[concepts/value-betting-operational-assessment]] (added deploy validation gap as emerging weakness, triple-failure scenario), [[concepts/bet365-mlb-lazy-subscribe-migration]] (added Bet365 AU MLB prop content timing: zero props outside pre-game window), [[connections/operational-compound-failures]] (added 2026-04-20 triple simultaneous failure: tracker syntax error + SSE startup hang + MLB content timing)
+
+## [2026-04-22T19:51:38+10:00] compile | daily/lcash/2026-04-21.md
+- Source: daily/lcash/2026-04-21.md
+- Developer: lcash
+- Articles created: [[concepts/bet365-mlb-batch-api-co-format]], [[concepts/mlb-parallel-scraper-workers]], [[concepts/pinnacle-prediction-market-roi-breakdown]]
+- Articles updated: [[concepts/bet365-mlb-lazy-subscribe-migration]] (added v4 batch API migration: batchmatchbettingcontentapi with CO segment format, click-through navigation, parallel workers, market expansion gap), [[concepts/spa-navigation-state-api-access]] (added click-through navigation requirement for MLB, CDP artifact detection in headed mode, Playwright native clicks vs hash nav vs synthetic JS), [[concepts/pinnacle-prediction-market-pipeline]] (added forward ROI validation: +8.1% ROI on 1,146 picks, losing league deactivation, NBA tipoff timing buffer), [[concepts/pinnacle-prop-type-sharpness-variance]] (added prediction market ROI: MLB HR +46.4%, NBA Rebounds +32.6%, sport-level efficiency variance extended to prediction markets), [[connections/anti-scraping-driven-architecture]] (added CDP artifact detection as refinement of layer 2: headed mode necessary but not sufficient, native clicks required)
+
+## [2026-04-22T20:01:26+10:00] compile | daily/lcash/2026-04-22.md
+- Source: daily/lcash/2026-04-22.md
+- Developer: lcash
+- Articles created: [[concepts/podcast-pick-extraction-pipeline]], [[concepts/vps-sse-cascade-silent-crash]], [[concepts/dashboard-pick-flashing-stale-odds]]
+- Articles updated: [[concepts/mlb-parallel-scraper-workers]] (added overnight validation: 6,669 odds, 12 prop types, 13-14/15 games, market expansion gap persists), [[concepts/dashboard-client-server-ev-divergence]] (added pick flashing from 5 stacking bugs, market key format mismatch, captured_at override), [[concepts/value-betting-operational-assessment]] (added VPS SSE cascade crash reinforcing weakness #2 and #6), [[concepts/odds-staleness-pipeline-diagnosis]] (added seventh cause: VPS captured_at override at state.py:2115 masking 111-min stale sharps, dashboard lacks sharp staleness check)

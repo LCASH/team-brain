@@ -8,8 +8,9 @@ sources:
   - "daily/lcash/2026-04-17.md"
   - "daily/lcash/2026-04-18.md"
   - "daily/lcash/2026-04-19.md"
+  - "daily/lcash/2026-04-22.md"
 created: 2026-04-15
-updated: 2026-04-18
+updated: 2026-04-22
 ---
 
 # Dashboard Client-Server EV Divergence
@@ -109,6 +110,16 @@ Critically, trail data is completely unaffected by this display inconsistency. T
 
 If this inconsistency becomes frequent, a fix would cache the devigged true probability per market (keyed by fixture + prop type + side + line) so all soft book rows reference the same computed value within a render cycle.
 
+### Pick Flashing, Stale Odds, and `captured_at` Override (2026-04-22)
+
+On 2026-04-22, lcash investigated multiple stacking dashboard bugs that manifested as picks "flashing" in and out while displaying stale odds. Five independent causes were identified: (1) SSE snapshot clearing on reconnect, (2) `reconcile_sport()` aggressive market removal, (3) stored Supabase picks carrying frozen `book_odds`, (4) market key format inconsistency (underscores in stored keys vs spaces in live keys), and (5) `captured_at` being overwritten with `time.time()` at VPS ingest (`state.py:2115`).
+
+The `captured_at` override was the most critical bug: it made every market appear 5 seconds old, so the 5-min staleness filter never triggered, hiding the fact that OpticOdds sharp data was 111 minutes stale. The dashboard also lacked a **sharp book** staleness check — it only filters on soft book age, meaning picks computed from 2-hour-old sharp data display with confident EV%.
+
+The market key format mismatch (`harrison_barnes_threes_under` in Supabase vs `harrison barnes_threes_under` in live API) caused the stored-vs-live dedup filter to fail, allowing both frozen and live versions of the same pick to appear simultaneously. This is the same class of format inconsistency documented in [[concepts/game-line-display-normalization]] (prop_type spaces vs underscores).
+
+See [[concepts/dashboard-pick-flashing-stale-odds]] for the full multi-bug analysis and fixes (SSE merge instead of clear, reconcile_sport 60s grace period, 15-min isGameLive buffer, stored pick removal for SSE sports, captured_at override removal).
+
 ## Sources
 
 - [[daily/lcash/2026-04-15.md]] - Pinnacle theory showing AU soft books instead of prediction markets; `loadTheories()` dropping 6 fields via JS destructuring; client-side EV ≠ server-side EV divergence; fix deployed; zero Pinnacle picks correct (games outside 3h window); deploy killed all workers requiring manual restart; NRL scheduled task re-enable needed (Session 22:03/16:20+)
@@ -116,3 +127,4 @@ If this inconsistency becomes frequent, a fix would cache the devigged true prob
 - [[daily/lcash/2026-04-17.md]] - Dashboard HTML lost on VPS restart (in-memory only, re-push required); merge conflict artifacts leaving orphaned JS code (`books is not defined`, undefined `contentEl`); 21K picks / 11MB / 25s timeout → 7-day default range; deploy git sync guard blocks on uncommitted changes (Sessions 11:06, 16:09, 21:11)
 - [[daily/lcash/2026-04-18.md]] - Theory name exclusion too aggressive: NHL had both theories excluded → 0 picks; MLB "MLB Pinnacle" excluded → fewer computations; critical distinction between display filtering and computation filtering; fix: exclude only from display query, not EV engine theory loading; sharp data age threshold 60s→120s for mini PC polling interval; VPS single-stream architecture confirmed (all sports on port 8802) (Session 21:50)
 - [[daily/lcash/2026-04-19.md]] - True-odds display inconsistency: same bet (LOUD vs MIBR moneyline) showing different true odds (4.44 vs 5.33) on Kalshi vs Polymarket under the same Pinnacle theory; cause: sharp data freshness varies between render cycles → different sharp books selected for same market → different devigged true probability displayed; confirmed trail data unaffected (trails store raw odds, resolver devigs server-side consistently); separation between ephemeral dashboard JS computation and persistent server-side pipeline is an architectural strength (Session 07:26)
+- [[daily/lcash/2026-04-22.md]] - Pick flashing from 5 stacking bugs: SSE snapshot clear-on-reconnect, reconcile_sport aggressive removal, frozen stored pick odds (Harrison Barnes 2.45 vs live 1.833), market key format mismatch (underscores vs spaces), `captured_at: time.time()` override at state.py:2115 masking 111-min sharp staleness; dashboard lacks sharp book staleness check (Sessions 09:42, 10:31, 11:06)

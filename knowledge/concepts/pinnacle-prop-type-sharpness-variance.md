@@ -7,8 +7,9 @@ sources:
   - "daily/lcash/2026-04-17.md"
   - "daily/lcash/2026-04-18.md"
   - "daily/lcash/2026-04-19.md"
+  - "daily/lcash/2026-04-21.md"
 created: 2026-04-16
-updated: 2026-04-19
+updated: 2026-04-21
 ---
 
 # Pinnacle Prop-Type Sharpness Variance
@@ -92,6 +93,25 @@ On 2026-04-19, NHL dashboard integration was fully validated. Of 381 NHL markets
 
 Adding `nhl` to `ACTIVE_SPORTS` required updating three config layers on the VPS: (1) code defaults, (2) `.env` file, (3) systemd `Environment=` directive. The systemd layer takes highest precedence and was the actual blocker — see [[concepts/configuration-drift-manual-launch]] for the full config precedence analysis. SSE-discovered leagues (auto-appended during `_sse_startup()`) do not need manual addition to ACTIVE_SPORTS, but core sports like NHL do.
 
+### Prediction Market ROI Validation (2026-04-21)
+
+On 2026-04-21, lcash performed a comprehensive ROI analysis of Pinnacle-sharp theories against prediction market soft books (Kalshi/Polymarket) across 1,146 picks, providing the largest forward validation dataset to date. The overall result was +8.1% ROI (+92.8 units), confirming the prediction market strategy is profitable.
+
+Per-prop-type findings extend the sharpness variance principle with prediction-market-specific data:
+
+| Prop Type | ROI vs Prediction Markets | Pinnacle Sharpness Assessment |
+|-----------|--------------------------|------------------------------|
+| MLB Home Runs | **+46.4%** (avg odds 6.26) | Pinnacle significantly sharper than prediction markets |
+| NBA Rebounds | **+32.6%** | Pinnacle sharper — prediction markets misprice rebounds |
+| Moneyline (non-NBA) | **+5.0%** (overall) | Edge on non-NBA game outcomes |
+| NBA Moneyline | **-6.7%** | Prediction markets price NBA outcomes near-sharp |
+| Goals/Draws | ~0% | No edge — prediction markets efficient |
+| Strikeouts | **-9.1%** | Slight negative — monitor |
+
+The MLB Home Runs finding (+46.4%) is the strongest single-edge discovery in the scanner's history, surpassing even the Threes on Sportsbet edge (+28.7%). The mechanism is likely prediction market participants overpricing the excitement/narrative value of home runs relative to Pinnacle's probability-based pricing.
+
+Per-league variance was also extreme: Dota 2 (+53.2%), Valorant (+37.5%), ATP Tennis (+33.0%), China CBA (+28.6%) were all profitable, while LoL (-31.9%), NHL (-21.0%), and ATP Challenger (-34.3%) were losing and recommended for theory deactivation. This extends the sport-level efficiency variance principle from AU books to prediction markets — the same prediction market can be exploitable on one sport and efficient on another.
+
 ## Related Concepts
 
 - [[concepts/pinnacle-prediction-market-pipeline]] - The pipeline that exposed prop-type variance when it produced 0 picks at min_ev=5
@@ -112,3 +132,4 @@ Adding `nhl` to `ACTIVE_SPORTS` required updating three config layers on the VPS
 - [[daily/lcash/2026-04-17.md]] - 110 resolved Pinnacle picks: +0.8% ROI overall; Threes on Sportsbet +28.7% (n=19) is only clear signal; need 400+ picks before strategy-level conclusions; edge may be prop/book-specific not broad (Session 22:16)
 - [[daily/lcash/2026-04-18.md]] - Sharp CLV theory ranking across 7,724 resolved picks: AltLine-V1 +28.4% CLV (sharpest), Conservative 72.7% CLV>0 rate (most consistent), Aggressive-Wide -9.3% (no edge despite 62% WR); MLB Calibrated +6.4% CLV and MLB Conservative +6.5% CLV confirmed as sharpest MLB theories; sharp CLV validated as superior to soft CLV (~0% for AU books) (Sessions 17:04, 17:35, 21:07). NHL AU book efficiency: 381 markets, 354 with both sharp+soft, only 3 +EV (all false positives); Sportsbet prices NHL tightly; 168 one-sided Goals markets unevaluable without one-sided devig in dashboard JS (Session 22:20)
 - [[daily/lcash/2026-04-19.md]] - NHL dashboard integration confirmed: 309/381 markets had no soft book match; 3 that passed +EV were false positives (100%+ EV from line mismatches); NHL Goals Over-only markets need `one_sided_consensus` devig method (not yet implemented as dashboard-side theory); NHL doesn't warrant special +EV attention — AU soft books too sharp; `nhl` added to ACTIVE_SPORTS across code defaults, .env, and systemd service (Sessions 07:26, 07:57)
+- [[daily/lcash/2026-04-21.md]] - Prediction market ROI validation: +8.1% ROI, +92.8u across 1,146 picks; MLB HR +46.4% (avg odds 6.26, strongest single edge), NBA Rebounds +32.6%; losing leagues: LoL -31.9%, NHL -21.0%, ATP Challenger -34.3% recommended for deactivation; profitable: Dota 2 +53.2%, Valorant +37.5%, ATP Tennis +33.0%, CBA +28.6%; extends sport-level efficiency variance to prediction markets (Session 12:01)

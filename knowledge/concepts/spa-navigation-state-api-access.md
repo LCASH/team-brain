@@ -4,8 +4,9 @@ aliases: [spa-state, navigate-away-trick, spa-cache-busting, bet365-spa]
 tags: [spa, scraping, anti-bot, browser-automation, bet365]
 sources:
   - "daily/lcash/2026-04-11.md"
+  - "daily/lcash/2026-04-21.md"
 created: 2026-04-11
-updated: 2026-04-12
+updated: 2026-04-21
 ---
 
 # SPA Navigation State and API Access
@@ -45,6 +46,22 @@ The navigate-away pattern reduced per-meeting fetch failures from ~50% (without)
 
 Race identifiers use PD (page descriptor) values with context-dependent suffixes: `#K^6#` for meeting-level discovery, `#G9#H0#L9#X^T#` for race-level browser navigation. Using the wrong suffix variant produces empty responses even with correct navigation state.
 
+### Click-Through Navigation Requirement (2026-04-21)
+
+On 2026-04-21, lcash discovered that hash navigation (`window.location.hash = "#/AS/B16/..."`) no longer triggers bet365's MLB API calls. The SPA requires full click-through navigation — real Playwright native clicks on the sidebar, game links, and prop tabs — to trigger the `batchmatchbettingcontentapi` responses. Hash navigation changes the URL but does not fire the SPA's internal routing handlers for the MLB section.
+
+This is a significant escalation from the original hash navigation pattern documented above. Previously, hash navigation worked reliably for racing and NBA (with the navigate-away trick for cache busting). The MLB section now requires genuine user-like click sequences: sidebar → MLB → game → tab → expand markets. Three navigation methods were compared:
+
+1. **Hash navigation** (`window.location.hash`) — no longer triggers MLB API calls; SPA intercepts the hash change but doesn't render game content in the DOM
+2. **Synthetic JS clicks** (`el.click()` via `page.evaluate`) — behaves differently from native clicks in SPAs; bet365 may distinguish between synthetic and native event dispatch
+3. **Playwright native clicks** (`page.click()`) — generates genuine browser events that pass SPA validation; confirmed working with 333 odds from a single game
+
+### CDP Artifact Detection in Headed Mode
+
+The same investigation revealed that bet365 detects CDP (Chrome DevTools Protocol) connection artifacts even when running in headed mode with `--disable-blink-features=AutomationControlled`. The SPA's sidebar loads normally, but game content areas render blank — network-level API responses still flow (the `batchmatchbettingcontentapi` endpoint IS called), but the SPA's JavaScript fails to render the response into the DOM. This is distinct from the headless detection documented in [[concepts/bet365-headless-detection]], which blocks data at the WS level. CDP artifact detection operates at the DOM rendering level — data is available in the network layer but not in the visible page.
+
+The detection likely examines properties that differ between a CDP-attached Chrome and a normal Chrome instance: the `webdriver` property, Chrome DevTools Protocol endpoint availability, or specific runtime behavior differences. Local Playwright's bundled Chromium is blocked entirely, while real Chrome via `--remote-debugging-port` passes the sidebar check but fails the game content render. The game scraper's existing architecture (capturing API responses via CDP interception rather than reading the DOM) means it can function even when the DOM doesn't render, but market expansion clicks require DOM elements to be present.
+
 ## Related Concepts
 
 - [[concepts/bet365-racing-data-protocol]] - The protocol whose HTTP layer depends on proper navigation state
@@ -55,3 +72,4 @@ Race identifiers use PD (page descriptor) values with context-dependent suffixes
 ## Sources
 
 - [[daily/lcash/2026-04-11.md]] - Discovery that racecoupon returns empty without navigation context (Session 13:54); navigate-away trick achieving 14/14 venues (Session 14:45); SPA cache limit of ~15 navigations (Session 15:05); hash navigation requirement (Session 14:25)
+- [[daily/lcash/2026-04-21.md]] - Hash navigation no longer triggers MLB API calls; Playwright native clicks required for full click-through flow (sidebar→MLB→game→tab→expand); synthetic JS `el.click()` fails in SPA; CDP artifacts detected even in headed mode — sidebar loads but game content blank; Playwright bundled Chromium fully blocked, real Chrome via CDP partially blocked (Sessions 10:41, 12:36)

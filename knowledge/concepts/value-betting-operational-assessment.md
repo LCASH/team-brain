@@ -7,8 +7,9 @@ sources:
   - "daily/lcash/2026-04-15.md"
   - "daily/lcash/2026-04-19.md"
   - "daily/lcash/2026-04-20.md"
+  - "daily/lcash/2026-04-22.md"
 created: 2026-04-12
-updated: 2026-04-20
+updated: 2026-04-22
 ---
 
 # Value Betting System Operational Assessment
@@ -70,6 +71,15 @@ On 2026-04-20, a syntax error on `tracker.py:1370` from a bad deploy silently ki
 
 See [[concepts/deploy-syntax-validation-gap]] for the full analysis of the triple-failure scenario and recommended prevention layers.
 
+### VPS SSE Cascade Crash (2026-04-22)
+
+On 2026-04-22, the VPS server silently died from SSE 400 error cascades at 23:08 the previous night, remaining dead for 10+ hours with no alerting. The tracker went from 560 picks/day to 0. Discovery was entirely manual — lcash noticed zero picks the next morning. This reinforces two weaknesses:
+
+- **Weakness #2 (no monitoring):** 10+ hours of complete VPS downtime with zero alerting. Even the partial monitoring cron (commit `31eaf5da`) only covers the Bet365 game scraper, not VPS process liveness.
+- **Weakness #6 (no redundancy/auto-recovery):** The VPS has no process supervisor (like systemd restart-on-failure) that would auto-restart after the SSE cascade crash. The mini PC's schtasks/watchdog pattern (despite its environment-stripping issues) at least attempts auto-restart.
+
+The SSE cascade failure is also architecturally concerning: client-facing SSE errors (HTTP 400 from browser clients) cascaded to kill the backend data-processing tracker. These layers should be isolated. See [[concepts/vps-sse-cascade-silent-crash]] for the full analysis.
+
 ## Related Concepts
 
 - [[concepts/opticodds-critical-dependency]] - Weakness #1: the single-provider risk
@@ -79,6 +89,7 @@ See [[concepts/deploy-syntax-validation-gap]] for the full analysis of the tripl
 - [[concepts/betstamp-bet365-scraper-migration]] - Context for deepening OpticOdds dependency
 - [[connections/operational-compound-failures]] - How weaknesses #2, #3, and #4 compound together
 - [[concepts/deploy-syntax-validation-gap]] - The deploy validation gap exposed by the 2026-04-20 triple-failure scenario
+- [[concepts/vps-sse-cascade-silent-crash]] - VPS killed by SSE 400 cascade, dead 10+ hours with no alerting
 
 ## Sources
 
@@ -86,3 +97,4 @@ See [[concepts/deploy-syntax-validation-gap]] for the full analysis of the tripl
 - [[daily/lcash/2026-04-15.md]] - VPS/mini PC write topology clarified: mini PC writes picks directly to Supabase, VPS outage only affects dashboard/relay/push — picks still tracked (Session 07:14)
 - [[daily/lcash/2026-04-19.md]] - First automated monitoring deployed: hourly trail health cron (commit 31eaf5da) for Bet365 game scraper, checking liveness + odds-vs-trail consistency + freshness; auto-expires 7 days (Session 21:36)
 - [[daily/lcash/2026-04-20.md]] - Triple simultaneous failure (tracker dead from syntax error + SSE startup hung + MLB idle): exposed deploy validation gap and need for per-component health dashboard; `python -m py_compile` recommended as pre-deploy guard (Session 14:57)
+- [[daily/lcash/2026-04-22.md]] - VPS SSE 400 cascade crash: dead 10+ hours (23:08→09:21), 0 picks/0 alerting; reinforces weakness #2 and #6; no process supervisor for auto-restart; client-facing SSE errors cascaded to kill backend tracker (Session 09:21)

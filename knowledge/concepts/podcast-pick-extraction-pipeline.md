@@ -1,0 +1,116 @@
+---
+title: "Podcast Pick Extraction Pipeline"
+aliases: [newsbets, podcast-picks, youtube-transcript-extraction, podcast-backtesting, mlb-podcast-pipeline]
+tags: [value-betting, podcast, extraction, backtesting, mlb, pipeline]
+sources:
+  - "daily/lcash/2026-04-22.md"
+created: 2026-04-22
+updated: 2026-04-22
+---
+
+# Podcast Pick Extraction Pipeline
+
+A system for extracting structured betting picks from YouTube MLB podcast transcripts, resolving outcomes against MLB Stats API box scores, and backtesting profitability. The pipeline uses `yt-dlp` for transcript fetching (no API keys), Claude Agent SDK `query()` for LLM-based extraction with tool-use, and a 4-table Supabase data model. A full 2025 season backtest across 810 episodes and 2,650 picks found **51.0% WR, -1.7% ROI** — essentially breakeven, with profitable niches in team totals (+35.7%) and strikeouts (+12.3%).
+
+## Key Points
+
+- `yt-dlp` fetches YouTube auto-captions (VTT format) without API keys; strict pattern matching requires subject + prop + side + line co-occurrence to filter noise from conversational transcripts
+- Claude Agent SDK `query()` with tool-based extraction (`record_pick` tool) produces structured JSON; `ClaudeSDKClient` class does NOT work — use `query()` directly
+- Sonnet is 8x faster than Haiku for extraction (~16s vs ~124s/episode) because Agent SDK CLI startup overhead dominates per-token savings; same accuracy, lower total cost despite higher per-token price
+- **Critical finding:** Prop type misclassification (HRR classified as Home Runs) completely inverted backtest results — 43.5% WR / -15.2% ROI became 58.8% WR / +15.4% ROI after fixing. Extraction accuracy is the #1 variable
+- Podcast confidence signals are **inverted**: "best bets" (80-100 confidence) produce -9.2% ROI; host enthusiasm correlates with long-shot props that lose more
+- Full backtest: 810 episodes, 2,650 picks, 2,104 graded → 51.0% WR, -1.7% ROI (breakeven); profitable niches: team totals over (+35.7%), strikeouts (+12.3%), game unders
+
+## Details
+
+### Architecture
+
+The pipeline has four phases:
+
+**Phase 1 — Fetch:** `yt-dlp` downloads auto-generated VTT captions from YouTube. The VTT parser strips timestamps and deduplicates overlapping subtitle segments, producing clean text (~46K chars for a typical 30-min episode). YouTube dynamic rendering blocks Playwright selectors for video list scraping, making `yt-dlp` the only reliable transcript path. Channel handle format matters: `@Wagertalk` works, `@WagerTalkTV` does not.
+
+**Phase 2 — Extract:** The Claude Agent SDK's `query()` function (NOT `ClaudeSDKClient`) processes transcripts with a sport-config-driven prompt (`build_extraction_prompt("mlb")`) containing per-sport prop vocabulary, example picks, and extraction rules. The agent uses a `record_pick` tool to output structured JSON with player names, prop types, lines, odds, confidence scores, and host attribution. The `ANTHROPIC_API_KEY` is not available in the Claude Code CLI environment — the Agent SDK uses Claude Code's internal auth, so direct Anthropic API calls fail.
+
+**Phase 3 — Resolve:** The MLB Stats API provides box score data for grading. Fuzzy player name matching handles auto-caption mangling: exact match → strip suffix → last name only → first initial + last name. Known failure modes include garbled names (no match → skip), doubleheaders (wrong game selected), and ambiguous last names.
+
+**Phase 4 — Report:** A dashboard at `http://170.64.213.223:8802/podcasts.html` shows per-show, per-prop-type, per-host, and per-confidence breakdowns with ROI calculations using decimal odds conversion (`_to_decimal_odds` helper).
+
+### Data Model
+
+Four Supabase tables with `pick_hash` (subject+prop+side+line+game_date) for cross-episode deduplication:
+
+| Table | Purpose |
+|-------|---------|
+| `sources` | Podcast channels (WagerTalk, JuiceBox, etc.) |
+| `episodes` | Individual episodes with YouTube IDs, transcripts, extraction status |
+| `picks_extracted` | Structured picks with player, prop, line, odds, confidence, host |
+| `pick_mentions` | Cross-references: same pick mentioned across multiple episodes |
+
+### Sport-Agnostic Design
+
+The extraction prompt is generated from a sport config dict — adding NBA/NFL requires only a new config entry with sport-specific prop vocabulary, resolution API, and channel list. The game_date is derived from transcript context by the extraction agent (not from `published_at` or title parsing), because podcast publish dates are unreliable and one episode can span multiple game days. This was identified as the most critical flaw in the initial design — 10 critical flaws were documented including name mangling, no host attribution, "preview picks" wrong-date problem, and doubleheader ambiguity.
+
+### Backtest Results
+
+**Overall (810 episodes, 2,104 graded):** 51.0% WR, -1.7% ROI — following podcast picks blindly loses money or at best breaks even.
+
+**By prop type:**
+
+| Prop Type | ROI | WR | Assessment |
+|-----------|-----|----|------------|
+| Team Totals | **+35.7%** | — | Profitable niche |
+| Strikeouts | **+12.3%** | — | Profitable niche |
+| Earned Runs Over | **+55.0%** | — | Strong but small sample |
+| Moneyline | **+5.0%** | — | Marginal |
+| Home Runs | **-80.3%** | 10.3% | Likely still has misclassification issues |
+| Total Bases | **-60.5%** | — | Catastrophic |
+| Game Totals | **-13.2%** | — | Losing |
+
+**By show:** JuiceBox MLB was the only show with positive ROI (+9.6% on 98 picks) — borderline/variance territory. Total Bases and Drew's Daily Diamond were near breakeven. MLB Gambling Podcast was the biggest loser (-18.6%).
+
+**By confidence:** Confidence signals don't help. "Best bets" (80-100) still -9.2% ROI. This is because hosts like Prop Hitters label long-shot HR/total bases plays as "best bets" due to big potential payouts — but these props lose at high rates. Leans and speculative picks are worse (-18.6% to -64.1%).
+
+### Data Quality Issues
+
+Three resolution bugs were found and fixed during backtesting:
+
+1. **Game total resolution:** `_resolve_game_total` was partial-matching one team's runs instead of summing both teams' scores. This made losses look like wins, inflating ROI by ~14 percentage points (initial -11.6% was really -35.9% before the fix).
+2. **F5 (First 5 Innings) picks:** 136 F5 picks were being graded against full-game stats — a fundamental mismatch. All F5 picks were voided since partial-game box score data isn't available.
+3. **HRR misclassification:** "Hits, Runs, RBIs" props were classified as Home Runs by the extractor. Fixing this single classification flipped Prop Hitters' ROI from -59.9% to +10.9%.
+
+The 31% unresolved rate (299 picks) stems from auto-caption name mangling and missing player matches. YouTube auto-captions produce player name errors that vary each time — "Kahana wits" for Khanawitz, "Stallings Stewart" for unknown players.
+
+### Scaling and Performance
+
+- **Extraction speed:** ~16s/episode with Sonnet (Agent SDK CLI startup ~10s + generation ~6s), ~2 hours for 811 episodes with parallel batches of 20
+- **Transcript fetching:** ~4s per transcript, sequential per show
+- **Total pipeline:** ~3 hours for full 2025 season (fetch + extract + resolve) across 8 shows
+- **66% odds extraction rate:** 85/128 picks had extractable odds from transcripts; auto-captions sometimes lose numeric values
+
+### Podcast Sources
+
+8 of 9 recommended MLB betting podcasts were included:
+
+| Show | Source | Focus |
+|------|--------|-------|
+| Total Bases | WagerTalk | Game-level picks (ML, totals, run lines) |
+| Drew's Daily Diamond | WagerTalk | Daily best bets (season record: 23-16, +6.5u) |
+| Prop Hitters | WagerTalk | Player props (hits, HRs, total bases, K's) |
+| Under the Radar | WagerTalk | Contrarian/underdog picks |
+| MLB Double Picks | WagerTalk | Quick-fire daily selections |
+| JuiceBox | JuiceBox MLB | Daily best bets with props in titles |
+| Baseball Betting Show | Greg Peterson | Analysis-heavy game picks |
+| Beating The Book | Gill Alexander | Line analysis |
+
+"On Deck" (DFS CheatSheet) was excluded — too DFS-lineup focused for explicit betting pick extraction.
+
+## Related Concepts
+
+- [[concepts/value-betting-theory-system]] - The scanner's theory system that podcast picks could theoretically be cross-referenced against for EV validation
+- [[concepts/opticodds-critical-dependency]] - OpticOdds could provide odds verification for extracted picks, enabling EV computation on podcast recommendations
+- [[concepts/betting-window-roi-methodology]] - The ROI methodology (closing odds, dedup) applied to podcast backtest with decimal odds conversion
+- [[connections/silent-type-coercion-data-corruption]] - HRR misclassification follows the same pattern: plausible wrong output from extraction errors with zero error signal
+
+## Sources
+
+- [[daily/lcash/2026-04-22.md]] - Full pipeline design: 4-table data model, yt-dlp for YouTube captions, Claude Agent SDK `query()` for extraction (not ClaudeSDKClient), strict pattern matching, confidence scoring from language cues (Sessions 08:59, 09:55). Sonnet 8x faster than Haiku due to CLI startup overhead; HRR misclassification inverted backtest; game_date from transcript context not published_at; parallel batch extraction 7x faster than serial (Session 13:20). 10 critical pipeline flaws identified and sport-agnostic redesign with `build_extraction_prompt("mlb")` (Session 13:20). Full year backtest: 810 episodes, 2,650 picks, 2,104 graded → 51.0% WR, -1.7% ROI; team totals +35.7%, strikeouts +12.3%; confidence inverted; game total resolution bug inflated ROI by 14 points; F5 picks voided; JuiceBox only profitable show (+9.6%); dashboard deployed (Sessions 16:59, 17:33, 19:51)

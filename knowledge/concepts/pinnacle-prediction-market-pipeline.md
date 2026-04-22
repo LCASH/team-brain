@@ -6,8 +6,9 @@ sources:
   - "daily/lcash/2026-04-15.md"
   - "daily/lcash/2026-04-16.md"
   - "daily/lcash/2026-04-18.md"
+  - "daily/lcash/2026-04-21.md"
 created: 2026-04-15
-updated: 2026-04-18
+updated: 2026-04-21
 ---
 
 # Pinnacle Prediction Market Pipeline
@@ -134,6 +135,20 @@ Combined, the Pinnacle pipeline and Crypto Edge pipeline now generate 215 picks 
 
 The pipeline's expansion to 491+ leagues exposed a fundamental REST polling limitation: ~10K API calls/minute would exceed OpticOdds rate limits. The discovery of OpticOdds' SSE streaming endpoint (`/stream/odds/{sport}`) provides a path to cover all leagues per sport with ~15 persistent connections instead of 28+ REST pollers. The scanner was only polling 23 of 491 Kalshi leagues (~5% actual coverage). See [[concepts/opticodds-sse-streaming-scaling]] for the migration plan.
 
+### Forward ROI Validation (2026-04-21)
+
+On 2026-04-21, lcash performed a comprehensive ROI analysis of the Pinnacle prediction market pipeline, confirming it as a profitable strategy: **+8.1% ROI, +92.8 units across 1,146 picks**. The analysis used average positive-EV odds (not peak odds) for a more realistic representation of bettor returns.
+
+Key findings by league: MLB +15.6%, Dota 2 +53.2%, NBA +6.2%, Valorant +37.5%, ATP Tennis +33.0%, China CBA +28.6%. Three losing leagues were identified for deactivation: LoL -31.9%, NHL -21.0%, ATP Challenger -34.3% — saving ~34 units going forward.
+
+Per-prop-type analysis revealed MLB Home Runs as the single best edge at +46.4% ROI (average odds 6.26) and NBA Rebounds at +32.6%. Moneyline was profitable overall (+5.0%, +32.1u) despite NBA moneyline specifically being -6.7% — prediction markets price NBA game outcomes with near-sharp efficiency but misprice player props and non-NBA moneylines.
+
+See [[concepts/pinnacle-prediction-market-roi-breakdown]] for the full breakdown and methodology.
+
+### NBA Tipoff Timing Buffer (2026-04-21)
+
+NBA picks were disappearing from the dashboard "before tip-off" — root cause was that OpticOdds reports the scheduled start time, but actual tip-off is 10-15 minutes later due to pre-game ceremonies and introductions. A 15-minute buffer was added to `_is_game_live()` to match actual tip-off time vs scheduled time, preventing premature filtering of picks that are still actionable.
+
 ## Related Concepts
 
 - [[concepts/value-betting-theory-system]] - The theory system that the Pinnacle pipeline extends with a new sharp/soft pairing
@@ -154,3 +169,4 @@ The pipeline's expansion to 491+ leagues exposed a fundamental REST polling limi
 - [[daily/lcash/2026-04-15.md]] - Pinnacle theory committed (9a0b19d, +177/-28 lines): prediction market book IDs (Kalshi 950, Polymarket 970, DraftKings Predictions 971, Underdog 980, Crypto.com 981/982), virtual sport pill, sportSupabaseFilter helper; pipeline verified end-to-end (Polymarket 348, Kalshi 168, Pinnacle 402 markets); zero picks correct (outside 3h window); stash/restore pattern for branch isolation (Sessions 22:03, 22:36)
 - [[daily/lcash/2026-04-16.md]] - NHL viable (3 game-line markets, ~400 LOC for game-line support); MLB non-viable (0 prediction market coverage on OpticOdds); soccer deactivated (22 theories, 30 phantom picks voided — 3-way devig needed); Pinnacle prop-type variance: Threes +27.9%, Assists -50.4%; min_ev 5→1; trail capture SOFT_IDS gap fixed; all theories set to 3h window; SSE payload bloated to 6-9MB from game-line expansion (MLB 2K→5,040 markets), fixed by VPS-side Pinnacle pollers with restricted book set and SSE push disabled (Sessions 13:04, 13:38, 16:30, 20:38, 21:31). Virtual pill rendering: skipped live computation entirely, only stored picks; cleared _storedEVPicks on pill switch to fix race condition; multiple render paths (renderStats/renderEV) both calling computeEVPicks independently (Session 22:35). Niche league pipeline unblocked: three compound bottlenecks (ACTIVE_SPORTS iteration, 30s→120s sharp freshness, SSE filter hiding tracker view) silently killed niche league output; post-fix 0 picks confirmed correct (games 27-124h away) (Session 23:12)
 - [[daily/lcash/2026-04-18.md]] - Crypto Edge pill launched (1,535 non-Pinnacle markets, MLB 1,354); 215 picks across 14 leagues; only polling 23/491 Kalshi leagues (~5%); SSE streaming endpoint discovered (459KB/15s all leagues per sport); 5-phase REST-to-SSE migration plan; fixture cache limit=100 silently dropped 495/2,400 SSE markets (Sessions 12:31, 13:31, 14:39)
+- [[daily/lcash/2026-04-21.md]] - Forward ROI validation: +8.1% ROI, +92.8u across 1,146 picks using average +EV odds methodology; MLB HR +46.4%, NBA Rebounds +32.6%; losing leagues deactivated: LoL -31.9%, NHL -21.0%, ATP Challenger -34.3% (saves ~34u); NBA tipoff 15-min buffer added for scheduled vs actual start time (Sessions 12:01, 17:12)

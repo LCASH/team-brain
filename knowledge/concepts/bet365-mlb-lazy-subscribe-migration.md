@@ -5,8 +5,9 @@ tags: [bet365, mlb, scraping, api-migration, value-betting]
 sources:
   - "daily/lcash/2026-04-14.md"
   - "daily/lcash/2026-04-20.md"
+  - "daily/lcash/2026-04-21.md"
 created: 2026-04-14
-updated: 2026-04-20
+updated: 2026-04-21
 ---
 
 # bet365 MLB Lazy-Subscribe API Migration
@@ -67,6 +68,16 @@ On 2026-04-20, lcash investigated the MLB game scraper and confirmed it correctl
 
 This is distinct from the lazy-subscribe migration issue (which was about API endpoint changes). The v3 hybrid scraper's click/scroll/retain logic works correctly when props are available; the limitation is upstream: bet365 AU does not serve MLB prop data outside the pre-game window. Validation requires running the scraper during tomorrow's pre-game window when props should be populated.
 
+### V4 Batch API Migration (2026-04-21)
+
+On 2026-04-21, lcash discovered that bet365 had changed the MLB player props API again — from individual `matchbettingcontentapi` responses to a `batchmatchbettingcontentapi` endpoint that delivers all prop markets in a single large payload. The new format uses CO (Column) segments to pack 8 milestone threshold columns per player instead of individual Over/Under toggles. See [[concepts/bet365-mlb-batch-api-co-format]] for the full data format specification.
+
+The v4 migration required three changes: (1) the API interceptor URL filter was expanded to catch `batchmatchbettingcontentapi`, (2) a CO segment handler was added (~8 lines at `bet365_mlb_game.py:216-224`), and (3) all navigation was switched from hash navigation to Playwright native click-through flow, because bet365's SPA now detects CDP artifacts even in headed mode and requires genuine user-like click navigation to trigger API calls (see [[concepts/spa-navigation-state-api-access]]).
+
+Additionally, the sequential per-game scraping model (~9-12 min per rotation) was replaced with a parallel multi-worker architecture using 3 Chrome pages scraping concurrently. See [[concepts/mlb-parallel-scraper-workers]] for the parallel design.
+
+The v4 parser was confirmed working locally with 333 odds from a single game, and deployed to the mini PC with 2,468 odds from 3 games on first check. Market expansion count was lower on the mini PC (208-216 odds) compared to local (700+), likely due to Chrome profile/cache maturity differences.
+
 ## Related Concepts
 
 - [[concepts/bet365-racing-adapter-architecture]] - A different bet365 scraper facing similar SPA interaction challenges
@@ -78,3 +89,4 @@ This is distinct from the lazy-subscribe migration issue (which was about API en
 
 - [[daily/lcash/2026-04-14.md]] - WS frame dumps showed cross-sport noise not MLB props; git archaeology confirmed v1 had click/scroll triggers dropped in v2; v3 hybrid built merging v1 interactions with v2 parser; bet365 uses intersection observers for lazy-load; NBA still on BB wizard (Session 10:44)
 - [[daily/lcash/2026-04-20.md]] - MLB scraper correctly discovers games and navigates to Props tabs, but bet365 AU returns zero prop data (Batter Props + Pitcher Props tabs empty); confirmed as content timing issue — props only available pre-game, not a code bug (Session 14:57)
+- [[daily/lcash/2026-04-21.md]] - V4 batch API migration: `matchbettingcontentapi` → `batchmatchbettingcontentapi` with CO segment format; ~8-line parser fix; hash navigation replaced with Playwright native clicks; parallel 3-worker architecture; 333 odds locally, 2,468 from 3 games on mini PC; market expansion gap (208-216 vs 700+) likely Chrome profile maturity (Sessions 09:13, 09:27, 10:41, 12:36, 17:12)
