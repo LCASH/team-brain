@@ -33,7 +33,7 @@ The pipeline has four phases:
 
 **Phase 3 — Resolve:** The MLB Stats API provides box score data for grading. Fuzzy player name matching handles auto-caption mangling: exact match → strip suffix → last name only → first initial + last name. Known failure modes include garbled names (no match → skip), doubleheaders (wrong game selected), and ambiguous last names.
 
-**Phase 4 — Report:** A dashboard at `http://170.64.213.223:8802/podcasts.html` shows per-show, per-prop-type, per-host, and per-confidence breakdowns with ROI calculations using decimal odds conversion (`_to_decimal_odds` helper).
+**Phase 4 — Report:** A dashboard at `http://170.64.213.223:8802/podcasts.html` shows per-show, per-prop-type, per-host, and per-confidence breakdowns with ROI calculations using odds-weighted profit and decimal odds conversion (`_to_decimal_odds` helper). The ROI calculation was upgraded from simple even-money `(w-l)/n` to odds-weighted profit using real decimal odds (assumes -110 when odds are unavailable) — the old calculation overstated a +25.6% episode as +33.3%. Dashboard features include expandable quote rows, Prop x Side breakdown (Over vs Under per prop type), and Avg Odds columns across all breakdown tables.
 
 ### Data Model
 
@@ -66,7 +66,7 @@ The extraction prompt is generated from a sport config dict — adding NBA/NFL r
 | Total Bases | **-60.5%** | — | Catastrophic |
 | Game Totals | **-13.2%** | — | Losing |
 
-**By show:** JuiceBox MLB was the only show with positive ROI (+9.6% on 98 picks) — borderline/variance territory. Total Bases and Drew's Daily Diamond were near breakeven. MLB Gambling Podcast was the biggest loser (-18.6%).
+**By show:** JuiceBox MLB was the only show with positive ROI — initial analysis showed +9.6% on 98 picks, updated to **+10.5% ROI on 139 picks (59.7% WR)** after full extraction. JuiceBox's edge is in moneylines and strikeout overs; run lines are a weakness; counterintuitively, "leans" outperform "best bets" (+26.2% vs lower ROI). Total Bases and Drew's Daily Diamond were near breakeven. MLB Gambling Podcast was the biggest loser (-18.6%).
 
 **By confidence:** Confidence signals don't help. "Best bets" (80-100) still -9.2% ROI. This is because hosts like Prop Hitters label long-shot HR/total bases plays as "best bets" due to big potential payouts — but these props lose at high rates. Leans and speculative picks are worse (-18.6% to -64.1%).
 
@@ -79,6 +79,16 @@ Three resolution bugs were found and fixed during backtesting:
 3. **HRR misclassification:** "Hits, Runs, RBIs" props were classified as Home Runs by the extractor. Fixing this single classification flipped Prop Hitters' ROI from -59.9% to +10.9%.
 
 The 31% unresolved rate (299 picks) stems from auto-caption name mangling and missing player matches. YouTube auto-captions produce player name errors that vary each time — "Kahana wits" for Khanawitz, "Stallings Stewart" for unknown players.
+
+### Supabase Deployment Gotchas
+
+Two Supabase platform issues were discovered during dashboard deployment:
+
+1. **PostgREST 1000-row pagination cap:** Supabase's PostgREST silently caps results at 1,000 rows even when `limit=5000` is passed. The dashboard initially showed only ~131 picks instead of 2,650 because the default "Last 14 days" filter combined with the 1,000-row cap hid most data. The fix requires client-side pagination — fetching in 1,000-row pages and concatenating results.
+
+2. **Row Level Security (RLS) blocks anon key reads:** Supabase RLS blocks the `anon` key from reading tables by default. The `podcast_picks` and `podcast_episodes` tables needed explicit `FOR SELECT USING (true)` policies for the public dashboard to function. Without these policies, queries return empty results with no error message — a silent failure pattern consistent with the scanner's broader operational anti-patterns.
+
+The full pipeline was committed as `6533340` (+4,155 lines, 10 files) with CLAUDE.md updated to include podcast pipeline architecture documentation.
 
 ### Scaling and Performance
 
@@ -113,4 +123,4 @@ The 31% unresolved rate (299 picks) stems from auto-caption name mangling and mi
 
 ## Sources
 
-- [[daily/lcash/2026-04-22.md]] - Full pipeline design: 4-table data model, yt-dlp for YouTube captions, Claude Agent SDK `query()` for extraction (not ClaudeSDKClient), strict pattern matching, confidence scoring from language cues (Sessions 08:59, 09:55). Sonnet 8x faster than Haiku due to CLI startup overhead; HRR misclassification inverted backtest; game_date from transcript context not published_at; parallel batch extraction 7x faster than serial (Session 13:20). 10 critical pipeline flaws identified and sport-agnostic redesign with `build_extraction_prompt("mlb")` (Session 13:20). Full year backtest: 810 episodes, 2,650 picks, 2,104 graded → 51.0% WR, -1.7% ROI; team totals +35.7%, strikeouts +12.3%; confidence inverted; game total resolution bug inflated ROI by 14 points; F5 picks voided; JuiceBox only profitable show (+9.6%); dashboard deployed (Sessions 16:59, 17:33, 19:51)
+- [[daily/lcash/2026-04-22.md]] - Full pipeline design: 4-table data model, yt-dlp for YouTube captions, Claude Agent SDK `query()` for extraction (not ClaudeSDKClient), strict pattern matching, confidence scoring from language cues (Sessions 08:59, 09:55). Sonnet 8x faster than Haiku due to CLI startup overhead; HRR misclassification inverted backtest; game_date from transcript context not published_at; parallel batch extraction 7x faster than serial (Session 13:20). 10 critical pipeline flaws identified and sport-agnostic redesign with `build_extraction_prompt("mlb")` (Session 13:20). Full year backtest: 810 episodes, 2,650 picks, 2,104 graded → 51.0% WR, -1.7% ROI; team totals +35.7%, strikeouts +12.3%; confidence inverted; game total resolution bug inflated ROI by 14 points; F5 picks voided; JuiceBox only profitable show (+9.6%); dashboard deployed (Sessions 16:59, 17:33, 19:51). Dashboard iteration: Supabase PostgREST 1000-row cap required client-side pagination; RLS blocked anon key reads (explicit SELECT policies needed); JuiceBox updated to 139 picks / 59.7% WR / +10.5% ROI with moneylines and K overs as edge, "leans" outperform "best bets" (+26.2%); ROI switched from even-money to odds-weighted decimal odds; committed as `6533340` (+4,155 lines, 10 files) (Session 20:22)

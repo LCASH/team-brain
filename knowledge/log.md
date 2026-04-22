@@ -190,3 +190,10 @@
 - Developer: lcash
 - Articles created: [[concepts/podcast-pick-extraction-pipeline]], [[concepts/vps-sse-cascade-silent-crash]], [[concepts/dashboard-pick-flashing-stale-odds]]
 - Articles updated: [[concepts/mlb-parallel-scraper-workers]] (added overnight validation: 6,669 odds, 12 prop types, 13-14/15 games, market expansion gap persists), [[concepts/dashboard-client-server-ev-divergence]] (added pick flashing from 5 stacking bugs, market key format mismatch, captured_at override), [[concepts/value-betting-operational-assessment]] (added VPS SSE cascade crash reinforcing weakness #2 and #6), [[concepts/odds-staleness-pipeline-diagnosis]] (added seventh cause: VPS captured_at override at state.py:2115 masking 111-min stale sharps, dashboard lacks sharp staleness check)
+
+## [2026-04-22T20:30:00+10:00] compile | daily/lcash/2026-04-22.md (incremental)
+- Source: daily/lcash/2026-04-22.md
+- Developer: lcash
+- Note: Incremental recompile — Sessions 08:48 through 19:51 were compiled in prior pass; this pass covers Session 20:22 (dashboard iteration: Supabase PostgREST pagination, RLS policies, JuiceBox deeper analysis, odds-weighted ROI, git commit)
+- Articles created: (none)
+- Articles updated: [[concepts/podcast-pick-extraction-pipeline]] (added Supabase deployment gotchas: PostgREST 1000-row cap requiring pagination, RLS anon key SELECT policies; JuiceBox updated to 139 picks / 59.7% WR / +10.5% ROI with "leans" outperforming "best bets"; ROI methodology upgraded to odds-weighted decimal; committed as 6533340 +4,155 lines)
