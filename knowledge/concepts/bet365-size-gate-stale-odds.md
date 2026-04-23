@@ -60,6 +60,7 @@ The size-gate removal and session expiry detection were deployed and pushed as c
 - [[concepts/dashboard-pick-flashing-stale-odds]] - Pick flashing was partly caused by stale odds from the `captured_at` override; size-gate is a separate stale-odds mechanism at the scraper layer
 - [[concepts/bet365-headless-detection]] - Anonymous Chrome getting correct odds suggests that headed mode is sufficient for data access; authentication may only gate bet-limit-specific content
 - [[connections/silent-type-coercion-data-corruption]] - The size-gate is another "plausible wrong output" bug — the cached data looked valid, just stale
+- [[concepts/bet365-auto-login-session-recovery]] - The automated recovery mechanism for the session expiry that the three-layer detection system identifies; sessions die overnight despite ~10-day cookie expiry
 
 ## Sources
 

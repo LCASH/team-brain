@@ -210,3 +210,10 @@
 - Note: Incremental recompile — Sessions 08:30 through 18:10 were compiled in prior pass; this pass covers Session 18:23 (OpticOdds partial stats causing silent mis-resolution of Wembanyama DD pick)
 - Articles created: [[concepts/opticodds-partial-stats-silent-misresolution]]
 - Articles updated: [[concepts/dd-td-resolver-bias]] (added packed field as potential cross-check for truncated component data; Wembanyama 5pts/4reb/12min vs packed field 1.501040001 suggesting full-game DD), [[concepts/opticodds-critical-dependency]] (added third dependency risk dimension: data completeness without quality flags, beyond availability and bias)
+
+## [2026-04-23T21:36:25+10:00] compile | daily/lcash/2026-04-23.md (incremental)
+- Source: daily/lcash/2026-04-23.md
+- Developer: lcash
+- Note: Incremental recompile — Sessions 08:30 through 18:23 were compiled in prior passes; this pass covers Sessions 19:12, 21:05 (trail chart visualization, DEFAULT_SHARP_IDS fallback), and 21:36 (bet365 auto-login session recovery, push worker instability)
+- Articles created: [[concepts/bet365-auto-login-session-recovery]]
+- Articles updated: [[concepts/theory-aware-sharp-book-filtering]] (added DEFAULT_SHARP_IDS fallback, chart smoothing with step-chart + rolling average, historical size-gate oscillation visible in trails), [[connections/browser-automation-reliability-cost]] (added fifth reliability dimension: session expiry and auto-login as authentication lifecycle management overhead; Playwright protocol errors → raw CDP fallback), [[concepts/bet365-size-gate-stale-odds]] (added auto-login as related concept for session expiry recovery)

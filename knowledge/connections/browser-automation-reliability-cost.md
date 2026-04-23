@@ -10,8 +10,9 @@ sources:
   - "daily/lcash/2026-04-11.md"
   - "daily/lcash/2026-04-13.md"
   - "daily/lcash/2026-04-19.md"
+  - "daily/lcash/2026-04-23.md"
 created: 2026-04-12
-updated: 2026-04-19
+updated: 2026-04-23
 ---
 
 # Connection: Browser Automation Reliability Cost
@@ -50,6 +51,14 @@ The game scraper's Chrome crash-recovery investigation on 2026-04-19 quantified 
 
 The crash-loop evidence confirms the broader thesis: browser-mediated architectures don't just have occasional failure modes — they have **continuous reliability overhead** that requires active mitigation (auto-recovery, crash detection, orphan cleanup) to maintain acceptable uptime.
 
+### Session Expiry and Auto-Login Overhead (2026-04-23)
+
+A fifth reliability dimension emerged on 2026-04-23: **authentication lifecycle management**. The bet365 game scraper depends on an authenticated Chrome session to access player prop data. Despite the `aaat` cookie having a ~10-day expiry, sessions die overnight — requiring daily re-authentication. The initial recovery procedure was manual RDP login, creating a daily maintenance burden that compounds with the operational bus factor (see [[concepts/value-betting-operational-assessment]], weakness #7).
+
+An automated login script was built using CDP to drive the existing Chrome instance through bet365's login form. This adds a new category of reliability overhead beyond the other four dimensions: the browser is not just a rendering engine that can hang (dimension 1), lose WS connections (dimension 2), take hours to warm up (dimension 3), or crash in loops (dimension 4) — it is also an **authentication vessel** whose session state degrades independently of process health. The Chrome process can be alive, the JS context responsive, and the CDP connection stable — but the bet365 session is expired, and no data flows until re-authentication.
+
+Notably, Playwright had protocol errors when connecting to the long-lived Chrome instance, requiring a fallback to raw CDP via httpx. This is a meta-reliability issue: the automation tool used to recover from browser failures can itself fail against aged browser processes. See [[concepts/bet365-auto-login-session-recovery]] for the full auto-login implementation.
+
 ## Related Concepts
 
 - [[concepts/playwright-evaluate-uncancellable]] - The specific uncancellable failure mode
@@ -59,3 +68,4 @@ The crash-loop evidence confirms the broader thesis: browser-mediated architectu
 - [[connections/anti-scraping-driven-architecture]] - The defenses that forced the browser-mediated architecture in the first place
 - [[concepts/cdp-browser-data-interception]] - CDP-level access that also fails to work around JS context hangs
 - [[concepts/game-scraper-chrome-crash-recovery]] - Crash-loop quantification: 14 restarts/day for game scraper, ~50 for direct scraper
+- [[concepts/bet365-auto-login-session-recovery]] - Session expiry and auto-login: fifth reliability dimension — authentication lifecycle management

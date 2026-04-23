@@ -59,6 +59,16 @@ This bug is related to but distinct from the devig method-market structure misma
 
 The common thread is that devigging is a garbage-in-garbage-out operation: the output is only as good as the input books' pricing quality and the model's assumptions about market structure.
 
+### DEFAULT_SHARP_IDS Fallback
+
+When `theoryList` is empty or the theory's weights config is unavailable (e.g., during initial load or for picks with no `triggered_by` match), a `DEFAULT_SHARP_IDS` fallback (`['100', '125', '192', '200', '250']`) kicks in. This covers the Aggressive theory's sharp book set and ensures devig computation proceeds with reasonable sharp filtering rather than falling back to all books. The fallback is a safety net — in normal operation, the theory lookup should always succeed for any pick with a valid `triggered_by` field.
+
+### Chart True Odds Line Smoothing
+
+After the theory-aware sharp filtering fix, the trail chart was redesigned to use ALL sharp trail entries (from the theory's sharp books) for the true odds line, rather than only entries that coincide with soft book observations. This produces a smoother continuous line because sharp book trails are typically denser than soft book trails. The chart uses a step-chart style for soft odds (odds jump discretely, not continuously) with a rolling average (window of 3) for the true odds line to smooth micro-noise from the change detector's 0.001 threshold.
+
+Historical (pre-size-gate-fix) trail data still shows wild oscillations — soft odds bouncing between ~1.3 and ~4.3 every 2 minutes as the scraper alternated between two response sizes. This produces fake 191% peak EVs in historical data. The chart cannot be validated against pre-fix data; clean post-fix picks (2026-04-23 onwards) are needed to assess the visualization quality.
+
 ### Dashboard Staleness Warning
 
 The `MAX_ODDS_AGE_S=180` filter correctly excludes stale trail entries from EV computation even when the dashboard shows a degraded status. The "stale data" warning is cosmetic — it indicates some data channels are slow, but the EV computation only uses entries within the freshness window.
@@ -74,4 +84,4 @@ The `MAX_ODDS_AGE_S=180` filter correctly excludes stale trail entries from EV c
 
 ## Sources
 
-- [[daily/lcash/2026-04-23.md]] - User spotted wrong true odds line on expanded trail charts; deep dive confirmed devig iterating ALL books instead of theory-specific sharps; fix in three places: chart renderer (line 688), computePeakEV (line 188), resolver _compute_trail_stats; theory lookup via triggered_by → weights config → sharp book IDs; MAX_ODDS_AGE_S=180 filter confirmed working correctly; old picks may need backfill with corrected filtering (Session 17:53)
+- [[daily/lcash/2026-04-23.md]] - User spotted wrong true odds line on expanded trail charts; deep dive confirmed devig iterating ALL books instead of theory-specific sharps; fix in three places: chart renderer (line 688), computePeakEV (line 188), resolver _compute_trail_stats; theory lookup via triggered_by → weights config → sharp book IDs; MAX_ODDS_AGE_S=180 filter confirmed working correctly; old picks may need backfill with corrected filtering (Session 17:53). DEFAULT_SHARP_IDS fallback for Aggressive theory; chart uses all sharp trails for smooth true odds line; step-chart for soft odds, rolling average for true odds; historical size-gate oscillation data visible in trails as validation of the bug (Sessions 19:12, 21:05)
