@@ -203,3 +203,10 @@
 - Developer: lcash
 - Articles created: [[concepts/bet365-size-gate-stale-odds]], [[concepts/polymarket-liquidity-enrichment]], [[concepts/trail-stats-precomputed-columns]], [[concepts/theory-aware-sharp-book-filtering]], [[concepts/superwin-edge-pick-backtesting]], [[concepts/shopify-ai-agent-optimization]]
 - Articles updated: [[concepts/podcast-pick-extraction-pipeline]] (added NBA expansion: JuiceBox NBA -5.6% ROI, Action Network +58.6%, Derek Carty new tipster; dataset now 3,899 picks / 12 shows / 2 sports; dashboard UX improvements; extraction methodology refinements), [[concepts/pinnacle-prediction-market-pipeline]] (added NBA Pinnacle/Crypto Edge theories → 20 new picks; SOFT_IDS 950/970 gap for NBA; 14-league OpticOdds scan validating niche league edges CBA +11.2%, Euroleague +5.3%)
+
+## [2026-04-23T18:23:54+10:00] compile | daily/lcash/2026-04-23.md (incremental)
+- Source: daily/lcash/2026-04-23.md
+- Developer: lcash
+- Note: Incremental recompile — Sessions 08:30 through 18:10 were compiled in prior pass; this pass covers Session 18:23 (OpticOdds partial stats causing silent mis-resolution of Wembanyama DD pick)
+- Articles created: [[concepts/opticodds-partial-stats-silent-misresolution]]
+- Articles updated: [[concepts/dd-td-resolver-bias]] (added packed field as potential cross-check for truncated component data; Wembanyama 5pts/4reb/12min vs packed field 1.501040001 suggesting full-game DD), [[concepts/opticodds-critical-dependency]] (added third dependency risk dimension: data completeness without quality flags, beyond availability and bias)

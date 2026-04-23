@@ -5,8 +5,9 @@ tags: [value-betting, resolver, data-quality, bug, opticodds]
 sources:
   - "daily/lcash/2026-04-16.md"
   - "daily/lcash/2026-04-17.md"
+  - "daily/lcash/2026-04-23.md"
 created: 2026-04-16
-updated: 2026-04-17
+updated: 2026-04-23
 ---
 
 # DD/TD Resolver Encoded Stat Bug
@@ -69,8 +70,17 @@ The DD/TD investigation codified three rules for future development:
 2. **Extreme win rates (>90% or <10% on 20+ picks) are a bug signal, not an edge.** 100% win rate on 350+ picks should have triggered an automatic sanity alert, not gone unnoticed for weeks.
 3. **Pick deduplication is needed at the analytics layer.** The 2.6x inflation obscures anomalies in the noise and makes manual audits harder.
 
+### Packed Field as Potential Cross-Check (2026-04-23)
+
+On 2026-04-23, a Wembanyama DD pick was graded incorrectly because OpticOdds returned **truncated component stats** (5 pts / 4 reb / 1 ast / 12 min — only Q1-Q2 data) while the packed `player_double_double` field was `1.501040001`, suggesting ~50 pts / ~10 reb from the full game. The resolver's fix to compute from primitives — correct for the encoding bug — produced a wrong result because the primitives themselves were incomplete.
+
+This reveals a potential second use for the packed field: as a **cross-check** against component-derived resolutions. When the packed field disagrees with the component derivation (e.g., packed suggests DD achieved but components show 0 categories ≥ 10), the pick should be flagged for manual review rather than auto-graded. The packed field appears to be populated from a different data pipeline that may have more complete data in partial-response scenarios.
+
+See [[concepts/opticodds-partial-stats-silent-misresolution]] for the full analysis of the partial stats failure mode.
+
 ## Related Concepts
 
+- [[concepts/opticodds-partial-stats-silent-misresolution]] - Second-order consequence of the primitives fix: when components are truncated, the previously-dismissed packed field may contain more complete data
 - [[concepts/opticodds-critical-dependency]] - The encoded stat field is an OpticOdds-specific data quality issue; trusting it without verification amplifies the single-provider risk
 - [[concepts/pick-dedup-multi-theory-limitation]] - The pick dedup architecture that produces the 2.6x inflation; analytics-layer dedup established as the correct fix location
 - [[concepts/one-sided-consensus-structural-bias]] - Another Over/Under asymmetry (951:13) from a different root cause (structural method bug vs. encoding assumption)
@@ -81,3 +91,4 @@ The DD/TD investigation codified three rules for future development:
 
 - [[daily/lcash/2026-04-16.md]] - Initial DD/TD investigation: 100% Over / 0% Under win rate flagged; encoded floats like 1.402040003 noted; 768→291 dedup (62% inflation); resolution trusted OpticOdds entirely (Session 14:45)
 - [[daily/lcash/2026-04-17.md]] - Encoding decoded: `player_double_double` is stat-line concatenation (1.PPRRAA), NOT binary; 645/773 picks mis-graded (83.4%); fix: compute from primitives (pts, reb, ast, stl, blk ≥ 10); full audit confirmed DD/TD was ONLY resolver defect; combo props zero mismatches across 49 checks; 111 unresolvable nulled for production retry; three forward rules codified (Sessions 13:15, 13:56, 14:52)
+- [[daily/lcash/2026-04-23.md]] - Wembanyama DD pick mis-resolved: OpticOdds returned truncated stats (5 pts / 4 reb / 1 ast / 12 min) while packed field `1.501040001` suggested full-game DD achieved; component derivation correct in principle but fails on incomplete data; packed field identified as potential cross-check source (Session 18:23)

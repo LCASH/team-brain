@@ -5,8 +5,9 @@ tags: [value-betting, infrastructure, dependency, odds-data, single-point-of-fai
 sources:
   - "daily/lcash/2026-04-12.md"
   - "daily/lcash/2026-04-20.md"
+  - "daily/lcash/2026-04-23.md"
 created: 2026-04-12
-updated: 2026-04-20
+updated: 2026-04-23
 ---
 
 # OpticOdds Critical Dependency
@@ -51,8 +52,15 @@ The planned removal of the Betstamp adapter (see [[concepts/betstamp-bet365-scra
 
 An OpticOdds esports audit on 2026-04-20 revealed significant coverage gaps: while 9 esports leagues are listed as available (CS2, Call of Duty, Dota 2, Kings of Glory, League of Legends, MLBB, Rainbow Six Siege, Rocket League, Valorant), only **League of Legends** has actual odds from any book (Pinnacle, Kalshi, Polymarket). The remaining 8 esports leagues have fixtures but zero odds entries from any bookmaker. This means the OpticOdds SSE streaming expansion (see [[concepts/opticodds-sse-streaming-scaling]]) will stream fixture events for these leagues but the scanner cannot evaluate them without odds data. Esports markets are thin across the industry — OpticOdds' gap reflects the broader market, not a provider-specific limitation.
 
+### Data Completeness Without Quality Flags (2026-04-23)
+
+A third dependency risk dimension was discovered on 2026-04-23, beyond availability (key expiry) and bias (no genuine sharps for AFL): **data completeness**. OpticOdds returned truncated player stats for Wembanyama (5 pts / 4 reb / 1 ast / 12 minutes — clearly partial Q1-Q2 data) with no flag indicating incompleteness. The API returned HTTP 200 with valid-looking JSON containing real numbers. The resolver graded the pick based on these incomplete stats, producing a silently wrong resolution.
+
+This is a particularly insidious risk because, unlike an availability outage (immediately visible) or a bias issue (detectable through aggregate outcome analysis), partial data looks valid at the individual record level. There is no completeness flag, no partial-response indicator, and no mechanism to distinguish "player scored 5 points" (legitimate) from "only first-half stats were returned" (truncated). The system must build its own completeness heuristics (e.g., minutes-played sanity checks) because OpticOdds does not provide them. See [[concepts/opticodds-partial-stats-silent-misresolution]] for the full analysis.
+
 ## Related Concepts
 
+- [[concepts/opticodds-partial-stats-silent-misresolution]] - Truncated stat lines from OpticOdds causing silent mis-resolution; a third dependency risk beyond availability and bias
 - [[concepts/bet365-racing-adapter-architecture]] - Bet365 scrapers are the only odds source independent of OpticOdds
 - [[concepts/parlay-ev-calculation]] - EV calculations depend on true odds derived from sharp book data (via OpticOdds)
 - [[concepts/betstamp-bet365-scraper-migration]] - Betstamp removal that deepens the single-provider dependency
@@ -63,3 +71,4 @@ An OpticOdds esports audit on 2026-04-20 revealed significant coverage gaps: whi
 
 - [[daily/lcash/2026-04-12.md]] - OpticOdds key expiry exposed full dependency scope: NRL/AFL/MLB 100% dependent, NBA partially resilient via Bet365 scrapers; key rotated across 3 environments; Windows `taskkill /F /PID` gotcha; port mappings documented (Session 20:15). Betstamp removal analysis confirmed deepening dependency (Session 21:15)
 - [[daily/lcash/2026-04-20.md]] - Esports coverage audit: 9 leagues listed but only League of Legends has odds from any book (Pinnacle, Kalshi, Polymarket); CS2, Valorant, Dota 2, CoD, and 4 others have fixtures but zero odds (Sessions 14:57, 16:29)
+- [[daily/lcash/2026-04-23.md]] - Third dependency dimension: data completeness without quality flags. Wembanyama stats truncated (5 pts / 4 reb / 12 min) with no incompleteness indicator; resolver produced wrong grade from valid-looking partial data (Session 18:23)
