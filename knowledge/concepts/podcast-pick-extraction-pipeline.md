@@ -1,16 +1,17 @@
 ---
 title: "Podcast Pick Extraction Pipeline"
-aliases: [newsbets, podcast-picks, youtube-transcript-extraction, podcast-backtesting, mlb-podcast-pipeline]
-tags: [value-betting, podcast, extraction, backtesting, mlb, pipeline]
+aliases: [newsbets, podcast-picks, youtube-transcript-extraction, podcast-backtesting, mlb-podcast-pipeline, nba-podcast-pipeline]
+tags: [value-betting, podcast, extraction, backtesting, mlb, nba, pipeline]
 sources:
   - "daily/lcash/2026-04-22.md"
+  - "daily/lcash/2026-04-23.md"
 created: 2026-04-22
-updated: 2026-04-22
+updated: 2026-04-23
 ---
 
 # Podcast Pick Extraction Pipeline
 
-A system for extracting structured betting picks from YouTube MLB podcast transcripts, resolving outcomes against MLB Stats API box scores, and backtesting profitability. The pipeline uses `yt-dlp` for transcript fetching (no API keys), Claude Agent SDK `query()` for LLM-based extraction with tool-use, and a 4-table Supabase data model. A full 2025 season backtest across 810 episodes and 2,650 picks found **51.0% WR, -1.7% ROI** — essentially breakeven, with profitable niches in team totals (+35.7%) and strikeouts (+12.3%).
+A multi-sport system for extracting structured betting picks from YouTube podcast transcripts, resolving outcomes against sports stats APIs, and backtesting profitability. The pipeline uses `yt-dlp` for transcript fetching (no API keys), Claude Agent SDK `query()` for LLM-based extraction with tool-use, and a 4-table Supabase data model. Expanded from MLB-only to NBA on 2026-04-23 with Action Network as a new source. Full dataset: **3,899 picks across 12 shows and 2 sports, 2,639 resolved**. MLB remains breakeven (-1.7% ROI); NBA varies dramatically by show: Action Network +58.6% (moneyline-skewed), JuiceBox -5.6% (only player prop overs profitable).
 
 ## Key Points
 
@@ -114,6 +115,51 @@ The full pipeline was committed as `6533340` (+4,155 lines, 10 files) with CLAUD
 
 "On Deck" (DFS CheatSheet) was excluded — too DFS-lineup focused for explicit betting pick extraction.
 
+### NBA Expansion (2026-04-23)
+
+On 2026-04-23, the pipeline was expanded to NBA with two shows: JuiceBox NBA and Action Network (86 NBA + 17 MLB episodes, fetched via `yt-dlp --dump-json --skip-download` since `--flat-playlist` doesn't return upload dates for streams). The sport-agnostic design proved out — adding NBA required only a new config entry with NBA-specific prop vocabulary and resolution API.
+
+**JuiceBox NBA results (121 picks, 50.4% WR, -5.6% ROI, -6.7 units):** Not profitable overall unlike their MLB (+10.5% ROI). Profitable niche: **player prop overs at 80+ confidence** (~40 picks, projected +10-15% ROI). PRA +29%, rebounds +100% WR, points +1.1%. Spreads catastrophic at 29.6% WR / -43.4% ROI / -11.7 units. Game totals also terrible at -68.2%.
+
+**Action Network NBA results (325 picks, +58.6% ROI):** Headline-grabbing but moneyline-skewed — +203% ROI on 73 moneyline picks from underdog wins. Player props genuinely profitable at **+16-17% ROI on 200+ picks**, making Action Network sharper at scale on NBA props than JuiceBox (+3% vs +17%).
+
+**Action Network MLB (mediocre, -7.5% ROI):** Action Network's NBA strength does not transfer to MLB.
+
+### New Tipster Source: Derek Carty / Unabated
+
+Derek Carty (@UnabatedLive "The Bat: MLB Player Props" + @CoversSports "THE BAT X Release Show") was identified and fetch started. Key distinction: model-driven (THE BAT projection system) rather than gut feel — potentially better calibrated than conversational podcast picks. Results pending extraction and resolution.
+
+### Updated Dataset Totals
+
+| Metric | Value |
+|--------|-------|
+| Total picks | **3,899** |
+| Resolved | **2,639** |
+| Shows | **12** |
+| Sports | **2** (MLB, NBA) |
+| Episodes | **~920** (810 MLB + 104 Action Network + JuiceBox NBA) |
+
+### Dashboard UX Improvements (2026-04-23)
+
+- Default date range changed from "Last 14 days" to **"All time"** to avoid data visibility confusion
+- Date range change **auto-reloads data** (no manual "Load Results" click needed)
+- Replaced dropdown date ranges with **calendar date pickers** (From/To) plus quick-range dropdown for flexible timeframe analysis (e.g., single MLB season: March 27 – October 26, 2025)
+
+### Extraction Methodology Refinements (2026-04-23)
+
+Several extraction judgment calls were codified during NBA transcript processing:
+
+- **Star ratings → confidence**: 3-star → 90, 2-star → 80, 1-star → 65, parlay components → 40
+- **Odds source priority**: When host quotes one number but DraftKings/book price is given, use the verifiable book price
+- **Attribution filtering**: Guest picks excluded from output — only host picks counted
+- **Previously placed vs current**: Hosts reference past bets during recaps; only current recommendations extracted
+- **Segment confidence**: "Plant the Flag" segments → 90 confidence; "best bets" → 80; softer mentions → 65
+- **Missing odds**: Leave null rather than guess (e.g., "Mariners AL West at plus money")
+
+### Batch Extraction Reliability
+
+NBA batch extraction hit many CLI timeout errors ("Control request timeout: initialize") from parallelism, but episodes still processed — errors are noisy but not fatal. This is consistent with the Agent SDK CLI startup overhead issue documented for MLB extraction.
+
 ## Related Concepts
 
 - [[concepts/value-betting-theory-system]] - The scanner's theory system that podcast picks could theoretically be cross-referenced against for EV validation
@@ -123,4 +169,5 @@ The full pipeline was committed as `6533340` (+4,155 lines, 10 files) with CLAUD
 
 ## Sources
 
+- [[daily/lcash/2026-04-23.md]] - NBA expansion: JuiceBox NBA 121 picks, -5.6% ROI (spreads -43.4%, player prop overs profitable); Action Network 104 episodes fetched via yt-dlp --dump-json, 325 NBA picks +58.6% ROI (ML-skewed, props +16-17%); Action Network MLB -7.5%; Derek Carty/Unabated identified as model-driven tipster; full dataset 3,899 picks / 2,639 resolved / 12 shows / 2 sports (Sessions 09:30, 11:17). Dashboard UX: "All time" default, auto-reload on date change, calendar date pickers (Session 11:17). Extraction methodology: star rating mapping, DK price priority, guest exclusion, segment confidence inference, null odds preference (Sessions 09:50, 10:01, 10:06)
 - [[daily/lcash/2026-04-22.md]] - Full pipeline design: 4-table data model, yt-dlp for YouTube captions, Claude Agent SDK `query()` for extraction (not ClaudeSDKClient), strict pattern matching, confidence scoring from language cues (Sessions 08:59, 09:55). Sonnet 8x faster than Haiku due to CLI startup overhead; HRR misclassification inverted backtest; game_date from transcript context not published_at; parallel batch extraction 7x faster than serial (Session 13:20). 10 critical pipeline flaws identified and sport-agnostic redesign with `build_extraction_prompt("mlb")` (Session 13:20). Full year backtest: 810 episodes, 2,650 picks, 2,104 graded → 51.0% WR, -1.7% ROI; team totals +35.7%, strikeouts +12.3%; confidence inverted; game total resolution bug inflated ROI by 14 points; F5 picks voided; JuiceBox only profitable show (+9.6%); dashboard deployed (Sessions 16:59, 17:33, 19:51). Dashboard iteration: Supabase PostgREST 1000-row cap required client-side pagination; RLS blocked anon key reads (explicit SELECT policies needed); JuiceBox updated to 139 picks / 59.7% WR / +10.5% ROI with moneylines and K overs as edge, "leans" outperform "best bets" (+26.2%); ROI switched from even-money to odds-weighted decimal odds; committed as `6533340` (+4,155 lines, 10 files) (Session 20:22)

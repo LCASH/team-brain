@@ -7,8 +7,9 @@ sources:
   - "daily/lcash/2026-04-16.md"
   - "daily/lcash/2026-04-18.md"
   - "daily/lcash/2026-04-21.md"
+  - "daily/lcash/2026-04-23.md"
 created: 2026-04-15
-updated: 2026-04-21
+updated: 2026-04-23
 ---
 
 # Pinnacle Prediction Market Pipeline
@@ -149,6 +150,14 @@ See [[concepts/pinnacle-prediction-market-roi-breakdown]] for the full breakdown
 
 NBA picks were disappearing from the dashboard "before tip-off" — root cause was that OpticOdds reports the scheduled start time, but actual tip-off is 10-15 minutes later due to pre-game ceremonies and introductions. A 15-minute buffer was added to `_is_game_live()` to match actual tip-off time vs scheduled time, preventing premature filtering of picks that are still actionable.
 
+### NBA Pinnacle and Crypto Edge Theories Created (2026-04-23)
+
+On 2026-04-23, lcash discovered that NBA was missing from the Pinnacle and Crypto Edge theory configurations — MLB and NHL already had theories but NBA was a gap. Creating **NBA Pinnacle** and **NBA Crypto Edge** theory rows in Supabase instantly generated **20 new NBA picks** that were previously completely invisible.
+
+The discovery came during Polymarket liquidity enrichment work (see [[concepts/polymarket-liquidity-enrichment]]): prediction market book IDs (950 for Kalshi, 970 for Polymarket) were missing from the NBA dashboard's `SOFT_IDS`, meaning ~600+ NBA markets with Polymarket/Kalshi odds were silently ignored by the EV computation. This is a recurrence of the `SOFT_IDS` exclusion pattern documented in [[concepts/trail-capture-soft-ids-gap]].
+
+Additionally, a full 14-league scan of OpticOdds was performed to validate Pinnacle + prediction market overlap, finding real edges in niche basketball leagues: CBA +11.2%, Euroleague +5.3%, NBA +1.7%. The niche leagues produce stronger edges because prediction markets are less efficient there — a counter-intuitive but validated finding. An earlier MLB scan that showed zero prediction-market coverage was re-run and found real overlap (Kalshi 36 entries, Polymarket 12 entries) — the original "zero coverage" result was a false negative from timing gaps or query methodology.
+
 ## Related Concepts
 
 - [[concepts/value-betting-theory-system]] - The theory system that the Pinnacle pipeline extends with a new sharp/soft pairing
@@ -163,6 +172,7 @@ NBA picks were disappearing from the dashboard "before tip-off" — root cause w
 - [[concepts/niche-league-tracker-pipeline-bottlenecks]] - Three compound bottlenecks silently killing niche league picks: ACTIVE_SPORTS, freshness cutoff, SSE filter
 - [[concepts/crypto-edge-non-pinnacle-strategy]] - The complementary strategy targeting non-Pinnacle prediction market gaps
 - [[concepts/opticodds-sse-streaming-scaling]] - SSE streaming migration to scale from 23 to 491+ leagues
+- [[concepts/polymarket-liquidity-enrichment]] - Liquidity metadata from Polymarket CLOB API; NBA SOFT_IDS gap exposed during this integration
 
 ## Sources
 
@@ -170,3 +180,4 @@ NBA picks were disappearing from the dashboard "before tip-off" — root cause w
 - [[daily/lcash/2026-04-16.md]] - NHL viable (3 game-line markets, ~400 LOC for game-line support); MLB non-viable (0 prediction market coverage on OpticOdds); soccer deactivated (22 theories, 30 phantom picks voided — 3-way devig needed); Pinnacle prop-type variance: Threes +27.9%, Assists -50.4%; min_ev 5→1; trail capture SOFT_IDS gap fixed; all theories set to 3h window; SSE payload bloated to 6-9MB from game-line expansion (MLB 2K→5,040 markets), fixed by VPS-side Pinnacle pollers with restricted book set and SSE push disabled (Sessions 13:04, 13:38, 16:30, 20:38, 21:31). Virtual pill rendering: skipped live computation entirely, only stored picks; cleared _storedEVPicks on pill switch to fix race condition; multiple render paths (renderStats/renderEV) both calling computeEVPicks independently (Session 22:35). Niche league pipeline unblocked: three compound bottlenecks (ACTIVE_SPORTS iteration, 30s→120s sharp freshness, SSE filter hiding tracker view) silently killed niche league output; post-fix 0 picks confirmed correct (games 27-124h away) (Session 23:12)
 - [[daily/lcash/2026-04-18.md]] - Crypto Edge pill launched (1,535 non-Pinnacle markets, MLB 1,354); 215 picks across 14 leagues; only polling 23/491 Kalshi leagues (~5%); SSE streaming endpoint discovered (459KB/15s all leagues per sport); 5-phase REST-to-SSE migration plan; fixture cache limit=100 silently dropped 495/2,400 SSE markets (Sessions 12:31, 13:31, 14:39)
 - [[daily/lcash/2026-04-21.md]] - Forward ROI validation: +8.1% ROI, +92.8u across 1,146 picks using average +EV odds methodology; MLB HR +46.4%, NBA Rebounds +32.6%; losing leagues deactivated: LoL -31.9%, NHL -21.0%, ATP Challenger -34.3% (saves ~34u); NBA tipoff 15-min buffer added for scheduled vs actual start time (Sessions 12:01, 17:12)
+- [[daily/lcash/2026-04-23.md]] - NBA Pinnacle + Crypto Edge theories created → 20 new picks instantly; SOFT_IDS 950/970 missing from NBA dashboard; 14-league OpticOdds scan confirmed CBA +11.2%, Euroleague +5.3%, NBA +1.7% edges; earlier MLB "zero coverage" was false negative (Kalshi 36, Polymarket 12 entries on re-scan); Pinnacle sharp on game lines but weak on player props (#7/8, Brier 0.2695) (Sessions 13:46, 18:10)

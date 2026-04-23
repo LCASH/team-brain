@@ -197,3 +197,9 @@
 - Note: Incremental recompile — Sessions 08:48 through 19:51 were compiled in prior pass; this pass covers Session 20:22 (dashboard iteration: Supabase PostgREST pagination, RLS policies, JuiceBox deeper analysis, odds-weighted ROI, git commit)
 - Articles created: (none)
 - Articles updated: [[concepts/podcast-pick-extraction-pipeline]] (added Supabase deployment gotchas: PostgREST 1000-row cap requiring pagination, RLS anon key SELECT policies; JuiceBox updated to 139 picks / 59.7% WR / +10.5% ROI with "leans" outperforming "best bets"; ROI methodology upgraded to odds-weighted decimal; committed as 6533340 +4,155 lines)
+
+## [2026-04-23T18:10:00+10:00] compile | daily/lcash/2026-04-23.md
+- Source: daily/lcash/2026-04-23.md
+- Developer: lcash
+- Articles created: [[concepts/bet365-size-gate-stale-odds]], [[concepts/polymarket-liquidity-enrichment]], [[concepts/trail-stats-precomputed-columns]], [[concepts/theory-aware-sharp-book-filtering]], [[concepts/superwin-edge-pick-backtesting]], [[concepts/shopify-ai-agent-optimization]]
+- Articles updated: [[concepts/podcast-pick-extraction-pipeline]] (added NBA expansion: JuiceBox NBA -5.6% ROI, Action Network +58.6%, Derek Carty new tipster; dataset now 3,899 picks / 12 shows / 2 sports; dashboard UX improvements; extraction methodology refinements), [[concepts/pinnacle-prediction-market-pipeline]] (added NBA Pinnacle/Crypto Edge theories → 20 new picks; SOFT_IDS 950/970 gap for NBA; 14-league OpticOdds scan validating niche league edges CBA +11.2%, Euroleague +5.3%)
