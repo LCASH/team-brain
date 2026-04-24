@@ -4,8 +4,9 @@ aliases: [sse-startup-hang, theory-creation-bottleneck, sequential-supabase-gets
 tags: [value-betting, operations, sse, supabase, scaling, bug]
 sources:
   - "daily/lcash/2026-04-20.md"
+  - "daily/lcash/2026-04-24.md"
 created: 2026-04-20
-updated: 2026-04-20
+updated: 2026-04-24
 ---
 
 # SSE Startup Theory Creation Hang
@@ -54,13 +55,23 @@ The SSE startup hang is a more severe manifestation: not just slow, but potentia
 3. **Parallelization** — if individual GETs must be retained, run them concurrently with `asyncio.gather()` bounded by a semaphore to respect rate limits
 4. **Phase separation** — decouple theory creation from stream launch so that a theory creation failure doesn't block streaming
 
+### SSE_SPORTS Filtering and API Key Discovery (2026-04-24)
+
+On 2026-04-24, lcash discovered that the SSE startup's auto-discovery was creating theories for 432 leagues — all against an API key that only covers NBA basketball. The 22 non-basketball SSE streams all failed with 400 "not enabled for your API key." This means the 5+ minute startup delay was entirely wasted compute for inaccessible sports.
+
+An `SSE_SPORTS` environment variable was added to `server/main.py` to filter which sports get SSE streams. It was set to all sports (not just basketball) so that when the API key is upgraded, streams auto-activate without code changes. Failed connections silently retry with no harm. See [[concepts/opticodds-api-key-sport-scoping]] for the full API key audit.
+
+Additionally, the auto-resolver and SSE startup running simultaneously after a VPS restart can flood the OpticOdds API, causing SSE streams to get stuck. A 5-minute startup delay was added to the auto-resolver to stagger the load.
+
 ## Related Concepts
 
 - [[concepts/fixture-cache-silent-market-dropout]] - Identified the same serial Supabase GET bottleneck (0.2s × 462 = ~90s); the SSE hang is the failure mode when this bottleneck becomes indefinite
 - [[concepts/niche-league-tracker-pipeline-bottlenecks]] - Three compound bottlenecks (ACTIVE_SPORTS, freshness, SSE filter) produced zero output similarly; SSE startup hang adds a fourth potential bottleneck upstream of all three
 - [[concepts/value-betting-operational-assessment]] - Weakness #2 (no monitoring): the SSE hang was invisible because the task showed "alive" — health checks need to verify stream count, not just task status
 - [[concepts/opticodds-sse-streaming-scaling]] - The SSE streaming architecture that depends on `_sse_startup()` completing successfully
+- [[concepts/opticodds-api-key-sport-scoping]] - API key scope discovery that explained why 22/22 non-basketball SSE streams fail; SSE_SPORTS env var added as mitigation
 
 ## Sources
 
 - [[daily/lcash/2026-04-20.md]] - SSE startup hung after theory creation, blocking stream launch and fixture cache; 299 leagues auto-discovered, 2 new theories created; 18/18 streams came online after restart; multiple restart attempts needed; task showed "alive" despite zero streams running (Sessions 14:57, 16:29, 18:47)
+- [[daily/lcash/2026-04-24.md]] - SSE startup creating theories for 432 leagues against NBA-only API key; 22 non-basketball streams all 400 errors; `SSE_SPORTS` env var added; auto-resolver 5-min delay to prevent API flood on restart (Sessions 14:40, 15:47, 16:35)

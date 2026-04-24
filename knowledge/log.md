@@ -217,3 +217,9 @@
 - Note: Incremental recompile — Sessions 08:30 through 18:23 were compiled in prior passes; this pass covers Sessions 19:12, 21:05 (trail chart visualization, DEFAULT_SHARP_IDS fallback), and 21:36 (bet365 auto-login session recovery, push worker instability)
 - Articles created: [[concepts/bet365-auto-login-session-recovery]]
 - Articles updated: [[concepts/theory-aware-sharp-book-filtering]] (added DEFAULT_SHARP_IDS fallback, chart smoothing with step-chart + rolling average, historical size-gate oscillation visible in trails), [[connections/browser-automation-reliability-cost]] (added fifth reliability dimension: session expiry and auto-login as authentication lifecycle management overhead; Playwright protocol errors → raw CDP fallback), [[concepts/bet365-size-gate-stale-odds]] (added auto-login as related concept for session expiry recovery)
+
+## [2026-04-24T20:09:33+10:00] compile | daily/lcash/2026-04-24.md
+- Source: daily/lcash/2026-04-24.md
+- Developer: lcash
+- Articles created: [[concepts/tab-scraper-threshold-markets]], [[concepts/bet365-shared-chrome-single-session]], [[concepts/pick-trail-time-window-separation]], [[concepts/news-agent-injury-pipeline]], [[concepts/opticodds-api-key-sport-scoping]], [[concepts/opticodds-tcp-drop-max-age-tuning]]
+- Articles updated: [[concepts/opticodds-critical-dependency]] (added fourth dependency risk dimension: API key sport-specific scoping, NBA-only access), [[concepts/sse-startup-theory-creation-hang]] (added SSE_SPORTS env var filtering, 432 leagues against NBA-only key, auto-resolver 5-min delay), [[concepts/value-betting-operational-assessment]] (added third triple overnight failure, API key scope discovery, bet365 shared Chrome), [[concepts/bet365-auto-login-session-recovery]] (added single-session-per-account discovery, shared Chrome on port 9223)

@@ -6,8 +6,9 @@ sources:
   - "daily/lcash/2026-04-12.md"
   - "daily/lcash/2026-04-20.md"
   - "daily/lcash/2026-04-23.md"
+  - "daily/lcash/2026-04-24.md"
 created: 2026-04-12
-updated: 2026-04-23
+updated: 2026-04-24
 ---
 
 # OpticOdds Critical Dependency
@@ -58,6 +59,20 @@ A third dependency risk dimension was discovered on 2026-04-23, beyond availabil
 
 This is a particularly insidious risk because, unlike an availability outage (immediately visible) or a bias issue (detectable through aggregate outcome analysis), partial data looks valid at the individual record level. There is no completeness flag, no partial-response indicator, and no mechanism to distinguish "player scored 5 points" (legitimate) from "only first-half stats were returned" (truncated). The system must build its own completeness heuristics (e.g., minutes-played sanity checks) because OpticOdds does not provide them. See [[concepts/opticodds-partial-stats-silent-misresolution]] for the full analysis.
 
+### API Key Sport-Specific Scoping (2026-04-24)
+
+A fourth dependency risk dimension was discovered on 2026-04-24: **API key scope**. The current OpticOdds API key only grants access to NBA basketball — not multi-sport. REST fixtures return empty for all non-basketball sports, SSE connections fail with 400 "not enabled for your API key" for all 22 non-basketball streams, and even other basketball leagues (NBL, EuroLeague, CBA) are inaccessible. This means the scanner is effectively **NBA-only** despite code and infrastructure supporting multi-sport operation.
+
+The practical impact: MLB has 275 markets from the Bet365 game scraper but zero sharp book data — no EV calculation is possible. NRL and AFL mini PC servers are not running. The Pinnacle prediction-market pipeline, Crypto Edge strategy, and SSE streaming expansion are all NBA-only until the API key is upgraded.
+
+The API key scope limitation interacts with the other dependency dimensions:
+- **Availability** (key expiry): affects all sports equally
+- **Bias** (no genuine sharps): affects AFL specifically
+- **Completeness** (truncated stats): affects all sports
+- **Scope** (key permissions): affects all non-NBA sports — the broadest impact of the four
+
+See [[concepts/opticodds-api-key-sport-scoping]] for the full audit and `SSE_SPORTS` env var mitigation.
+
 ## Related Concepts
 
 - [[concepts/opticodds-partial-stats-silent-misresolution]] - Truncated stat lines from OpticOdds causing silent mis-resolution; a third dependency risk beyond availability and bias
@@ -66,9 +81,11 @@ This is a particularly insidious risk because, unlike an availability outage (im
 - [[concepts/betstamp-bet365-scraper-migration]] - Betstamp removal that deepens the single-provider dependency
 - [[connections/scraper-consolidation-provider-dependency]] - Analysis of how scraper consolidation interacts with provider dependency
 - [[concepts/opticodds-sse-streaming-scaling]] - SSE streaming expansion depends on OpticOdds having actual odds data per league, not just fixture listings
+- [[concepts/opticodds-api-key-sport-scoping]] - API key scope limiting access to NBA-only; fourth dependency risk dimension beyond availability, bias, and completeness
 
 ## Sources
 
 - [[daily/lcash/2026-04-12.md]] - OpticOdds key expiry exposed full dependency scope: NRL/AFL/MLB 100% dependent, NBA partially resilient via Bet365 scrapers; key rotated across 3 environments; Windows `taskkill /F /PID` gotcha; port mappings documented (Session 20:15). Betstamp removal analysis confirmed deepening dependency (Session 21:15)
 - [[daily/lcash/2026-04-20.md]] - Esports coverage audit: 9 leagues listed but only League of Legends has odds from any book (Pinnacle, Kalshi, Polymarket); CS2, Valorant, Dota 2, CoD, and 4 others have fixtures but zero odds (Sessions 14:57, 16:29)
 - [[daily/lcash/2026-04-23.md]] - Third dependency dimension: data completeness without quality flags. Wembanyama stats truncated (5 pts / 4 reb / 12 min) with no incompleteness indicator; resolver produced wrong grade from valid-looking partial data (Session 18:23)
+- [[daily/lcash/2026-04-24.md]] - Fourth dependency dimension: API key sport-specific scoping. Key only covers NBA basketball; MLB/soccer/tennis/hockey/esports all return empty/400; NRL/AFL servers dead; MLB 275 markets from Bet365 only with zero sharps (Sessions 14:40, 15:47, 16:35)

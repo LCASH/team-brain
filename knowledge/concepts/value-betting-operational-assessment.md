@@ -8,8 +8,9 @@ sources:
   - "daily/lcash/2026-04-19.md"
   - "daily/lcash/2026-04-20.md"
   - "daily/lcash/2026-04-22.md"
+  - "daily/lcash/2026-04-24.md"
 created: 2026-04-12
-updated: 2026-04-22
+updated: 2026-04-24
 ---
 
 # Value Betting System Operational Assessment
@@ -80,6 +81,16 @@ On 2026-04-22, the VPS server silently died from SSE 400 error cascades at 23:08
 
 The SSE cascade failure is also architecturally concerning: client-facing SSE errors (HTTP 400 from browser clients) cascaded to kill the backend data-processing tracker. These layers should be isolated. See [[concepts/vps-sse-cascade-silent-crash]] for the full analysis.
 
+### Triple Overnight Failure and API Key Scope Discovery (2026-04-24)
+
+On 2026-04-24, a morning health check revealed three simultaneous overnight failures: push worker died, both Chrome sessions expired, and OpticOdds was erroring. This is the third triple-failure incident (after 2026-04-20 and 2026-04-22), reinforcing the pattern that the system regularly enters multi-component degraded states overnight with no alerting.
+
+The same session also uncovered that the OpticOdds API key only covers NBA basketball — all other sports (MLB, soccer, tennis, hockey, esports) return empty or 400 errors. This fundamentally changes the operational picture: the scanner is **effectively NBA-only** despite infrastructure supporting multi-sport operation. NRL and AFL servers are not running on the mini PC. MLB has 275 markets from Bet365 but zero sharp data, making EV calculation impossible. See [[concepts/opticodds-api-key-sport-scoping]] for the full audit.
+
+This adds a new dimension to weakness #1 (OpticOdds SPOF): the dependency is not just a single-provider risk but a single-sport-single-provider bottleneck. Upgrading the API key to multi-sport access is a prerequisite for the system to function as designed.
+
+A positive development: the user's correction — "never assume the system is good; check every component individually" — drove an investigation that uncovered the bet365 single-session-per-account constraint (see [[concepts/bet365-shared-chrome-single-session]]), consolidating two Chrome instances into one and eliminating session conflicts.
+
 ## Related Concepts
 
 - [[concepts/opticodds-critical-dependency]] - Weakness #1: the single-provider risk
@@ -90,6 +101,8 @@ The SSE cascade failure is also architecturally concerning: client-facing SSE er
 - [[connections/operational-compound-failures]] - How weaknesses #2, #3, and #4 compound together
 - [[concepts/deploy-syntax-validation-gap]] - The deploy validation gap exposed by the 2026-04-20 triple-failure scenario
 - [[concepts/vps-sse-cascade-silent-crash]] - VPS killed by SSE 400 cascade, dead 10+ hours with no alerting
+- [[concepts/opticodds-api-key-sport-scoping]] - API key only covers NBA — scanner is effectively single-sport despite multi-sport infrastructure
+- [[concepts/bet365-shared-chrome-single-session]] - Single-session-per-account constraint drove Chrome consolidation; positive fix from thorough health checking
 
 ## Sources
 
@@ -98,3 +111,4 @@ The SSE cascade failure is also architecturally concerning: client-facing SSE er
 - [[daily/lcash/2026-04-19.md]] - First automated monitoring deployed: hourly trail health cron (commit 31eaf5da) for Bet365 game scraper, checking liveness + odds-vs-trail consistency + freshness; auto-expires 7 days (Session 21:36)
 - [[daily/lcash/2026-04-20.md]] - Triple simultaneous failure (tracker dead from syntax error + SSE startup hung + MLB idle): exposed deploy validation gap and need for per-component health dashboard; `python -m py_compile` recommended as pre-deploy guard (Session 14:57)
 - [[daily/lcash/2026-04-22.md]] - VPS SSE 400 cascade crash: dead 10+ hours (23:08→09:21), 0 picks/0 alerting; reinforces weakness #2 and #6; no process supervisor for auto-restart; client-facing SSE errors cascaded to kill backend tracker (Session 09:21)
+- [[daily/lcash/2026-04-24.md]] - Third triple overnight failure (push worker + Chrome sessions + OpticOdds); OpticOdds API key only covers NBA — MLB/NRL/AFL all dead; scanner is effectively NBA-only; bet365 single-session-per-account forced Chrome consolidation; user correction: "never assume the system is good" (Sessions 09:10, 14:40)

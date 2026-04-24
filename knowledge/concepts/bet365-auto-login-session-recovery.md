@@ -4,8 +4,9 @@ aliases: [auto-login, session-recovery, bet365-login-automation, cookie-expiry-r
 tags: [bet365, scraping, operations, browser-automation, reliability, value-betting]
 sources:
   - "daily/lcash/2026-04-23.md"
+  - "daily/lcash/2026-04-24.md"
 created: 2026-04-23
-updated: 2026-04-23
+updated: 2026-04-24
 ---
 
 # bet365 Auto-Login Session Recovery
@@ -75,7 +76,9 @@ As of 2026-04-23, the auto-login script was built and tested against the NBA Chr
 - [[connections/browser-automation-reliability-cost]] - Session expiry and auto-login add a fifth reliability dimension to the browser-mediated architecture: authentication lifecycle management
 - [[concepts/cdp-browser-data-interception]] - Raw CDP via httpx used as fallback when Playwright has protocol errors with long-lived Chrome instances
 - [[concepts/configuration-drift-manual-launch]] - Auto-login reduces the operational bus factor by eliminating the need for manual RDP login after overnight session expiry
+- [[concepts/bet365-shared-chrome-single-session]] - bet365 enforces single-session-per-account; auto-login now targets only port 9223 (shared Chrome) instead of two separate ports
 
 ## Sources
 
 - [[daily/lcash/2026-04-23.md]] - Bet365 NBA scraper NOT logged in despite yesterday's cookies; cookie `aaat` ~10-day expiry but sessions die overnight; built automated login script watching manual flow via CDP; must clear autofilled fields before typing; Playwright protocol errors → raw CDP via httpx fallback; login flow: click Log In → clear+type username → clear+type password → click submit; human-like delays for bot detection avoidance; deployment to both NBA/MLB scrapers pending (Session 21:36)
+- [[daily/lcash/2026-04-24.md]] - bet365 single-session-per-account discovered: NBA Chrome login failing because MLB Chrome already logged in; consolidated to shared Chrome on port 9223; auto-login now targets only one port; port 9224 killed (Session 09:10)
