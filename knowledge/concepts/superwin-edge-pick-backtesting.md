@@ -4,8 +4,9 @@ aliases: [edge-picks, racing-backtesting, superwin-backtesting, edge-scanner-per
 tags: [superwin, racing, backtesting, architecture, supabase]
 sources:
   - "daily/lcash/2026-04-23.md"
+  - "daily/lcash/2026-04-25.md"
 created: 2026-04-23
-updated: 2026-04-23
+updated: 2026-04-25
 ---
 
 # SuperWin Edge Pick Backtesting System
@@ -65,6 +66,25 @@ Detection-time EV uses the scanner's devigged true probability at the moment of 
 
 The racing cron stops around 1:00 PM UTC (11 PM AEST) when Australian racing ends for the day. Late deploys won't see new racing picks until the next day's racing begins. Sports and golf picks bypass racing-specific filters (max odds, time-to-jump, spread check) as they operate in different domains.
 
+### LTP as CLV Proxy When BSP Unavailable (2026-04-25)
+
+On 2026-04-25, lcash discovered that only 21% of settled picks had BSP data — most Australian greyhound and harness markets don't have BSP enabled on Betfair at all. The `sp` objects in Betfair API responses are empty for these markets. LTP (Last Traded Price) is available for 88% of picks and serves as a viable CLV proxy.
+
+The resolver was updated to cascade: BSP → LTP for CLV calculation. A backfill of 53 historical picks with LTP-based CLV brought coverage from 21% to 88%. Nine picks have no CLV at all (zero Betfair trading data) — an acceptable gap.
+
+### Early Backtesting Results (2026-04-25)
+
+Review of all 80 journal picks across 3 days revealed:
+- **TAB profitable**: +13.7% ROI
+- **TabTouch bleeding**: -100% (every pick lost)
+- **By race type**: Greyhounds losing (-29.3%), Thoroughbreds winning (+21.9%)
+- **Detection timing**: 84% of picks detected under 10 minutes before jump — most edges found very late, clustering at 2-5 minutes. This is too late for practical bet placement and requires investigation into earlier detection.
+- **Mode tracking gap**: `mode_slug` column exists but is always NULL because no edges have `boost_mode` configured yet
+
+### Cron Toggle Design Gap (2026-04-25)
+
+A cron architecture gap was identified: toggling the `enabled` flag in Supabase doesn't hot-load adapters. If the service restarts during off-hours (e.g., midnight AEST), only bet365 loads because TAB/TabTouch/Betfair adapters aren't running. The 9am cron just toggles DB flags without actually starting the adapters. The fix is for the cron to `systemctl restart superwin` rather than just flipping DB flags.
+
 ### Supabase Constraints
 
 DDL operations (CREATE TABLE, ALTER TABLE) cannot be executed via PostgREST or the service-role key — they must be run in Supabase's SQL Editor dashboard. RLS follows the TAKEOVER pattern: `service_role` has full access, `authenticated` has read-only (no org-scoped RLS needed since picks aren't user-owned). The table is in the SuperWin Supabase project (`swryqkixpqhvuagnqqul`), not the TAKEOVER project.
@@ -79,3 +99,4 @@ DDL operations (CREATE TABLE, ALTER TABLE) cannot be executed via PostgREST or t
 ## Sources
 
 - [[daily/lcash/2026-04-23.md]] - VPS disk crisis (100% → 77% via 40GB volume + symlinks); designed edge_picks schema with mode-based backtesting, UNIQUE dedup, RLS pattern; 12 backtesting flaws ranked by severity; insert-only over upsert for first-detection preservation; racing filters (time-to-jump, max odds $30, spread <20%); CLV against BSP as gold standard; settlement resolver 90s loop (Sessions 12:05, 12:38). Peak EV tracking: peak_bookie_odds, peak_ev_pct, peak_detected_at columns; racing cron stops ~1:00 PM UTC; sports/golf bypass racing filters (Session 13:13)
+- [[daily/lcash/2026-04-25.md]] - BSP only available for 21% of settled picks (AU greyhound/harness markets lack BSP); LTP available for 88%; resolver cascades BSP→LTP; backfilled 53 picks, coverage 21%→88%; 9 picks zero Betfair trading data. Early results: TAB +13.7% ROI, TabTouch -100%, Greyhounds -29.3%, Thoroughbreds +21.9%; 84% of picks detected <10min before jump — too late for practical betting. Cron toggle gap: toggling DB enabled flag doesn't hot-load adapters; cron should restart service not just flip flags. mode_slug always NULL — no edges have boost_mode configured yet (Session 13:07)

@@ -9,8 +9,9 @@ sources:
   - "daily/lcash/2026-04-20.md"
   - "daily/lcash/2026-04-22.md"
   - "daily/lcash/2026-04-24.md"
+  - "daily/lcash/2026-04-25.md"
 created: 2026-04-12
-updated: 2026-04-24
+updated: 2026-04-25
 ---
 
 # Value Betting System Operational Assessment
@@ -91,6 +92,21 @@ This adds a new dimension to weakness #1 (OpticOdds SPOF): the dependency is not
 
 A positive development: the user's correction — "never assume the system is good; check every component individually" — drove an investigation that uncovered the bet365 single-session-per-account constraint (see [[concepts/bet365-shared-chrome-single-session]]), consolidating two Chrome instances into one and eliminating session conflicts.
 
+### VPS SSE Streams Broken and Instability (2026-04-25)
+
+On 2026-04-25, a VPS health check revealed all 22 OpticOdds SSE streams returning HTTP 400 Bad Request — 5,056 errors in 24 hours. The likely cause was invalid sportsbook names in SSE URLs (`polymarket_usa_`, `draftkings_predictions`, `crypto_com` may be deprecated by OpticOdds). This kills the entire moneyline/prediction-market edge across 400+ leagues while the NBA player props pipeline continues functioning via REST polling.
+
+Additional VPS issues:
+- **Disk at 77%** — only 2.1GB free on 8.7GB partition; `/mnt/takeover_data/` consuming 5.4GB
+- **4 restarts in one day** — service restarting 3 times in 15 minutes during check window; auto-restart catches it but indicates instability
+- **High load (6.81)** — likely from 22 SSE streams constantly failing and retrying in tight loops
+
+This continues the pattern of weakness #2 (no monitoring): the SSE streams were broken and retrying in loops, consuming resources while producing zero data, with no alerting. The "task alive" status masked that zero data was flowing — reinforcing the lesson from the 2026-04-24 API key discovery that **process liveness ≠ data flow**.
+
+### Positive Development: Baseball Unlocked (2026-04-25)
+
+The new OpticOdds API key unlocked baseball access (15 leagues including MLB, KBO, NPB) alongside expanded basketball coverage (111 leagues). This partially addresses weakness #1 (OpticOdds SPOF): the scanner is no longer NBA-only, significantly expanding the market universe. MLB sharp data now flows through OpticOdds with all 17 prop type mappings confirmed working. However, NRL/AFL remain dead, and soccer/tennis/hockey are still inaccessible.
+
 ## Related Concepts
 
 - [[concepts/opticodds-critical-dependency]] - Weakness #1: the single-provider risk
@@ -112,3 +128,4 @@ A positive development: the user's correction — "never assume the system is go
 - [[daily/lcash/2026-04-20.md]] - Triple simultaneous failure (tracker dead from syntax error + SSE startup hung + MLB idle): exposed deploy validation gap and need for per-component health dashboard; `python -m py_compile` recommended as pre-deploy guard (Session 14:57)
 - [[daily/lcash/2026-04-22.md]] - VPS SSE 400 cascade crash: dead 10+ hours (23:08→09:21), 0 picks/0 alerting; reinforces weakness #2 and #6; no process supervisor for auto-restart; client-facing SSE errors cascaded to kill backend tracker (Session 09:21)
 - [[daily/lcash/2026-04-24.md]] - Third triple overnight failure (push worker + Chrome sessions + OpticOdds); OpticOdds API key only covers NBA — MLB/NRL/AFL all dead; scanner is effectively NBA-only; bet365 single-session-per-account forced Chrome consolidation; user correction: "never assume the system is good" (Sessions 09:10, 14:40)
+- [[daily/lcash/2026-04-25.md]] - VPS SSE streams all broken (22 streams returning 400, 5,056 errors/24h); disk at 77% (2.1GB free); 4 restarts in one day; high load 6.81 from SSE retry loops; process liveness ≠ data flow confirmed again. Positive: baseball unlocked on new API key (15 leagues), basketball expanded to 111 leagues — scanner no longer NBA-only (Session 16:18)
