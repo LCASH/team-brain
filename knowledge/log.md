@@ -229,3 +229,10 @@
 - Developer: lcash
 - Articles created: [[concepts/trail-change-detection-architecture]], [[concepts/twitter-x-api-scraping-constraints]], [[concepts/news-driven-pre-sharp-ev-thesis]], [[connections/sport-specific-news-intelligence-architecture]]
 - Articles updated: [[concepts/opticodds-api-key-sport-scoping]] (baseball unlocked on new key — 15 leagues; basketball expanded to 111 leagues; scanner no longer NBA-only; OpticOdds baseball market_stats confirmed same format as basketball), [[concepts/news-agent-injury-pipeline]] (major overhaul: EV gate removed for conviction-based picks; multi-sport NBA+MLB with 22 Twitter sources; deployed to mini PC for residential IP; 7 flaws fixed; workspace trimmed 90KB→48KB; dashboard source management), [[concepts/superwin-edge-pick-backtesting]] (LTP as CLV proxy when BSP unavailable — coverage 21%→88%; early results: TAB +13.7%, Thoroughbreds +21.9%, Greyhounds -29.3%; 84% detection <10min before jump; cron toggle design gap), [[concepts/value-betting-operational-assessment]] (VPS SSE streams all broken — 22×400 errors, 5,056 in 24h; disk 77%, 4 restarts, load 6.81; positive: baseball unlocked expanding from NBA-only)
+
+## [2026-04-25T21:48:13+10:00] compile | daily/lcash/2026-04-25.md (incremental)
+- Source: daily/lcash/2026-04-25.md
+- Developer: lcash
+- Note: Incremental recompile — Sessions 07:28 through 20:45 were compiled in prior pass; this pass covers Session 21:48 (Twitter self-healing auth system: Playwright fingerprinting, curl_cffi API login, AdsPower anti-detect, twitter_auth.py module)
+- Articles created: (none)
+- Articles updated: [[concepts/twitter-x-api-scraping-constraints]] (added self-healing auth system: curl_cffi API login flow, AdsPower as reliable fallback, twitter_auth.py with login_if_expired() auto-refresh, Playwright stealth patches all fingerprintable, IP-level rate limiting from failed attempts)

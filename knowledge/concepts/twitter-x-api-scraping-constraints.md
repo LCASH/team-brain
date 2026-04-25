@@ -1,6 +1,6 @@
 ---
 title: "Twitter/X API Scraping Constraints"
-aliases: [x-api-rate-limits, twitter-scraping, twscrape-blocking, graphql-rate-limits, twitter-anti-bot]
+aliases: [x-api-rate-limits, twitter-scraping, twscrape-blocking, graphql-rate-limits, twitter-anti-bot, twitter-auth, self-healing-auth, adspower-login]
 tags: [value-betting, twitter, scraping, rate-limiting, anti-bot, news-pipeline]
 sources:
   - "daily/lcash/2026-04-25.md"
@@ -19,7 +19,8 @@ The value betting scanner's news agent pipeline requires scraping Twitter/X for 
 - **GraphQL rate limits are per endpoint-type + auth-token**, NOT per query ID — swapping GraphQL query IDs (`naBcZ4al` vs `V7H0Ap3_Hh2FyS75OCDO3Q`) does not bypass limits
 - **Extended lockout feedback loop**: Hitting 429 responses resets the cooldown window; checking "when does the limit reset?" burns a call and pushes the window out further — must do a **complete hard blackout** with zero API calls
 - **50 requests per 15-minute window** for the `user_tweets` endpoint; `resolve_user_id` shares or has its own limited pool
-- Manual browser login + cookie extraction (`auth_token` + `ct0`) is the viable authentication path; direct programmatic login is not feasible
+- Manual browser login + cookie extraction (`auth_token` + `ct0`) was the initial viable path; now automated via `twitter_auth.py` with curl_cffi API login (username → email challenge → password → TOTP 2FA → cookie export) and AdsPower anti-detect browser as the reliable fallback
+- **AdsPower bypasses all fingerprinting** where Playwright fails — `twitter_auth.py` integrates `login_if_expired()` auto-refresh so cookie renewal is transparent to the scraper
 
 ## Details
 
@@ -41,12 +42,31 @@ The only reliable recovery is a **complete hard blackout**: zero API requests of
 
 ### Viable Authentication Path
 
-The working approach for X/Twitter API access is manual browser login followed by cookie extraction. Two cookies are required:
+X/Twitter API access requires two cookies:
 
-1. **`auth_token`** — the session authentication cookie, persists for weeks-months
+1. **`auth_token`** — the session authentication cookie, persists for weeks-months under normal operation
 2. **`ct0`** — the CSRF token, rotates more frequently
 
-These cookies are extracted from a logged-in browser session (manually opening X.com, logging in, then copying the cookie values from browser DevTools). The cookies are then injected into the programmatic scraper's HTTP client. This bypasses all three defense layers: no Cloudflare challenge (cookies prove prior human login), no anti-automation JS (no login interaction needed), and the API calls use a legitimate authenticated session.
+These cookies bypass all three defense layers: no Cloudflare challenge (cookies prove prior human login), no anti-automation JS (no login interaction needed), and the API calls use a legitimate authenticated session. Initially, cookies were extracted manually from a browser DevTools session. On 2026-04-25, this was automated via `twitter_auth.py` (see below).
+
+### Self-Healing Authentication System (2026-04-25)
+
+On 2026-04-25, lcash built `twitter_auth.py` — a self-healing authentication module that automatically refreshes expired cookies without manual browser intervention. Three approaches were tested before arriving at a working solution:
+
+**Approach 1 — Playwright with stealth patches (FAILED):** Even with `navigator.webdriver = undefined`, `AutomationControlled` disabled, human-like delays, and persistent Chrome profiles, X.com's client-side JavaScript detected the automation and cleared typed input from login fields. Multiple stealth configurations were attempted; all failed. This is more aggressive than bet365's detection — X actively interferes with input rather than passively serving empty data.
+
+**Approach 2 — curl_cffi API-based login (PARTIALLY WORKS):** A headless HTTP login flow using `curl_cffi` (which provides Akamai-like TLS fingerprinting) that walks through X's multi-step authentication: username submission → email challenge verification → password submission → TOTP 2FA code → cookie extraction. This approach passed X's JavaScript instrumentation checks (unlike Playwright) and successfully authenticated in testing. However, it is fragile to IP-level rate limiting: too many failed login attempts trigger a ~15-30 minute IP-level lockout that blocks all subsequent attempts regardless of credential validity. The flow includes retry/backoff logic, but repeated failures during development burned through the tolerance window.
+
+**Approach 3 — AdsPower anti-detect browser (RELIABLE):** AdsPower (profile `k19yb91n`) succeeded immediately where all other methods failed. AdsPower's anti-detect fingerprinting — which randomizes browser characteristics at a level deeper than Playwright's stealth patches — completely bypasses X's automation detection. The browser renders the login page normally, accepts typed credentials, and completes authentication without interference. This is the same tool used for bet365 scraping (see [[connections/anti-scraping-driven-architecture]]), confirming its effectiveness against multiple anti-bot systems.
+
+The final `twitter_auth.py` module integrates both approaches:
+
+- **Primary path:** curl_cffi API login (fast, headless, no browser overhead)
+- **Fallback path:** AdsPower browser login (reliable, handles edge cases curl_cffi can't)
+- **Auto-refresh:** `login_if_expired()` is wired into `twitter_scraper.py._load_cookies()` so cookie refresh is transparent — the scraper never needs to know about authentication state
+- **Credentials:** Stored in `.env` (`TWITTER_USERNAME`, `TWITTER_PASSWORD`, `TWITTER_2FA_SECRET`) — same pattern as other API keys in the scanner
+
+Since `auth_token` cookies persist for months under normal operation, the login flow only fires when sessions actually die — a rare event that the auto-refresh handles without operator intervention. This eliminates the manual cookie extraction step that was previously the only viable path.
 
 ### Rate Limit Strategy for Live Mode
 
@@ -60,11 +80,12 @@ Rate limits are per auth-token, NOT per IP address. Switching from laptop (resid
 
 ## Related Concepts
 
-- [[connections/anti-scraping-driven-architecture]] - bet365's six-layer defense stack parallels X's three-layer approach; both use Cloudflare at the network layer, but X's anti-automation JS is more aggressive (active interference vs passive data withholding)
-- [[concepts/bet365-headless-detection]] - bet365 serves empty data to headless browsers; X actively clears input fields — two different anti-automation strategies
+- [[connections/anti-scraping-driven-architecture]] - bet365's six-layer defense stack parallels X's three-layer approach; both use Cloudflare at the network layer, but X's anti-automation JS is more aggressive (active interference vs passive data withholding); AdsPower bypasses both platforms' detection
+- [[concepts/bet365-headless-detection]] - bet365 serves empty data to headless browsers; X actively clears input fields — two different anti-automation strategies, but AdsPower defeats both
 - [[concepts/news-agent-injury-pipeline]] - The news pipeline that consumes Twitter data; rate limit constraints directly impact polling architecture and source selection
 - [[concepts/news-driven-pre-sharp-ev-thesis]] - The strategic thesis that requires fast tweet ingestion — rate limits bound the achievable speed
+- [[concepts/bet365-auto-login-session-recovery]] - Parallel self-healing auth pattern: bet365 uses CDP-based auto-login for session recovery, Twitter uses curl_cffi/AdsPower — both automate authentication lifecycle management
 
 ## Sources
 
-- [[daily/lcash/2026-04-25.md]] - twscrape login blocked by Cloudflare 403 from AU IPs; Playwright with real Chrome detected by X anti-automation JS (clears typed input); GraphQL rate limits tracked by endpoint+token not QID; 50 req/15min for user_tweets; extended lockout from repeated 429s — checking status resets window, must do hard blackout; manual browser login + cookie extraction is viable path; rate limits per auth_token not per IP (Sessions 10:10, 15:43, 20:45). Hardcoded user IDs (JeffPassan=33857883, Ken_Rosenthal=25053298) to avoid wasting rate-limited resolve_user_id calls; live mode polls 1 tweet/user/cycle avoiding limits; second X account recommended for development/testing (Sessions 14:48, 15:43)
+- [[daily/lcash/2026-04-25.md]] - twscrape login blocked by Cloudflare 403 from AU IPs; Playwright with real Chrome detected by X anti-automation JS (clears typed input); GraphQL rate limits tracked by endpoint+token not QID; 50 req/15min for user_tweets; extended lockout from repeated 429s — checking status resets window, must do hard blackout; manual browser login + cookie extraction is viable path; rate limits per auth_token not per IP (Sessions 10:10, 15:43, 20:45). Hardcoded user IDs (JeffPassan=33857883, Ken_Rosenthal=25053298) to avoid wasting rate-limited resolve_user_id calls; live mode polls 1 tweet/user/cycle avoiding limits; second X account recommended for development/testing (Sessions 14:48, 15:43). Self-healing auth system built: Playwright stealth patches all fingerprintable by X (webdriver, automation flags); curl_cffi API login flow (username→email challenge→password→TOTP 2FA→cookie export) works but fragile to IP-level rate limits (~15-30 min lockout from failed attempts); AdsPower anti-detect browser (profile k19yb91n) succeeded immediately; `twitter_auth.py` integrates both with `login_if_expired()` auto-refresh wired into scraper; auth_token cookies persist months; credentials in .env (Session 21:48)
