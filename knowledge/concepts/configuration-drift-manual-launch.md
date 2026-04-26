@@ -6,8 +6,9 @@ sources:
   - "daily/lcash/2026-04-12.md"
   - "daily/lcash/2026-04-15.md"
   - "daily/lcash/2026-04-19.md"
+  - "daily/lcash/2026-04-26.md"
 created: 2026-04-12
-updated: 2026-04-19
+updated: 2026-04-26
 ---
 
 # Configuration Drift from Manual Launch
@@ -78,3 +79,4 @@ The fix required updating all three layers: (1) code default to include NHL, (2)
 - [[daily/lcash/2026-04-12.md]] - `start_nba.bat` missing ENABLE_* flags since Apr 8 commit; manual launch on Apr 10 masked the gap; restart during key rotation exposed regression (4/9 tasks, 3/8 soft books); fixed by adding flags to batch file (Session 21:15). Second layer: API keys in `.env` but not in batch file; workers launched but silently failed; required third restart to fully resolve (Session 21:51)
 - [[daily/lcash/2026-04-15.md]] - Third drift vector: watchdog restarts with bare `cmd /c python -m server.main` stripping all env vars; bet365_game went dark; stale `nba_out.log` from dead process misdirected diagnosis; fixed via full kill + `schtasks /Run /TN NBA_Server` (Session 23:17)
 - [[daily/lcash/2026-04-19.md]] - Fourth drift vector (Linux/VPS): systemd `Environment=` directive overrides `.env` file. Three-layer precedence: code defaults < `.env` file < systemd `Environment=`. Adding NHL to ACTIVE_SPORTS required updating all three layers; `systemctl restart` reads the systemd unit file env vars, NOT `.env` — fixing `.env` alone was insufficient (Session 07:57)
+- [[daily/lcash/2026-04-26.md]] - Fifth recurrence: TAB scraper not running because `ENABLE_DIRECT_SCRAPERS=1` env var was missing from `start_nba.bat`; direct scrapers require both sport config AND the env var (line 1445 in main.py); also `curl_cffi` missing on scanner-ms; same pattern: feature enabled in code but batch file doesn't pass the flag (Session 11:03)

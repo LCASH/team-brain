@@ -5,8 +5,9 @@ tags: [superwin, racing, backtesting, architecture, supabase]
 sources:
   - "daily/lcash/2026-04-23.md"
   - "daily/lcash/2026-04-25.md"
+  - "daily/lcash/2026-04-26.md"
 created: 2026-04-23
-updated: 2026-04-25
+updated: 2026-04-26
 ---
 
 # SuperWin Edge Pick Backtesting System
@@ -100,3 +101,4 @@ DDL operations (CREATE TABLE, ALTER TABLE) cannot be executed via PostgREST or t
 
 - [[daily/lcash/2026-04-23.md]] - VPS disk crisis (100% → 77% via 40GB volume + symlinks); designed edge_picks schema with mode-based backtesting, UNIQUE dedup, RLS pattern; 12 backtesting flaws ranked by severity; insert-only over upsert for first-detection preservation; racing filters (time-to-jump, max odds $30, spread <20%); CLV against BSP as gold standard; settlement resolver 90s loop (Sessions 12:05, 12:38). Peak EV tracking: peak_bookie_odds, peak_ev_pct, peak_detected_at columns; racing cron stops ~1:00 PM UTC; sports/golf bypass racing filters (Session 13:13)
 - [[daily/lcash/2026-04-25.md]] - BSP only available for 21% of settled picks (AU greyhound/harness markets lack BSP); LTP available for 88%; resolver cascades BSP→LTP; backfilled 53 picks, coverage 21%→88%; 9 picks zero Betfair trading data. Early results: TAB +13.7% ROI, TabTouch -100%, Greyhounds -29.3%, Thoroughbreds +21.9%; 84% of picks detected <10min before jump — too late for practical betting. Cron toggle gap: toggling DB enabled flag doesn't hot-load adapters; cron should restart service not just flip flags. mode_slug always NULL — no edges have boost_mode configured yet (Session 13:07)
+- [[daily/lcash/2026-04-26.md]] - TAB Cash Multiplier added as new edge (`racing-cash-multi`): flat `odds * 1.1` boost via `boost_multiplier` field in criteria (vs lookup table for SuperPicks). SuperPicks profitability deep-dive: **+70.0u, +38.6% ROI** across 181 settled picks; harness +157% vs thoroughbred +15.6% vs greyhound ~0%; sub-12% EV loses money (-18.7% ROI), 12%+ EV = +79.2% ROI on 106 picks; 4-5 detection scans sweet spot (+101% ROI); $5K+ Betfair liquidity worst (-40.5% ROI), $200-$1K profitable zone. `liquidity` column switched from `total_matched` (market-level) to `selection_matched` (per-runner Betfair `trd` field). Warmup guard deployed: 2+ bookies with 50+ races before persisting picks to journal. 9am cron changed from DB flag toggle to full systemctl restart. Sandown venue fuzzy matched to Sandown Park clearing 44h stuck pick (Sessions 13:19, 19:32)

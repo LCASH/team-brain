@@ -5,8 +5,9 @@ tags: [bet365, scraping, operations, browser-automation, reliability, value-bett
 sources:
   - "daily/lcash/2026-04-23.md"
   - "daily/lcash/2026-04-24.md"
+  - "daily/lcash/2026-04-26.md"
 created: 2026-04-23
-updated: 2026-04-24
+updated: 2026-04-26
 ---
 
 # bet365 Auto-Login Session Recovery
@@ -82,3 +83,4 @@ As of 2026-04-23, the auto-login script was built and tested against the NBA Chr
 
 - [[daily/lcash/2026-04-23.md]] - Bet365 NBA scraper NOT logged in despite yesterday's cookies; cookie `aaat` ~10-day expiry but sessions die overnight; built automated login script watching manual flow via CDP; must clear autofilled fields before typing; Playwright protocol errors → raw CDP via httpx fallback; login flow: click Log In → clear+type username → clear+type password → click submit; human-like delays for bot detection avoidance; deployment to both NBA/MLB scrapers pending (Session 21:36)
 - [[daily/lcash/2026-04-24.md]] - bet365 single-session-per-account discovered: NBA Chrome login failing because MLB Chrome already logged in; consolidated to shared Chrome on port 9223; auto-login now targets only one port; port 9224 killed (Session 09:10)
+- [[daily/lcash/2026-04-26.md]] - Auto-login self-heal wired into both bet365 scrapers (NBA + MLB): detects session expiry by checking CDP tab URLs for login/redirect pages, triggers `login_bet365()` automatically, resets scraper state on successful login; completes the self-healing loop: scraper detects expiry → auto-login restores session → scraper resumes (Session 07:42)

@@ -236,3 +236,9 @@
 - Note: Incremental recompile — Sessions 07:28 through 20:45 were compiled in prior pass; this pass covers Session 21:48 (Twitter self-healing auth system: Playwright fingerprinting, curl_cffi API login, AdsPower anti-detect, twitter_auth.py module)
 - Articles created: (none)
 - Articles updated: [[concepts/twitter-x-api-scraping-constraints]] (added self-healing auth system: curl_cffi API login flow, AdsPower as reliable fallback, twitter_auth.py with login_if_expired() auto-refresh, Playwright stealth patches all fingerprintable, IP-level rate limiting from failed attempts)
+
+## [2026-04-26T19:32:16+10:00] compile | daily/lcash/2026-04-26.md
+- Source: daily/lcash/2026-04-26.md
+- Developer: lcash
+- Articles created: [[concepts/matched-market-line-null-bug]], [[concepts/twitter-multi-account-cookie-rotation]], [[concepts/scanner-warmup-false-ev-guard]], [[connections/liquidity-efficiency-inverse-in-betting]]
+- Articles updated: [[concepts/configuration-drift-manual-launch]] (fifth recurrence: TAB scraper ENABLE_DIRECT_SCRAPERS missing from batch file), [[concepts/twitter-x-api-scraping-constraints]] (verify_credentials deprecated, timeline_v2→timeline rename, multi-account rotation), [[concepts/opticodds-api-key-sport-scoping]] (100-league multi-league expansion, 408 inaccessible theories deactivated, SSE_SPORTS restricted to basketball+baseball), [[concepts/superwin-edge-pick-backtesting]] (Cash Multiplier edge, SuperPicks +38.6% ROI on 181 picks, harness +157%, liquidity-efficiency inverse $5K+ = -40.5%, warmup guard, per-selection liquidity), [[concepts/bet365-auto-login-session-recovery]] (auto-login self-heal wired into both scrapers via CDP tab URL detection)

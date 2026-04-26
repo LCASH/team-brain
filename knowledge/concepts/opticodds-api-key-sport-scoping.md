@@ -5,8 +5,9 @@ tags: [value-betting, opticodds, infrastructure, configuration, api]
 sources:
   - "daily/lcash/2026-04-24.md"
   - "daily/lcash/2026-04-25.md"
+  - "daily/lcash/2026-04-26.md"
 created: 2026-04-24
-updated: 2026-04-25
+updated: 2026-04-26
 ---
 
 # OpticOdds API Key Sport-Specific Scoping
@@ -77,3 +78,4 @@ When both the SSE startup and auto-resolver run simultaneously after a VPS resta
 
 - [[daily/lcash/2026-04-24.md]] - API key audit: only NBA basketball returns data; all other sports empty/400; MLB 275 markets from Bet365 only, zero sharps; NRL/AFL servers dead; 22 non-basketball SSE streams all fail; 432 leagues auto-discovered but inaccessible (Sessions 14:40, 15:47, 16:35). `SSE_SPORTS` env var added for runtime filtering; auto-discovery still runs for all leagues (Session 15:47). MLB Crypto Edge resolver fallback via `fetch_mlb_stats()` from podcast pipeline; sport parameter added to resolve endpoint; Supabase URL length limit with 658 pick IDs; SSE + auto-resolver simultaneous flood issue with 5-min delay (Session 16:37)
 - [[daily/lcash/2026-04-25.md]] - New API key tested: initially appeared identical to old key, but thorough per-sport testing revealed baseball unlocked; 111 basketball leagues with active fixtures (WNBL1, Japan B1, France LNB Pro B, etc.); 15 baseball leagues (MLB, KBO, NPB, College Baseball, MiLB AAA, CPBL); OpticOdds baseball market_stats uses same format as basketball — all 17 prop mappings confirmed; 22 "alive" SSE streams were retry loops getting rejected; reconciliation disabled in relay mode for pick flashing fix; sport param added to /api/v1/resolve; auto-resolver found 4 stale MLB dates (Apr 19-22); chunk size 50 for resolver (Session 07:28)
+- [[daily/lcash/2026-04-26.md]] - Multi-league expansion deployed: 100 leagues (94 basketball + 6 baseball) with auto-discovered Pinnacle moneyline theories; 408 prediction market theories for inaccessible sports (soccer, tennis, hockey, esports) deactivated — harmless but noise; SSE_SPORTS restricted to `["basketball", "baseball"]` eliminating 16 blocked-sport 400 errors; theory existence check changed to look for ANY theory (not just `is_active=true`) preventing duplicate creation on restart; OpticOdds SSE multiplexes all leagues within a sport on one connection — 100 leagues need only 2 streams; EV picks found across 6 leagues: NBA (568), MLB (412), Japan B1 (13), KBO (5), Germany BBL (1), Greece A1 (1) (Session 07:42)

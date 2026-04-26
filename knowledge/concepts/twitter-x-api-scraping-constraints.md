@@ -4,8 +4,9 @@ aliases: [x-api-rate-limits, twitter-scraping, twscrape-blocking, graphql-rate-l
 tags: [value-betting, twitter, scraping, rate-limiting, anti-bot, news-pipeline]
 sources:
   - "daily/lcash/2026-04-25.md"
+  - "daily/lcash/2026-04-26.md"
 created: 2026-04-25
-updated: 2026-04-25
+updated: 2026-04-26
 ---
 
 # Twitter/X API Scraping Constraints
@@ -89,3 +90,4 @@ Rate limits are per auth-token, NOT per IP address. Switching from laptop (resid
 ## Sources
 
 - [[daily/lcash/2026-04-25.md]] - twscrape login blocked by Cloudflare 403 from AU IPs; Playwright with real Chrome detected by X anti-automation JS (clears typed input); GraphQL rate limits tracked by endpoint+token not QID; 50 req/15min for user_tweets; extended lockout from repeated 429s — checking status resets window, must do hard blackout; manual browser login + cookie extraction is viable path; rate limits per auth_token not per IP (Sessions 10:10, 15:43, 20:45). Hardcoded user IDs (JeffPassan=33857883, Ken_Rosenthal=25053298) to avoid wasting rate-limited resolve_user_id calls; live mode polls 1 tweet/user/cycle avoiding limits; second X account recommended for development/testing (Sessions 14:48, 15:43). Self-healing auth system built: Playwright stealth patches all fingerprintable by X (webdriver, automation flags); curl_cffi API login flow (username→email challenge→password→TOTP 2FA→cookie export) works but fragile to IP-level rate limits (~15-30 min lockout from failed attempts); AdsPower anti-detect browser (profile k19yb91n) succeeded immediately; `twitter_auth.py` integrates both with `login_if_expired()` auto-refresh wired into scraper; auth_token cookies persist months; credentials in .env (Session 21:48)
+- [[daily/lcash/2026-04-26.md]] - `verify_credentials` endpoint deprecated (returns 404); switched cookie validation to GraphQL `UserByScreenName` with full `features` params; Twitter silently renamed `timeline_v2` to `timeline` in GraphQL responses — scraper needed patching; multi-account cookie rotation implemented: 100 accounts via AdsPower mass login (~25s per login, ~40 min total), round-robin `CookieRotator` in `twitter_auth.py`; `ctx.clear_cookies()` for browser logout preserves server-side auth tokens; `pycache` can cause stale code to persist; architecture: `.twitter_accounts.json`, `.twitter_cookies_pool.json` for pool storage (Sessions 15:58, 16:31)
