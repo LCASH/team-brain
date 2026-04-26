@@ -68,7 +68,7 @@
 | [[connections/silent-type-coercion-data-corruption]] | Float/int hashing, DD/TD encoding, alt-line interpolation share pattern: plausible wrong output with zero error signal | daily/lcash/2026-04-17.md | 2026-04-17 |
 | [[concepts/crypto-edge-non-pinnacle-strategy]] | New pill targeting prediction market gaps where Pinnacle has no coverage; MLB goldmine (1,354 markets); DK/Novig/FD as sharps | daily/lcash/2026-04-18.md | 2026-04-18 |
 | [[concepts/opticodds-sse-streaming-scaling]] | SSE streaming endpoint replaces REST polling; ~15 connections cover 491+ leagues vs 28 pollers; 459KB/15s tested | daily/lcash/2026-04-18.md | 2026-04-18 |
-| [[concepts/tabtouch-domain-migration-mqtt]] | tabtouch.mobi dead (NXDOMAIN); new tabtouch.com.au uses SSR + Knockout.js + AWS IoT MQTT; no proxy needed | daily/lcash/2026-04-18.md | 2026-04-18 |
+| [[concepts/tabtouch-domain-migration-mqtt]] | tabtouch.mobi dead (NXDOMAIN); new tabtouch.com.au uses SSR + Knockout.js + AWS IoT MQTT; no proxy needed; sports section is separate Kambi platform | daily/lcash/2026-04-18.md, daily/lcash/2026-04-26.md | 2026-04-26 |
 | [[concepts/sharp-clv-theory-ranking]] | Sharp CLV as primary metric; AltLine-V1 +28.4% CLV (sharpest); Aggressive-Wide -9.3% (no edge despite 62% WR) | daily/lcash/2026-04-18.md | 2026-04-18 |
 | [[concepts/trail-preseeding-coverage-bug]] | VPS pre-seeds tracker cache from Supabase, preventing Phase B baseline trail writes; 5.9% coverage; fix: don't pre-seed | daily/lcash/2026-04-18.md | 2026-04-18 |
 | [[concepts/fixture-cache-silent-market-dropout]] | Fixture cache API limit=100 silently drops markets beyond 100th fixture; 495/2,400 SSE entries lost | daily/lcash/2026-04-18.md | 2026-04-18 |
@@ -108,3 +108,4 @@
 | [[concepts/twitter-multi-account-cookie-rotation]] | Mass 100-account AdsPower login pipeline with round-robin cookie rotation to bypass Twitter per-account rate limits | daily/lcash/2026-04-26.md | 2026-04-26 |
 | [[concepts/scanner-warmup-false-ev-guard]] | Startup bookie ramp-up creates artificial EV gaps; warmup guard requires 2+ bookies with 50+ races before persisting picks | daily/lcash/2026-04-26.md | 2026-04-26 |
 | [[connections/liquidity-efficiency-inverse-in-betting]] | High liquidity = efficient market = less edge; $200-$1K profitable zone, $5K+ worst (-40.5% ROI); applies across racing and prediction markets | daily/lcash/2026-04-26.md | 2026-04-26 |
+| [[concepts/tabtouch-kambi-white-label-sports]] | TabTouch sports = Kambi white-label; public REST API at kambicdn.com, no auth needed; 242 player props/game; stable participantIds; Socket.IO push | daily/lcash/2026-04-26.md | 2026-04-26 |

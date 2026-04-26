@@ -4,8 +4,9 @@ aliases: [tabtouch-migration, tabtouch-mqtt, tabtouch-architecture, tabtouch-mob
 tags: [superwin, tabtouch, racing, mqtt, architecture, reverse-engineering]
 sources:
   - "daily/lcash/2026-04-18.md"
+  - "daily/lcash/2026-04-26.md"
 created: 2026-04-18
-updated: 2026-04-18
+updated: 2026-04-26
 ---
 
 # TabTouch Domain Migration and MQTT Architecture
@@ -57,8 +58,15 @@ The MQTT streaming path was confirmed production-ready during a SuperWin diagnos
 
 The discovery that TabTouch no longer requires proxies raises the question of whether the Webshare subscription is still needed for other adapters. If TabTouch was the primary consumer, the monthly subscription may be unnecessary overhead.
 
+### TabTouch Sports: A Completely Separate Platform (2026-04-26)
+
+On 2026-04-26, lcash discovered that TabTouch's sports betting section is powered by **Kambi** — a B2B white-label sportsbook platform — at `ap.offering-api.kambicdn.com`. This is entirely separate from the racing MQTT platform documented above. TabTouch is effectively two products under one brand: a proprietary racing platform (AWS IoT MQTT + Cognito + Knockout.js) and a Kambi-powered sports platform (REST API + Socket.IO push, zero authentication required).
+
+The Kambi API is dramatically simpler than both the racing platform and other soft book integrations — no auth, no cookies, full player names, stable participant IDs, and 242 player prop markets from a single NBA game endpoint. See [[concepts/tabtouch-kambi-white-label-sports]] for the complete analysis of the sports platform.
+
 ## Related Concepts
 
+- [[concepts/tabtouch-kambi-white-label-sports]] - TabTouch's sports betting is powered by Kambi, a completely separate platform from the racing MQTT system documented here
 - [[concepts/bet365-racing-adapter-architecture]] - The bet365 racing adapter uses a much more complex browser-mediated architecture; TabTouch's public API is dramatically simpler
 - [[concepts/bet365-headless-detection]] - bet365 requires headed Chrome; TabTouch requires no browser at all for Phase 1
 - [[connections/anti-scraping-driven-architecture]] - TabTouch has minimal anti-scraping compared to bet365's 6-layer defense stack
@@ -67,3 +75,4 @@ The discovery that TabTouch no longer requires proxies raises the question of wh
 ## Sources
 
 - [[daily/lcash/2026-04-18.md]] - `api.tabtouch.mobi` NXDOMAIN (dead domain, not blocked); proxy debugging was red herring; new site SSR + Knockout.js + AWS IoT MQTT; endpoints: `/api/raceinfo/nextraces` discovery, `/racing/{date}/{meetingId}/{raceNum}` race card; Cognito anonymous auth `ap-southeast-2:06357b04-...`; no proxy needed; two-phase adapter plan; MQTT confirmed: 721 updates/8.5min, 36 races live, token refresh at 50min (Sessions 13:36, 14:09, 15:54)
+- [[daily/lcash/2026-04-26.md]] - TabTouch sports section discovered to be Kambi white-label platform at `ap.offering-api.kambicdn.com`, completely separate from racing MQTT; two independent streaming systems (MQTT + Socket.IO) under one brand (Session 22:10)

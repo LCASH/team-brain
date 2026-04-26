@@ -242,3 +242,10 @@
 - Developer: lcash
 - Articles created: [[concepts/matched-market-line-null-bug]], [[concepts/twitter-multi-account-cookie-rotation]], [[concepts/scanner-warmup-false-ev-guard]], [[connections/liquidity-efficiency-inverse-in-betting]]
 - Articles updated: [[concepts/configuration-drift-manual-launch]] (fifth recurrence: TAB scraper ENABLE_DIRECT_SCRAPERS missing from batch file), [[concepts/twitter-x-api-scraping-constraints]] (verify_credentials deprecated, timeline_v2→timeline rename, multi-account rotation), [[concepts/opticodds-api-key-sport-scoping]] (100-league multi-league expansion, 408 inaccessible theories deactivated, SSE_SPORTS restricted to basketball+baseball), [[concepts/superwin-edge-pick-backtesting]] (Cash Multiplier edge, SuperPicks +38.6% ROI on 181 picks, harness +157%, liquidity-efficiency inverse $5K+ = -40.5%, warmup guard, per-selection liquidity), [[concepts/bet365-auto-login-session-recovery]] (auto-login self-heal wired into both scrapers via CDP tab URL detection)
+
+## [2026-04-26T22:10:48+10:00] compile | daily/lcash/2026-04-26.md (incremental)
+- Source: daily/lcash/2026-04-26.md
+- Developer: lcash
+- Note: Incremental recompile — Sessions 07:42 through 19:32 were compiled in prior pass; this pass covers Sessions 20:37, 21:09 (Twitter login pipeline monitoring) and 22:10 (TabTouch Kambi white-label sports platform discovery)
+- Articles created: [[concepts/tabtouch-kambi-white-label-sports]]
+- Articles updated: [[concepts/tabtouch-domain-migration-mqtt]] (added Kambi sports platform cross-reference: TabTouch sports = Kambi white-label, completely separate from racing MQTT), [[concepts/twitter-multi-account-cookie-rotation]] (added mass login monitoring: 60s cooldown confirmed throttle-free, single-streak failures = bad accounts not throttling, empty page title benign)

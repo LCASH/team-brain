@@ -69,6 +69,16 @@ The `CookieRotator` in `twitter_auth.py` handles the rotation transparently: the
 
 A subtle bug was encountered during development: duplicate initialization code in `_do_login` caused failures where the login flow appeared to work but produced invalid cookies. This was a copy-paste artifact from merging the `curl_cffi` and AdsPower login paths. The lesson: authentication flows with multiple code paths for different login methods are prone to duplication bugs that produce plausible but wrong output (valid-looking cookies that don't actually work).
 
+### Mass Login Pipeline Monitoring (Sessions 20:37, 21:09)
+
+The 100-account login pipeline was monitored across two sessions. Key operational findings:
+
+- **60-second cooldown** between logins eliminated throttle issues — zero throttling observed across the entire run
+- **~27 of ~30 initial accounts** succeeded; ~3 failed as single-streak failures (streak counter resets to 1 immediately), confirming bad account credentials rather than rate limiting
+- **Throttle vs bad-account diagnostic**: consecutive failure streaks indicate throttling (increase cooldown); single failures that reset are account-quality issues (skip and continue)
+- **Empty page title** on login (title blank instead of "Home / X") is benign — cookies still export successfully. Title variations ("Home / X", "X", empty) are all valid login confirmations
+- By session 21:09, the pipeline had processed ~40 of ~80 accounts with consistent ~25s per login and no throttle-induced failure streaks
+
 ## Related Concepts
 
 - [[concepts/twitter-x-api-scraping-constraints]] - The rate limits, anti-automation defenses, and extended lockout feedback loop that necessitate multi-account rotation; the single-account constraints that this system overcomes
@@ -78,4 +88,4 @@ A subtle bug was encountered during development: duplicate initialization code i
 
 ## Sources
 
-- [[daily/lcash/2026-04-26.md]] - AdsPower as primary login for mass Twitter account onboarding; `verify_credentials` returns 404 (deprecated), switched to GraphQL `UserByScreenName`; `timeline_v2` silently renamed to `timeline`; round-robin rotation across 100 accounts (~25s per login, ~40 min total); `ctx.clear_cookies()` preserves server-side tokens; `CookieRotator` in `twitter_auth.py`; duplicate init code in `_do_login` caused subtle failures; architecture: `.twitter_accounts.json`, `.twitter_cookies_pool.json`, `twitter_auth.py`, `twitter_scraper.py` (Sessions 15:58, 16:31)
+- [[daily/lcash/2026-04-26.md]] - AdsPower as primary login for mass Twitter account onboarding; `verify_credentials` returns 404 (deprecated), switched to GraphQL `UserByScreenName`; `timeline_v2` silently renamed to `timeline`; round-robin rotation across 100 accounts (~25s per login, ~40 min total); `ctx.clear_cookies()` preserves server-side tokens; `CookieRotator` in `twitter_auth.py`; duplicate init code in `_do_login` caused subtle failures; architecture: `.twitter_accounts.json`, `.twitter_cookies_pool.json`, `twitter_auth.py`, `twitter_scraper.py` (Sessions 15:58, 16:31). Mass login monitoring: 60s cooldown confirmed as throttle-free sweet spot; ~27/30 initial accounts succeeded, 3 failed as bad credentials (single-streak failures); empty page title benign; ~40/80 processed by end of monitoring (Sessions 20:37, 21:09)
