@@ -249,3 +249,10 @@
 - Note: Incremental recompile — Sessions 07:42 through 19:32 were compiled in prior pass; this pass covers Sessions 20:37, 21:09 (Twitter login pipeline monitoring) and 22:10 (TabTouch Kambi white-label sports platform discovery)
 - Articles created: [[concepts/tabtouch-kambi-white-label-sports]]
 - Articles updated: [[concepts/tabtouch-domain-migration-mqtt]] (added Kambi sports platform cross-reference: TabTouch sports = Kambi white-label, completely separate from racing MQTT), [[concepts/twitter-multi-account-cookie-rotation]] (added mass login monitoring: 60s cooldown confirmed throttle-free, single-streak failures = bad accounts not throttling, empty page title benign)
+
+## [2026-04-26T23:12:41+10:00] compile | daily/lcash/2026-04-26.md (incremental)
+- Source: daily/lcash/2026-04-26.md
+- Developer: lcash
+- Note: Final incremental recompile — Sessions 07:42 through 22:10 were compiled in prior passes; this pass covers Session 23:12 (batch Twitter login pipeline round 2 monitoring, ~63/80 accounts processed)
+- Articles created: (none)
+- Articles updated: [[concepts/twitter-multi-account-cookie-rotation]] (added Session 23:12 pipeline progress: reached account #63, two more bad accounts confirmed, pattern holds at scale)

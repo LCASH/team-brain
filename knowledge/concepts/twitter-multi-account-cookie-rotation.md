@@ -78,6 +78,7 @@ The 100-account login pipeline was monitored across two sessions. Key operationa
 - **Throttle vs bad-account diagnostic**: consecutive failure streaks indicate throttling (increase cooldown); single failures that reset are account-quality issues (skip and continue)
 - **Empty page title** on login (title blank instead of "Home / X") is benign — cookies still export successfully. Title variations ("Home / X", "X", empty) are all valid login confirmations
 - By session 21:09, the pipeline had processed ~40 of ~80 accounts with consistent ~25s per login and no throttle-induced failure streaks
+- By session 23:12, the pipeline reached account #63 (~two-thirds through round 2) with the same high success rate — two additional bad accounts identified (@top_koala84601, @in_yak21384), confirming the pattern holds at scale
 
 ## Related Concepts
 
@@ -88,4 +89,4 @@ The 100-account login pipeline was monitored across two sessions. Key operationa
 
 ## Sources
 
-- [[daily/lcash/2026-04-26.md]] - AdsPower as primary login for mass Twitter account onboarding; `verify_credentials` returns 404 (deprecated), switched to GraphQL `UserByScreenName`; `timeline_v2` silently renamed to `timeline`; round-robin rotation across 100 accounts (~25s per login, ~40 min total); `ctx.clear_cookies()` preserves server-side tokens; `CookieRotator` in `twitter_auth.py`; duplicate init code in `_do_login` caused subtle failures; architecture: `.twitter_accounts.json`, `.twitter_cookies_pool.json`, `twitter_auth.py`, `twitter_scraper.py` (Sessions 15:58, 16:31). Mass login monitoring: 60s cooldown confirmed as throttle-free sweet spot; ~27/30 initial accounts succeeded, 3 failed as bad credentials (single-streak failures); empty page title benign; ~40/80 processed by end of monitoring (Sessions 20:37, 21:09)
+- [[daily/lcash/2026-04-26.md]] - AdsPower as primary login for mass Twitter account onboarding; `verify_credentials` returns 404 (deprecated), switched to GraphQL `UserByScreenName`; `timeline_v2` silently renamed to `timeline`; round-robin rotation across 100 accounts (~25s per login, ~40 min total); `ctx.clear_cookies()` preserves server-side tokens; `CookieRotator` in `twitter_auth.py`; duplicate init code in `_do_login` caused subtle failures; architecture: `.twitter_accounts.json`, `.twitter_cookies_pool.json`, `twitter_auth.py`, `twitter_scraper.py` (Sessions 15:58, 16:31). Mass login monitoring: 60s cooldown confirmed as throttle-free sweet spot; ~27/30 initial accounts succeeded, 3 failed as bad credentials (single-streak failures); empty page title benign; ~40/80 processed by session 21:09, ~63/80 by session 23:12 with same pattern holding at scale (Sessions 20:37, 21:09, 23:12)
