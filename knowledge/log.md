@@ -276,3 +276,10 @@
 - Note: Incremental recompile — Sessions 07:38 through 20:26 were compiled in prior pass; this pass covers Session 21:43 (mass server recovery, Chrome tab leak evidence) and Session 22:19 (News Edge cookie deployment failure, VPS SSE `_auto_create_theories` recurrence, MLB scraper rewrite confirmation)
 - Articles created: (none)
 - Articles updated: [[concepts/sse-startup-theory-creation-hang]] (third recurrence: 266 sequential Supabase calls killing SSE pipeline; confirmed across Sessions 17:03 and 22:19; fix deferred), [[concepts/news-agent-injury-pipeline]] (cookie deployment failure: cookies only on Mac not mini PC; only 3/17 accounts enabled; missed Edwards OUT, Reaves OUT, Embiid returning, KD OUT, Wembanyama cleared, DiVincenzo surgery)
+
+## [2026-04-27T23:30:00+10:00] compile | daily/lcash/2026-04-27.md (incremental)
+- Source: daily/lcash/2026-04-27.md
+- Developer: lcash
+- Note: Incremental recompile — Sessions 07:38 through 22:19 were compiled in prior passes; this pass covers Session 22:52 (SuperWin evening review: worst single day -112u, theory validation/contradiction, time gate removal validated, 769 total picks)
+- Articles created: (none)
+- Articles updated: [[concepts/superwin-racing-profitability-dimensions]] (Day 6 theory validation: 3 of 10 theories contradicted — $8-12 odds, 5-10min MTJ, Sunday-is-best all failed; harness weakened -30u/69% ROI; CLV paradox +12% CLV but -109u; best day-6 combo Cash Multi+liq≥750+MTJ<2; sample expanded to 769 picks), [[concepts/superwin-edge-pick-backtesting]] (time gate validation: 1-2min MTJ only profitable window; cumulative 769 picks +68.8u; volume amplification 341 picks = 3x normal; detection confirmed to 0.3min before jump)

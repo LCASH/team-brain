@@ -94,9 +94,26 @@ A single detection scan is unreliable — it could be a momentary data lag, a Be
 9. Venue-specific (some venues consistently profitable)
 10. Cash Multiplier + Harness + liq >= $500 + scans >= 2 (optimal composite)
 
+### Day 6 Theory Validation and Fragility (Session 22:52)
+
+The evening of 2026-04-27 produced the worst single-day result in the scanner's history: **341 picks, 44 winners, -112 units**. Cumulative P/L dropped from +181u to +68.8u across 769 total picks. Several theories built on the initial 487-pick dataset were directly contradicted:
+
+| Theory | Initial Finding | Day 6 Result | Assessment |
+|--------|----------------|-------------|------------|
+| Theory 5 ($8-12 odds sweet spot) | Strongest odds band | **$3-5 was only profitable range**; longshots ($8-20) collapsed to 1.5% WR | Contradicted — likely overfitted |
+| Theory 6 (5-10min MTJ) | Recommended window | **1-2min MTJ was ONLY profitable window** (+129% ROI, 35% WR) | Contradicted — near-jump edges stronger |
+| Harness dominance | 83% of profit, +152% ROI | **-30u today** (first losing day), ROI halved from 152% to 69% | Weakened — downgraded STRONG to MODERATE |
+| Sunday-is-best | Best day historically | **Worst day recorded** (-112u) | Contradicted |
+
+The **CLV paradox** is the most analytically important finding: CLV was +12% on the day (genuine mispricings were found), but results were -109u on CLV>0 picks. This demonstrates that positive CLV is a necessary condition for edge but not sufficient for daily profitability — variance over 341 picks (3x normal volume from time gate removal + evening greyhounds) can overwhelm a real edge in a single session.
+
+The 341-pick volume itself was a consequence of removing the 2-minute time gate (see [[concepts/superwin-edge-pick-backtesting]]) and capturing evening greyhound meetings. Higher volume amplifies variance in both directions — the same time gate removal that captured profitable 1-2min MTJ picks also exposed the scanner to 3x the usual loss potential.
+
+The best-performing filter on this difficult day was **Cash Multiplier + liquidity >= $750 + MTJ < 2 minutes**, producing 38% win rate and +93% ROI — a different optimal combo than the initial analysis suggested (which emphasized scans >= 2 and liq >= $500).
+
 ### Current Sample Limitations
 
-487 picks across 5 days is directionally informative but statistically insufficient for firm conclusions. The harness dominance (21% of picks = 83% of profit) and the $750-$1K goldmine are strong enough signals to act on, but the optimal composite filter (339% ROI on 17 picks) is too small a sample to validate. An estimated 2,000+ picks (~3-4 more weeks) are needed before strategy-level decisions should be made.
+769 picks across 6 days provides a larger dataset but the Day 6 results underscore the danger of premature theory formation. The initial 487-pick analysis identified clear signals that appeared robust (harness dominance, $8-12 odds, 5-10min MTJ) — but a single bad day contradicted three of the ten codified theories. The harness dominance and $750-$1K goldmine remain the most durable signals, but even harness showed its first losing day. An estimated 2,000+ picks (~2-3 more weeks) are needed before strategy-level decisions should be made, and theory validation should focus on signals that survive bad days rather than optimize for good days.
 
 ## Related Concepts
 
@@ -108,4 +125,4 @@ A single detection scan is unreliable — it could be a momentary data lag, a Be
 
 ## Sources
 
-- [[daily/lcash/2026-04-27.md]] - Comprehensive 16-dimension profitability analysis across 487 picks: harness=83% of profit from 21% of picks (+152% ROI), $750-$1K Betfair liquidity goldmine (+170% ROI, +28% CLV), Cash Multiplier best mode (+70.3% ROI), 4-5 detection scans = +108% ROI, EV sweet spot 12-15%, positive CLV = +54% ROI, optimal composite filter at 339% ROI (17 picks); 10 theories codified in edge-pick-theories.md (Session 13:36)
+- [[daily/lcash/2026-04-27.md]] - Comprehensive 16-dimension profitability analysis across 487 picks: harness=83% of profit from 21% of picks (+152% ROI), $750-$1K Betfair liquidity goldmine (+170% ROI, +28% CLV), Cash Multiplier best mode (+70.3% ROI), 4-5 detection scans = +108% ROI, EV sweet spot 12-15%, positive CLV = +54% ROI, optimal composite filter at 339% ROI (17 picks); 10 theories codified in edge-pick-theories.md (Session 13:36). Day 6 validation: 341 picks, -112u worst day; 3 of 10 theories contradicted ($8-12 odds → $3-5 profitable, 5-10min MTJ → 1-2min only profitable, harness first losing day -30u ROI halved to 69%); CLV paradox +12% CLV but -109u; volume amplification from time gate removal; Cash Multi + liq≥750 + MTJ<2 = 38% WR, +93% ROI; cumulative 769 picks +68.8u (Session 22:52)
