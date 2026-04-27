@@ -1,12 +1,13 @@
 ---
 title: "SSE Startup Theory Creation Hang"
-aliases: [sse-startup-hang, theory-creation-bottleneck, sequential-supabase-gets, sse-stream-launch-block]
+aliases: [sse-startup-hang, theory-creation-bottleneck, sequential-supabase-gets, sse-stream-launch-block, auto-create-theories-bottleneck]
 tags: [value-betting, operations, sse, supabase, scaling, bug]
 sources:
   - "daily/lcash/2026-04-20.md"
   - "daily/lcash/2026-04-24.md"
+  - "daily/lcash/2026-04-27.md"
 created: 2026-04-20
-updated: 2026-04-24
+updated: 2026-04-27
 ---
 
 # SSE Startup Theory Creation Hang
@@ -63,6 +64,16 @@ An `SSE_SPORTS` environment variable was added to `server/main.py` to filter whi
 
 Additionally, the auto-resolver and SSE startup running simultaneously after a VPS restart can flood the OpticOdds API, causing SSE streams to get stuck. A 5-minute startup delay was added to the auto-resolver to stagger the load.
 
+### Recurrence: 266 Sequential Calls Killing SSE Pipeline (2026-04-27)
+
+On 2026-04-27, the `_auto_create_theories` bottleneck resurfaced across two separate debugging sessions. In Session 17:03, lcash identified that the VPS's `_auto_create_theories` function was making 266 sequential Supabase calls — one per league — and this either timed out or hit rate limits, silently killing the entire SSE pipeline. No SSE streams came online, leaving all international leagues (KBO, NPB, Euroleague, Spain ACB, Argentina LNB) without data despite being correctly configured.
+
+In Session 22:19, the same issue was confirmed as the root cause of VPS SSE failure: `_auto_create_theories` consumed all available Supabase connection capacity, causing the SSE stream launch phase to never execute. The VPS SSE was confirmed broken while VPS health checks showed the SSE task as "alive" — the same invisible failure pattern from previous occurrences.
+
+This marks the third documented occurrence of this bottleneck (after 2026-04-20 and 2026-04-24), now with a specific call count (266 sequential GETs) rather than the estimated 299-432 from prior observations. The pattern is consistent: every VPS restart triggers auto-discovery, which triggers sequential theory creation, which either hangs or rate-limits, which blocks SSE streams.
+
+The recommended fix — batch Supabase calls, add error handling, or skip existing theories — remains undeployed. A secondary mitigation was noted: checking for ANY existing theory (not just `is_active=true`) before creating would prevent duplicate creation on restart, reducing the call count. The fix was deferred to a fresh session due to the complexity of modifying the startup pipeline safely.
+
 ## Related Concepts
 
 - [[concepts/fixture-cache-silent-market-dropout]] - Identified the same serial Supabase GET bottleneck (0.2s × 462 = ~90s); the SSE hang is the failure mode when this bottleneck becomes indefinite
@@ -75,3 +86,4 @@ Additionally, the auto-resolver and SSE startup running simultaneously after a V
 
 - [[daily/lcash/2026-04-20.md]] - SSE startup hung after theory creation, blocking stream launch and fixture cache; 299 leagues auto-discovered, 2 new theories created; 18/18 streams came online after restart; multiple restart attempts needed; task showed "alive" despite zero streams running (Sessions 14:57, 16:29, 18:47)
 - [[daily/lcash/2026-04-24.md]] - SSE startup creating theories for 432 leagues against NBA-only API key; 22 non-basketball streams all 400 errors; `SSE_SPORTS` env var added; auto-resolver 5-min delay to prevent API flood on restart (Sessions 14:40, 15:47, 16:35)
+- [[daily/lcash/2026-04-27.md]] - Third recurrence: `_auto_create_theories` makes 266 sequential Supabase calls, either times out or hits rate limits, killing entire SSE pipeline; confirmed across two debugging sessions (17:03, 22:19); VPS SSE task shows "alive" but zero streams running; fix (batch calls, skip existing theories) deferred to fresh session (Sessions 17:03, 22:19)
