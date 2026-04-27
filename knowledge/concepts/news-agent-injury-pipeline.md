@@ -5,8 +5,9 @@ tags: [value-betting, ai-agent, news, injury, pipeline, claude-sdk, twitter, mlb
 sources:
   - "daily/lcash/2026-04-24.md"
   - "daily/lcash/2026-04-25.md"
+  - "daily/lcash/2026-04-27.md"
 created: 2026-04-24
-updated: 2026-04-25
+updated: 2026-04-27
 ---
 
 # News Agent Injury-to-Pick Pipeline
@@ -92,6 +93,20 @@ The dashboard Sources tab (`news.html`) provides account management: add/remove 
 
 As of 2026-04-25, the news agent is deployed on the mini PC with all 22 Twitter accounts **disabled** — waiting for MLB validation before enabling. The live mode command is: `python3 scripts/news_agent_run.py --live --vps http://170.64.213.223:8802`. Each event costs ~$0.65 (Sonnet), ~3-4 min per event. The Supabase migration `029_news_agent.sql` was run successfully.
 
+### End-to-End Pipeline Test and Live Deployment (2026-04-27)
+
+On 2026-04-27, the full pipeline was tested end-to-end with a real-world event (KD ruled out for Game 4, Rockets vs Lakers). The pipeline correctly: classified the tweet → deduped the event → fetched 347 live odds → ran Stage 2 research agent → applied guardrails → stored 4 picks in Supabase.
+
+**Cost breakdown**: Stage 1 ~$0.01 (Haiku), Stage 2 ~$1.03 (Sonnet), total **~$1.04 per event**. Stage 2 is the expensive part (2-5 minutes) because the Sonnet research agent analyzes odds workspace and historical CLV data.
+
+**Dedup timezone bug discovered**: Games at 01:30 AM UTC April 28 = "tonight" April 27 local time. The classifier assigned different dates on each run, causing dedup to miss duplicates. Fixed with a ±1 day window search instead of exact date match.
+
+**Classifier team hallucination**: The classifier associated KD with the Suns (his former team) instead of the Rockets — stale training data. Team assignment from the classifier isn't fully reliable; post-classification team validation may be needed.
+
+**Sharp snapshot fields added**: `sharp_snapshot`, `sharp_books_used`, `sharp_count`, `opening_odds`, `triggered_ev` added to `news_agent/pick_writer.py` (lines ~229-253) so news picks now capture the same sharp context as regular picks — enabling CLV backtesting.
+
+**Live deployment**: Deployed to mini PC with 87 Twitter accounts rotating (from [[concepts/twitter-multi-account-cookie-rotation]]), monitoring @UnderdogNBA (NBA) + @FantasyLabsMLB (MLB) + @ShamsCharania (NBA). Previous news picks and events cleared for clean slate. Standalone dashboard at `http://170.64.213.223:8802/news.html` plus "News Edge" tab on main dashboard.
+
 ## Related Concepts
 
 - [[concepts/news-driven-pre-sharp-ev-thesis]] - The strategic thesis that the news agent implements: beating sharps to news, conviction-based picks validated retroactively by CLV
@@ -106,3 +121,4 @@ As of 2026-04-25, the news agent is deployed on the mini PC with all 22 Twitter 
 
 - [[daily/lcash/2026-04-24.md]] - SGA ruled out for Game 2 vs Phoenix — high-impact injury event (Session 17:51). Full pipeline built: odds fetcher (347 PHX-OKC markets, 8 sharp + 4 soft books), Haiku classifier (correctly classified injury_out), Sonnet analyst with SDK tools (CLV history: 132 SGA picks, +1.23% avg CLV); refactored from Anthropic SDK to Agent SDK matching podcast.py pattern; ~40s cold start; `exec_sql` RPC unavailable; pick_writer handles missing news columns gracefully; VPS only reachable via remote URL not localhost (Session 17:53)
 - [[daily/lcash/2026-04-25.md]] - Major pipeline overhaul: EV validation gate removed (thesis: beating sharps to news, not reacting to current EV); 7 flaws identified and fixed; workspace trimmed 90KB→48KB fixing Sonnet timeout; timeout increased 300s→600s; Stage 1 reduced to pure binary gate; full sportsbook odds workspace pre-computed with Pinnacle devig (Sessions 08:32, 09:08). Multi-sport expansion: MLB support added (30 teams, sport-aware classifier, MLB event types); 22 Twitter sources (10 NBA + 12 MLB); live mode auto-detects sport from source; national insiders first, beat writers planned (Session 14:48). Mini PC deployment: residential IP advantage; Node.js portable install; Claude CLI authenticated; curl_cffi installed; scraper reads enabled accounts from Supabase; `030_twitter_accounts.sql` migration with 9 seed accounts; all accounts disabled pending MLB validation (Sessions 10:46, 11:55, 12:26, 14:15, 15:43). Jalen Williams (OKC) ruled out Game 3, KD (Rockets) questionable Game 3 — live injury events processed (Sessions 08:41, 08:50). MLB beat writer hierarchy: DiComo (Mets), Matheson (Blue Jays), Sharma (Cubs) break news before national insiders; beat writer crawl job planned (Sessions 16:16, 20:45)
+- [[daily/lcash/2026-04-27.md]] - Full E2E test with KD ruled out Game 4: 4 picks generated; cost ~$1.04/event ($0.01 Haiku + $1.03 Sonnet); dedup timezone bug (±1 day window fix); classifier hallucinated KD on Suns (stale training data); sharp snapshot fields added to pick_writer.py; deployed with 87 rotating Twitter accounts monitoring @UnderdogNBA + @FantasyLabsMLB + @ShamsCharania; news dashboard at /news.html + "News Edge" tab (Sessions 10:37, 11:03, 12:15, 14:51)

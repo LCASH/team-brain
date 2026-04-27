@@ -9,8 +9,9 @@ sources:
   - "daily/lcash/2026-04-18.md"
   - "daily/lcash/2026-04-19.md"
   - "daily/lcash/2026-04-22.md"
+  - "daily/lcash/2026-04-27.md"
 created: 2026-04-15
-updated: 2026-04-22
+updated: 2026-04-27
 ---
 
 # Dashboard Client-Server EV Divergence
@@ -120,6 +121,23 @@ The market key format mismatch (`harrison_barnes_threes_under` in Supabase vs `h
 
 See [[concepts/dashboard-pick-flashing-stale-odds]] for the full multi-bug analysis and fixes (SSE merge instead of clear, reconcile_sport 60s grace period, 15-min isGameLive buffer, stored pick removal for SSE sports, captured_at override removal).
 
+### Six-Dimension Dual-Codebase Computation Drift (2026-04-27)
+
+On 2026-04-27, lcash performed a systematic audit between `dashboard/index.html` and `server/tracker.py`, tracing `findPair`, devig methods, Poisson interpolation, line-gap penalty, EV cap, odds-freshness, cross-validation, and `is_over` handling. Six specific dimensions where the implementations had drifted apart were identified and fixed:
+
+1. **Poisson interpolation**: Dashboard fell back to logit for line gaps >1.0; backend always uses Poisson for count props. Logit inflates EV for count props with large gaps.
+2. **Line-gap penalty**: Dashboard used "prob-shrink toward 0.5" which disproportionately inflates low-probability events; backend uses weight decay inside `computeTrueProb` — mathematically different.
+3. **EV cap**: Dashboard had a hard 50% cap; backend has none. Dashboard hid extreme EVs that the backend tracked.
+4. **Soft odds freshness**: Dashboard accepted odds up to 600s; backend rejected at 300s. Dashboard showed picks the backend already discarded as stale.
+5. **Cross-validation check**: Dashboard was missing the sharp-vs-soft devig >5pp divergence filter that the backend uses to skip unreliable picks.
+6. **`is_over` case sensitivity**: Dashboard checked `m.side === 'Over'` (case-sensitive); backend uses `.lower()` comparison. Non-standard case formats were misidentified.
+
+This represents a new class of divergence beyond field-dropping (`loadTheories()`) and filtering confusion (theory name exclusion): the *same algorithm* implemented with *different assumptions* in two languages. See [[connections/dual-codebase-ev-computation-drift]] for the full analysis.
+
+In the same session, the trail chart was also found to be using fundamentally different true-odds calculations than the table: the chart did raw devig without interpolation, while the table used `interpolateForProp()`. Under picks also had the devig arguments swapped (trail stores `odds` = this side, `u` = opposite, but `devigMultiplicative()` always expects Over first). Both were fixed. See [[concepts/per-theory-true-odds-display]] for the per-theory visualization redesign that emerged from this debugging.
+
+Additionally, the MLB game scraper was discovered to be using `BET365_2_BOOK_ID = 365` (old betstamp ID) instead of 366 (Bet365 2.0), making all MLB game scraper data invisible on the dashboard because the dashboard filters for book 366.
+
 ## Sources
 
 - [[daily/lcash/2026-04-15.md]] - Pinnacle theory showing AU soft books instead of prediction markets; `loadTheories()` dropping 6 fields via JS destructuring; client-side EV ≠ server-side EV divergence; fix deployed; zero Pinnacle picks correct (games outside 3h window); deploy killed all workers requiring manual restart; NRL scheduled task re-enable needed (Session 22:03/16:20+)
@@ -128,3 +146,4 @@ See [[concepts/dashboard-pick-flashing-stale-odds]] for the full multi-bug analy
 - [[daily/lcash/2026-04-18.md]] - Theory name exclusion too aggressive: NHL had both theories excluded → 0 picks; MLB "MLB Pinnacle" excluded → fewer computations; critical distinction between display filtering and computation filtering; fix: exclude only from display query, not EV engine theory loading; sharp data age threshold 60s→120s for mini PC polling interval; VPS single-stream architecture confirmed (all sports on port 8802) (Session 21:50)
 - [[daily/lcash/2026-04-19.md]] - True-odds display inconsistency: same bet (LOUD vs MIBR moneyline) showing different true odds (4.44 vs 5.33) on Kalshi vs Polymarket under the same Pinnacle theory; cause: sharp data freshness varies between render cycles → different sharp books selected for same market → different devigged true probability displayed; confirmed trail data unaffected (trails store raw odds, resolver devigs server-side consistently); separation between ephemeral dashboard JS computation and persistent server-side pipeline is an architectural strength (Session 07:26)
 - [[daily/lcash/2026-04-22.md]] - Pick flashing from 5 stacking bugs: SSE snapshot clear-on-reconnect, reconcile_sport aggressive removal, frozen stored pick odds (Harrison Barnes 2.45 vs live 1.833), market key format mismatch (underscores vs spaces), `captured_at: time.time()` override at state.py:2115 masking 111-min sharp staleness; dashboard lacks sharp book staleness check (Sessions 09:42, 10:31, 11:06)
+- [[daily/lcash/2026-04-27.md]] - Six-dimension dual-codebase drift audit: Poisson interpolation fallback removed, line-gap penalty changed from prob-shrink to weight-decay, EV cap removed, freshness tightened 600→300s, cross-validation check added, is_over case-insensitive; trail chart interpolation + Under devig arg swap fixed; MLB BET365_2_BOOK_ID was 365 instead of 366 making data invisible (Sessions 08:10, 08:45, 09:23, 11:34)

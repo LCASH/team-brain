@@ -263,3 +263,9 @@
 - Note: Final incremental recompile — Sessions 07:42 through 23:12 were compiled in prior passes; this pass covers Session 23:45 (batch Twitter login monitoring accounts #65-79, Cloudflare interstitial benign)
 - Articles created: (none)
 - Articles updated: [[concepts/twitter-multi-account-cookie-rotation]] (added Session 23:45 pipeline progress: ~79/100 accounts processed, Cloudflare "Just a moment..." interstitial confirmed benign for cookie export)
+
+## [2026-04-27T20:26:25+10:00] compile | daily/lcash/2026-04-27.md
+- Source: daily/lcash/2026-04-27.md
+- Developer: lcash
+- Articles created: [[concepts/per-theory-true-odds-display]], [[concepts/sse-market-map-default-dropout]], [[concepts/chrome-tab-leak-accumulation]], [[concepts/superwin-racing-profitability-dimensions]], [[connections/dual-codebase-ev-computation-drift]]
+- Articles updated: [[concepts/tabtouch-kambi-white-label-sports]] (production deployment: book_id 909, REST polling, MLB 182 betOffers, 1 outcome per betOffer, integer encoding), [[concepts/dashboard-client-server-ev-divergence]] (6-dimension dual-codebase computation drift audit: Poisson, penalty model, EV cap, freshness, cross-validation, case sensitivity; trail chart interpolation and Under devig arg swap; MLB book ID 365→366), [[concepts/news-agent-injury-pipeline]] (E2E test with KD Game 4: $1.04/event, dedup timezone bug, classifier team hallucination, sharp snapshots added, live deployment with 87 rotating accounts), [[concepts/mlb-parallel-scraper-workers]] (N_WORKERS reverted 3→1, 3-tier MG click strategy, tab-filtered MG names, MLB book ID bug), [[concepts/superwin-edge-pick-backtesting]] (2-min gate removed, EV tracking blindspot below 10%, trail depth fields lay_sz/bk_sz/sel_m), [[concepts/watchdog-environment-stripping]] (third recurrence: SPORT env var, watchdog broken since March 25, taskkill sledgehammer)

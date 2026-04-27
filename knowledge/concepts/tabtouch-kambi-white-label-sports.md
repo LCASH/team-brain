@@ -4,8 +4,9 @@ aliases: [kambi-api, tabtouch-kambi, kambi-white-label, tabtouch-sports-api, kam
 tags: [superwin, tabtouch, kambi, scraping, reverse-engineering, value-betting, sports-betting]
 sources:
   - "daily/lcash/2026-04-26.md"
+  - "daily/lcash/2026-04-27.md"
 created: 2026-04-26
-updated: 2026-04-26
+updated: 2026-04-27
 ---
 
 # TabTouch Kambi White-Label Sports Platform
@@ -76,6 +77,19 @@ A Kambi scraper adapter for the value betting scanner should:
 
 MLB data should be captured from the Kambi baseball endpoint to confirm player prop structure matches the NBA format — if Kambi uses the same betOffer schema across sports (likely, as it's a standardized platform), the scraper adapter is sport-agnostic.
 
+### Production Deployment (2026-04-27)
+
+On 2026-04-27, the Kambi scraper was built and deployed as book_id **909** (TabTouch Kambi), integrated directly into `direct_scraper_worker.py` alongside TAB polling at 60-second REST intervals. Key deployment findings:
+
+- **Book ID 909** was already present in `SOFT_BOOK_IDS` and `BOOK_NAMES` — no additional configuration needed
+- **MLB confirmed**: 182 betOffers per game with 11 player prop types (Home Runs, Hits, Runs, Bases, RBIs, Doubles, Strikeouts, Stolen Bases, Outs, and more) — proper Over/Under lines, not just thresholds like TAB
+- **Key structural difference from TAB**: Kambi returns **1 outcome per betOffer** (Over OR Under separately), while TAB returns 2 outcomes per market. The scraper parses each betOffer independently rather than pairing them
+- **Integer encoding**: Odds are `odds_value / 1000` (e.g., 1850 → 1.85 decimal), lines are `line / 1000` (e.g., 5500 → 5.5)
+- **106 unique criterion labels** for NBA — mapped to the scanner's internal prop type identifiers
+- **Operator codes**: `rwwawa` = TabTouch/RWWA; Kambi powers multiple AU bookies with the same API structure, just different operator codes
+- **`participantId`** confirmed stable across all markets for the same player — useful for cross-market player matching
+- **WebSocket upgrade deferred**: REST polling at 60s is sufficient for initial deployment; Socket.IO consumer for sub-second updates is Phase 2
+
 ### AdsPower Session Management Gotcha
 
 During the Kambi discovery session, AdsPower browser session management exhibited finicky behavior: profile WebSocket endpoints went stale when the browser restarted, and the browser opened to a cached page (Twitter from a prior login pipeline session) instead of the requested URL. This is an operational nuance of using AdsPower for network traffic capture — the profile state persists across sessions and may need manual navigation to the target page before traffic analysis.
@@ -91,3 +105,4 @@ During the Kambi discovery session, AdsPower browser session management exhibite
 ## Sources
 
 - [[daily/lcash/2026-04-26.md]] - AdsPower browser traffic capture revealed TabTouch sports = Kambi white-label; API at `ap.offering-api.kambicdn.com` requires no auth; 426 betOffers including 242 player props from single NBA game; full player names and stable participantIds; Kambi push via Socket.IO (763 messages/120s); two independent streaming systems (MQTT racing + Socket.IO sports); betOffer types: type 2 = over/under, type 1 = moneyline; criterion.id maps to stat categories; AdsPower session management gotcha (Session 22:10)
+- [[daily/lcash/2026-04-27.md]] - Production deployment: book_id 909, REST polling at 60s in direct_scraper_worker.py; MLB confirmed 182 betOffers / 11 prop types with proper O/U lines; 1 outcome per betOffer (vs TAB's 2); integer encoding odds/1000, line/1000; 106 unique NBA criterion labels; operator code `rwwawa` = TabTouch/RWWA; participantId stable across markets confirmed; WebSocket deferred to Phase 2 (Session 07:38)

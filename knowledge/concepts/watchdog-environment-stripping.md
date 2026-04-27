@@ -5,8 +5,9 @@ tags: [deployment, operations, anti-pattern, windows, value-betting]
 sources:
   - "daily/lcash/2026-04-15.md"
   - "daily/lcash/2026-04-16.md"
+  - "daily/lcash/2026-04-27.md"
 created: 2026-04-15
-updated: 2026-04-16
+updated: 2026-04-27
 ---
 
 # Watchdog Environment Variable Stripping
@@ -72,6 +73,16 @@ The identical failure recurred on 2026-04-16 — the watchdog (or equivalent bar
 
 Resolution was the same: kill orphaned processes (including 15 Chrome processes from `bet365_game_profile`), then `schtasks /Run /TN NBA_Server` to relaunch via the batch file. The recurrence — same root cause, same symptoms, same 15 orphaned Chrome processes — confirms that the root fix (updating `watchdog.py` to use the batch file) remains the highest-priority unresolved operational issue.
 
+### Third Recurrence and SPORT Env Var (2026-04-27)
+
+On 2026-04-27, the identical pattern recurred again — this time with a new diagnostic symptom: **NBA tracker showing 0 cycles**, which is the canonical indicator of "server started without SPORT env var." The `SPORT` environment variable is set by `start_nba.bat` and tells the tracker which sport to initialize. Without it, the tracker starts but never cycles — producing zero picks while the server process appears healthy.
+
+The trigger was `taskkill /im python.exe` which killed ALL Python processes (all sport servers, OpticOdds pollers, push workers). The watchdog auto-restarted processes but without `SPORT` env var, so trackers never initialized. The fix is `schtasks /Run /TN NBA_Server` (not direct Python launch) which executes the batch file with env vars.
+
+A deeper investigation revealed the **watchdog was actually broken since March 25** — disabled schtask, wrong Python path, and `subprocess.Popen` launches without env vars. This was the underlying root cause of all watchdog-related server deaths. The recommended permanent fix is to update `watchdog.py` to use `schtasks /Run` instead of bare `subprocess.Popen`.
+
+Additionally, `taskkill /im python.exe` is a sledgehammer — it kills ALL Python processes including healthy sport servers, OpticOdds pollers, and push workers. Recovery requires restarting each sport server individually via its scheduled task. More targeted process management is needed.
+
 ## Related Concepts
 
 - [[concepts/configuration-drift-manual-launch]] - The first two drift vectors (manual launch and batch file omission); the watchdog is a third, automated drift vector
@@ -84,3 +95,4 @@ Resolution was the same: kill orphaned processes (including 15 Chrome processes 
 
 - [[daily/lcash/2026-04-15.md]] - bet365_game went dark: watchdog restarted with bare `cmd /c python -m server.main` stripping all env vars; `nba_out.log` showed stale output from dead process while live process logged to `server.log`; 15 orphaned Chrome processes; naming zoo documented (bet365_game / GameBet365Scraper / "Bet365 2.0" / NBA_Server / book_id 366); fixed via full kill + `schtasks /Run /TN NBA_Server`; watchdog needs fixing to use batch file (Session 23:17)
 - [[daily/lcash/2026-04-16.md]] - Identical recurrence: 7.2 hours without bet365 data; same misdirection via stale `nba_out.log`; same resolution (kill orphans + schtasks restart); confirms root fix (watchdog.py update) still unresolved (Session 11:56)
+- [[daily/lcash/2026-04-27.md]] - Third recurrence: `taskkill /im python.exe` killed all processes; watchdog restarted without SPORT env var → tracker 0 cycles; canonical symptom: "0 tracker cycles = started without SPORT env var"; watchdog broken since March 25 (disabled schtask, wrong Python path, Popen without env vars); fix: `schtasks /Run` instead of `subprocess.Popen`; `taskkill /im python.exe` kills ALL Python processes (Sessions 12:15, 14:51, 15:23)
