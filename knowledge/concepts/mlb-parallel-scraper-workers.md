@@ -6,8 +6,10 @@ sources:
   - "daily/lcash/2026-04-21.md"
   - "daily/lcash/2026-04-22.md"
   - "daily/lcash/2026-04-27.md"
+  - "daily/lcash/2026-04-28.md"
+  - "daily/lcash/2026-04-29.md"
 created: 2026-04-21
-updated: 2026-04-27
+updated: 2026-04-29
 ---
 
 # MLB Parallel Scraper Workers
@@ -70,9 +72,25 @@ MG expansion clicks are now tab-filtered: only batter MGs are attempted on the "
 
 The MLB game scraper was discovered to be using `BET365_2_BOOK_ID = 365` (the old betstamp ID) instead of 366 (Bet365 2.0). This made ALL MLB game scraper data invisible on the dashboard because the dashboard filters for book 366. The mismatch was a migration artifact from the betstamp removal (see [[concepts/betstamp-bet365-scraper-migration]]) — the NBA scraper was correctly set to 366 but the MLB scraper was never updated.
 
+### Persistent-Page Architecture Replacement (2026-04-28)
+
+On 2026-04-28, the entire worker-cycling model was replaced with a **persistent-page-per-game architecture**. Instead of cycling N workers through games sequentially, each game gets a dedicated Chrome tab that stays open for the session. The `_game_pages` dict maps game IDs to their page objects. `scrape_cycle()` reads cached odds instantly, while `_refresh_loop()` re-captures stale pages in the background.
+
+The key architectural changes from the cycling model:
+
+- **Non-blocking setup**: Worker enters poll loop immediately; games set up in background (~2 min per game for SPA boot + market expansion); first game's odds hit shared file within 30s
+- **Per-game fault tolerance**: If one game page hangs, all others continue serving — no more all-or-nothing crashes from the blocking `_open_game_pages()` that the N_WORKERS model shared
+- **No tab cap needed**: Fixed set of tabs (one per game) instead of accumulating new tabs per cycle
+- **Separate Chrome instances restored**: NBA on port 9223, MLB on port 9224 with separate persistent profiles — reverting from shared Chrome (see [[concepts/bet365-shared-chrome-single-session]])
+- **AU soft book coverage**: Sportsbet (82), Neds (5), Ladbrokes (5) MLB markets confirmed — thin coverage is market reality, not a code bug
+
+MLB 15-19 games × 2min = 30+ min for full setup, but odds flow incrementally from each game as it completes. See [[concepts/persistent-page-chrome-scraper-architecture]] for the full architectural design.
+
 ## Related Concepts
 
 - [[concepts/bet365-mlb-batch-api-co-format]] - The batch API format that the parallel workers scrape; each worker captures the full batch response per game
+- [[concepts/playwright-node-pipe-crash-vector]] - Root cause of EPIPE crashes: Playwright Node.js pipe overflow from CDP tab creation; raw CDP migration eliminates this
+- [[concepts/bet365-mlb-hash-nav-mg-fetching]] - Hash-nav MG fetching with G-ids replaces DOM click-expand for all 25 MLB market groups
 - [[concepts/bet365-mlb-lazy-subscribe-migration]] - The broader MLB scraper evolution history that led to the current architecture
 - [[concepts/game-scraper-chrome-crash-recovery]] - Chrome crash auto-recovery applies to each parallel worker; a crashed worker can be restarted independently
 - [[connections/browser-automation-reliability-cost]] - More Chrome workers means more crash-recovery overhead; 3 workers × 14 restarts/day baseline = significant operational complexity
@@ -85,3 +103,5 @@ The MLB game scraper was discovered to be using `BET365_2_BOOK_ID = 365` (the ol
 - [[daily/lcash/2026-04-21.md]] - Sequential MLB scraping ~9-12 min per rotation too slow; parallel worker architecture with N_WORKERS=3, round-robin distribution, 30-min rediscovery; Dell has 7.2 GB free RAM; NBA scraper doesn't need this because BB wizard endpoint returns all data in single call (Session 17:12). Market expansion gap: 208-216 odds on mini PC vs 700+ locally, likely Chrome profile maturity issue (Session 17:12). First deployment: 2,468 odds from 3 games on first check (Session 12:36)
 - [[daily/lcash/2026-04-22.md]] - Overnight validation confirmed: 6,669 odds, 12 prop types, 13-14/15 games; workers 500-850+ odds/game; Dodgers@SF peak at 851 odds/16 markets/168KB; no crashes, no memory issues; dynamic scaling `min(N_WORKERS, len(game_list))`; market expansion gap persists (0-7 vs 15-17 local) (Session 08:48)
 - [[daily/lcash/2026-04-27.md]] - N_WORKERS reverted 3→1: multiple workers crash shared Chrome context on port 9223; single worker cycles 8 games in ~5 min; 3-tier MG click strategy (native → coordinate → MouseEvent dispatch); tab-filtered MG names (Batter Props capital P, Pitcher props lowercase p); MLB book ID bug: BET365_2_BOOK_ID was 365 (betstamp) instead of 366 (Bet365 2.0) making all MLB data invisible on dashboard (Sessions 09:23, 17:03)
+- [[daily/lcash/2026-04-28.md]] - Worker-cycling model fully replaced with persistent-page-per-game architecture; `_game_pages` dict + `_refresh_loop` replaces `_WorkerPage` cycling; non-blocking setup serves odds incrementally; per-game fault tolerance; separate Chrome instances restored (NBA 9223, MLB 9224); AU soft books confirmed thin (Sportsbet 82, Neds 5, Ladbrokes 5); deploy file mismatch (`state.py` extra kwarg) caused MLB crash loop (Sessions 08:16, 08:47, 11:33, 11:36, 12:07)
+- [[daily/lcash/2026-04-29.md]] - Direct URL navigation with `/I0/` suffix eliminates SPA boot + team-click flow; in-play detection via page content (not URL redirect, not event_id length); hash-nav MG fetching with 25 G-ids replaces DOM click-expand at ~1.3s/fetch; raw CDP WebSocket replaces Playwright for game page management eliminating EPIPE crashes; hybrid architecture: Playwright for discovery only, raw CDP for everything else; 0-odds pages auto-closed (Sessions 10:29, 10:59, 11:32, 16:07, 18:02)

@@ -1,11 +1,12 @@
 ---
 title: "bet365 Shared Chrome Single-Session Enforcement"
-aliases: [shared-chrome, single-session-per-account, chrome-port-9223, bet365-session-conflict]
+aliases: [shared-chrome, single-session-per-account, chrome-port-9223, bet365-session-conflict, dual-chrome-sessions]
 tags: [bet365, scraping, operations, chrome, architecture, value-betting]
 sources:
   - "daily/lcash/2026-04-24.md"
+  - "daily/lcash/2026-04-28.md"
 created: 2026-04-24
-updated: 2026-04-24
+updated: 2026-04-28
 ---
 
 # bet365 Shared Chrome Single-Session Enforcement
@@ -54,6 +55,18 @@ The shared Chrome architecture reduces operational complexity:
 
 On 2026-04-23, lcash discovered that injecting the same cookies into both Chrome instances (port 9223 and 9224) resulted in only the NBA Chrome accepting the session (see [[concepts/bet365-size-gate-stale-odds]]). The 2026-04-24 finding explains why: bet365 enforces single-session-per-account at the server level, not just per-cookie-set. Even with valid cookies, only one active session is permitted. The shared Chrome architecture makes this a non-issue by having only one session.
 
+### Reversion to Dual Chrome Instances (2026-04-28)
+
+On 2026-04-28, the shared Chrome architecture was **reversed** — NBA and MLB scrapers were split back to separate Chrome instances on port 9223 and port 9224 respectively, each with its own persistent profile directory (`bet365_nba_profile` and `bet365_mlb_profile`). Testing on this date confirmed that **bet365 allows simultaneous sessions from two Chrome profiles** — no account conflict was observed.
+
+This contradicts the 2026-04-24 finding. The most likely explanations:
+
+1. **Different accounts**: The two Chrome profiles may now use different bet365 accounts rather than the same one
+2. **Session enforcement relaxation**: bet365 may have changed their single-session enforcement policy
+3. **Profile-vs-instance distinction**: The earlier failure may have been caused by sharing *cookies* between instances (which definitely conflicts), while separate profile directories with independently-obtained sessions may coexist
+
+The practical outcome is that the scraper architecture returned to separate Chrome instances per sport, which eliminates the shared-Chrome single-point-of-failure and the tab-leak amplification across scrapers. Each sport's Chrome can crash and recover independently. The persistent profile directories preserve login cookies across Chrome restarts (see [[concepts/cdp-stale-connection-poisoning]]).
+
 ## Related Concepts
 
 - [[concepts/bet365-auto-login-session-recovery]] - The auto-login script now targets only port 9223; session conflicts were the cause of login failures that motivated the shared Chrome architecture
@@ -65,3 +78,4 @@ On 2026-04-23, lcash discovered that injecting the same cookies into both Chrome
 ## Sources
 
 - [[daily/lcash/2026-04-24.md]] - bet365 blocks simultaneous logins from same account on two browsers; NBA Chrome login failing because MLB Chrome already logged in; consolidated to shared Chrome on port 9223; MLB scraper updated to attach to 9223; port 9224 killed; `_kill_stale_chrome` safe with `self._chrome_proc = None`; user corrected: "never assume the system is good — check every component" (Session 09:10)
+- [[daily/lcash/2026-04-28.md]] - Reverted to dual Chrome: NBA on 9223, MLB on 9224 with separate persistent profiles; confirmed bet365 allows simultaneous sessions from two Chrome profiles — no account conflict; persistent profiles (`bet365_nba_profile`, `bet365_mlb_profile`) preserve login across Chrome kills; architecture diagram created showing full Chrome → Worker → Server → Push → VPS pipeline (Session 12:07)

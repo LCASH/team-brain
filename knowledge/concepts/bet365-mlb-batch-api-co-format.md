@@ -4,8 +4,9 @@ aliases: [batch-api, batchmatchbettingcontentapi, co-segment-format, co-columns,
 tags: [bet365, mlb, scraping, reverse-engineering, data-format]
 sources:
   - "daily/lcash/2026-04-21.md"
+  - "daily/lcash/2026-04-29.md"
 created: 2026-04-21
-updated: 2026-04-21
+updated: 2026-04-29
 ---
 
 # bet365 MLB Batch API and CO Segment Format
@@ -64,13 +65,21 @@ The batch response uses descriptive market names that must be mapped to the scan
 
 Some MG groups (particularly pitcher-specific props) may use different structures. The parser handles the common format and logs unrecognized MG groups for future mapping.
 
+### RBIs Name Mismatch (2026-04-29)
+
+On 2026-04-29, lcash discovered that bet365 renamed the "Runs Batted In" market group to "RBIs" in their API responses. The production scraper's market name mapping had the old name, causing it to silently drop approximately 109 RBI records per game. This is a recurring data format drift pattern — upstream API changes that produce zero errors but silently lose data (see [[connections/silent-type-coercion-data-corruption]]). The fix was a simple map patch adding the new name.
+
+Additionally, two formats per stat were confirmed to exist: CO milestones (threshold-style, e.g., "3+ RBIs") and standard O/U (over/under line). The games-list surface only has O/U format, while per-game tabs have both — many edges live in the CO milestone alt lines that are only available via per-game fetching.
+
 ## Related Concepts
 
 - [[concepts/bet365-mlb-lazy-subscribe-migration]] - The prior API migration history (v1 BB wizard → v2 lazy-subscribe → v3 hybrid → v4 batch API)
 - [[concepts/bet365-racing-data-protocol]] - The racing adapter uses similar pipe-delimited field codes (NA=, OD=, FI=) in a different structural format
 - [[concepts/spa-navigation-state-api-access]] - The batch API fires from specific navigation states; hash navigation alone doesn't trigger it
 - [[connections/anti-scraping-driven-architecture]] - The batch API is yet another format change in bet365's evolving defense stack
+- [[concepts/bet365-mlb-hash-nav-mg-fetching]] - Hash-nav with G-ids provides deterministic URL-driven access to all 25 MGs, replacing click-expand; discovered alongside the RBIs name mismatch
 
 ## Sources
 
 - [[daily/lcash/2026-04-21.md]] - Implementation plan: old `matchbettingcontentapi` → new `batchmatchbettingcontentapi` with MG/MA/CO/PA segment hierarchy; debug dump analysis showing CO NA=1→8 structure; PA ID consistency between player list and odds grid; fractional odds format (Session 09:13). CO segment handler added as ~8 lines at `bet365_mlb_game.py:216-224`; threshold N maps to line N-0.5; 333 odds from single game confirmed locally; pitcher props auto-load without expansion, batter props need expansion clicks (Session 09:27). Parser confirmed working with 333 odds from a single game locally (Session 10:41)
+- [[daily/lcash/2026-04-29.md]] - RBIs name mismatch: bet365 renamed "Runs Batted In" → "RBIs" silently dropping ~109 records/game; two formats per stat (CO milestones vs O/U) confirmed; games-list only has O/U, per-game tabs have both (Session 18:02)

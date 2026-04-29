@@ -1,12 +1,13 @@
 ---
 title: "Game Scraper Chrome Crash Auto-Recovery"
-aliases: [chrome-crash-recovery, epipe-broken-pipe, zero-ms-scrape-diagnostic, game-scraper-auto-recovery, stale-cached-odds]
+aliases: [chrome-crash-recovery, epipe-broken-pipe, zero-ms-scrape-diagnostic, game-scraper-auto-recovery, stale-cached-odds, fresh-chrome-always]
 tags: [value-betting, scraping, bet365, chrome, reliability, operations]
 sources:
   - "daily/lcash/2026-04-19.md"
   - "daily/lcash/2026-04-20.md"
+  - "daily/lcash/2026-04-28.md"
 created: 2026-04-19
-updated: 2026-04-20
+updated: 2026-04-28
 ---
 
 # Game Scraper Chrome Crash Auto-Recovery
@@ -59,6 +60,19 @@ Both the NBA game scraper (`bet365_game_worker.py` in scanner-new) and the MLB g
 The staleness was confirmed through trail data analysis. Soft trails for Bet365 2.0 picks showed only 1 entry each — the initial capture at pick creation time — with no subsequent odds movement recorded. All timestamps were batch-like (e.g., all at 00:27:42), indicating a single data snapshot followed by hours of stale cache serving. Healthy trail data would show multiple entries at 5-15 second intervals as odds move pre-game.
 
 The user correctly challenged the initial "between slates" explanation for sparse trails — Bet365 has pre-game player props hours before tipoff, so odds should be refreshing regardless of whether games are active. This pushed the investigation from "expected behavior" to "something is broken," ultimately revealing the Chrome crash.
+
+### Fresh Chrome Always Pattern (2026-04-28)
+
+On 2026-04-28, the recovery architecture evolved from "restart Chrome after 5 failures" to "always kill and relaunch Chrome on worker start." The trigger was discovering that stale CDP connections from dead workers (see [[concepts/cdp-stale-connection-poisoning]]) poison the Chrome state, making reattachment unreliable. The new pattern:
+
+1. Worker start → `_kill_stale_chrome()` kills any Chrome matching the profile path
+2. Launch fresh Chrome with persistent profile dir (preserves cookies/login)
+3. Connect via CDP to guaranteed-clean Chrome with zero ghost sessions
+4. Open game pages via the persistent-page architecture
+
+This eliminates the class of crash-loop failures where the auto-recovery's `stop() → start()` cycle launched a new Chrome but inherited poisoned state from the dead worker's ghost CDP session. The persistent profile directory ensures login cookies survive the kill, so no re-authentication is needed — unless bet365's CAPTCHA has triggered, which still requires manual intervention.
+
+The ~30s Chrome startup cost is paid once per worker lifecycle (not per game), making it negligible for scrapers that run for hours. The tradeoff is explicit: guaranteed reliability over reuse efficiency.
 
 ### Windows File Lock Complication
 

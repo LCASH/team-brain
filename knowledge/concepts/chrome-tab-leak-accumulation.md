@@ -4,8 +4,10 @@ aliases: [chrome-tab-leak, stale-tabs, tab-accumulation, chrome-tab-bloat]
 tags: [value-betting, bet365, chrome, scraping, reliability, operations]
 sources:
   - "daily/lcash/2026-04-27.md"
+  - "daily/lcash/2026-04-28.md"
+  - "daily/lcash/2026-04-29.md"
 created: 2026-04-27
-updated: 2026-04-27
+updated: 2026-04-29
 ---
 
 # Chrome Tab Leak Accumulation
@@ -39,13 +41,24 @@ The consolidation to a shared Chrome on port 9223 (see [[concepts/bet365-shared-
 
 Killing all Chrome processes (`taskkill /F /IM chrome.exe`) and letting both scrapers' auto-recovery mechanisms relaunch Chrome is the fastest remediation. Both NBA and MLB workers detected the dead Chrome and auto-recovered cleanly — confirming the auto-recovery mechanism works for externally-killed Chrome as well as EPIPE crashes.
 
-### Root Cause
+### Root Cause and Fix (2026-04-28)
 
-The scrapers use `context.new_page()` or `browser.new_page()` to create page objects for game navigation but never call `page.close()` on the previous page before creating a new one. The fix is to track the current page reference and close it before opening a new one. This is a straightforward code change in both `bet365_game_worker.py` (NBA) and the MLB scraper, but has not been deployed yet.
+The root cause was identified on 2026-04-28 as `_discover_games()` creating pages that were never closed — not the game page logic itself. The cycling architecture created tabs faster than the 60-second CDP tab cleanup could close them, leading to 30-41+ tab accumulation triggering EPIPE crash loops when Chrome became overwhelmed.
+
+Three fixes were deployed:
+
+1. **Persistent-page architecture**: Each game gets a dedicated tab via `_game_pages` dict that persists for the session, replacing the create-per-cycle model. See [[concepts/persistent-page-chrome-scraper-architecture]].
+2. **Event ID tab matching**: Tab cleanup switched from URL-based matching (unreliable — bet365 SPA URLs change format) to `event_id` matching. Cleanup is sport-scoped (`/B18/` for NBA, `/B16/` for MLB) to prevent cross-sport deletion.
+3. **Fresh Chrome on worker start**: Always kill Chrome and relaunch on worker start instead of trying to reuse (see [[concepts/cdp-stale-connection-poisoning]]). This eliminates inherited stale tabs from dead workers.
+
+A hard tab cap was also planned: if Chrome exceeds 20 tabs (checked via CDP `/json`), kill Chrome entirely and let auto-recovery relaunch it.
+
+The previous analysis was correct that `context.new_page()` / `browser.new_page()` without `page.close()` was the mechanism — but the cycling architecture's rediscovery loop was the primary source of unclosed pages, not the scrape cycle itself.
 
 ## Related Concepts
 
 - [[concepts/game-scraper-chrome-crash-recovery]] - The crash auto-recovery mechanism (EPIPE → 5 failures → stop/start) that handles sudden Chrome death; tab leaks are a different failure class that this mechanism doesn't detect
+- [[concepts/playwright-node-pipe-crash-vector]] - Tab leaks amplify Playwright's pipe overflow: more leaked tabs = more pipe traffic = faster EPIPE crashes; raw CDP eliminates this amplification
 - [[concepts/bet365-shared-chrome-single-session]] - Shared Chrome on port 9223 amplifies the tab leak impact across both scrapers
 - [[connections/browser-automation-reliability-cost]] - Tab leaks add a sixth reliability dimension: progressive resource exhaustion during normal operation, not triggered by errors or crashes
 - [[concepts/worker-status-observability]] - Tab count should be a health metric; scrapers report "streaming" while Chrome is drowning in stale tabs
@@ -54,3 +67,5 @@ The scrapers use `context.new_page()` or `browser.new_page()` to create page obj
 ## Sources
 
 - [[daily/lcash/2026-04-27.md]] - Both bet365 NBA and MLB scrapers non-functional; Chrome had 51 stale tabs causing navigation timeouts; killed all 58 Chrome processes; both workers auto-recovered cleanly; tab leak is the root cause — workers open tabs without closing old ones; port 9224 Chrome unresponsive (leftover); tab count monitoring recommended for /vb health (Session 17:34)
+- [[daily/lcash/2026-04-28.md]] - Root cause traced to `_discover_games()` creating unclosed pages; URL-based tab matching unreliable, switched to event_id matching scoped per sport; persistent-page architecture eliminates create-per-cycle tab growth; fresh Chrome on worker start removes inherited stale tabs; 41 tabs found on Chrome 9223; hard tab cap (>20 → kill Chrome) planned (Sessions 08:16, 08:47)
+- [[daily/lcash/2026-04-29.md]] - `_setup_task` identified as the **main tab leak culprit**: each Chrome-death restart leaks a full set of game tabs because the old setup task keeps running after `close()` returns; fix: add `_setup_task` to cancel list in `close()`; wrap discovery page creation in try/finally (Session 09:22). Raw CDP tab management confirmed stable at `tabs=5/4→6/6` versus Playwright's `tabs=21/4` leak (Session 11:32)

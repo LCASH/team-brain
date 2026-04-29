@@ -4,8 +4,9 @@ aliases: [racing-profitability, harness-dominance, liquidity-goldmine, mode-anal
 tags: [superwin, racing, analytics, methodology, backtesting]
 sources:
   - "daily/lcash/2026-04-27.md"
+  - "daily/lcash/2026-04-29.md"
 created: 2026-04-27
-updated: 2026-04-27
+updated: 2026-04-29
 ---
 
 # SuperWin Racing Profitability Dimensions
@@ -126,3 +127,4 @@ The best-performing filter on this difficult day was **Cash Multiplier + liquidi
 ## Sources
 
 - [[daily/lcash/2026-04-27.md]] - Comprehensive 16-dimension profitability analysis across 487 picks: harness=83% of profit from 21% of picks (+152% ROI), $750-$1K Betfair liquidity goldmine (+170% ROI, +28% CLV), Cash Multiplier best mode (+70.3% ROI), 4-5 detection scans = +108% ROI, EV sweet spot 12-15%, positive CLV = +54% ROI, optimal composite filter at 339% ROI (17 picks); 10 theories codified in edge-pick-theories.md (Session 13:36). Day 6 validation: 341 picks, -112u worst day; 3 of 10 theories contradicted ($8-12 odds → $3-5 profitable, 5-10min MTJ → 1-2min only profitable, harness first losing day -30u ROI halved to 69%); CLV paradox +12% CLV but -109u; volume amplification from time gate removal; Cash Multi + liq≥750 + MTJ<2 = 38% WR, +93% ROI; cumulative 769 picks +68.8u (Session 22:52)
+- [[daily/lcash/2026-04-29.md]] - Expanded to 8D matrix with trail-derived dimensions (EV trajectory, volatility, lay depth, speed to peak); 60% of picks lack trail data (45% pre-deploy Apr 23-26, 15% single-scan); 3% EV threshold NOT the bottleneck (only 19 picks blocked); single-scan picks confirmed noise at -29% ROI / -43u; **Harness + $12-20 + liq$500-1.5K + mtj 2-10min + sc2+** = 485% ROI on 10 picks; CLV is portfolio filter not pick predictor (76% of profit from CLV≥15%); CLV×Liquidity interaction: liq $500-1.5K + CLV 0-10% = +128% ROI; ev_flat + vol_med consistently profitable (Session 12:02)

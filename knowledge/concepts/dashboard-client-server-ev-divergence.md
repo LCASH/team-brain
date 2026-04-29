@@ -10,8 +10,9 @@ sources:
   - "daily/lcash/2026-04-19.md"
   - "daily/lcash/2026-04-22.md"
   - "daily/lcash/2026-04-27.md"
+  - "daily/lcash/2026-04-29.md"
 created: 2026-04-15
-updated: 2026-04-27
+updated: 2026-04-29
 ---
 
 # Dashboard Client-Server EV Divergence
@@ -138,6 +139,16 @@ In the same session, the trail chart was also found to be using fundamentally di
 
 Additionally, the MLB game scraper was discovered to be using `BET365_2_BOOK_ID = 365` (old betstamp ID) instead of 366 (Bet365 2.0), making all MLB game scraper data invisible on the dashboard because the dashboard filters for book 366.
 
+### Frontend `computeTrueProb()` Fundamental Math Bug (2026-04-29)
+
+On 2026-04-29, lcash discovered a **critical bug** in the dashboard's `computeTrueProb()` JavaScript function that produces wildly incorrect true odds. For a Pinnacle theory, the function showed true odds of 1.28 (implying 47.7% EV) when manual calculation produced 1.749 (8.2% EV) — a 39.5 percentage point discrepancy. The Aggressive theory showed +7.6% EV in the table versus manually computed -0.9% EV.
+
+This is distinct from the six-dimension drift documented above: those were subtle parameter differences. The `computeTrueProb()` bug produces **fundamentally wrong numbers** — not "slightly different from backend" but "completely divorced from mathematical reality." The 1.28 true odds for a market where Pinnacle's actual line is around 1.75 indicates a structural error in how the devig inputs are selected or combined.
+
+The bug undermines trust in ALL displayed EV values on the dashboard. The chart (different code path for true odds) showed stale but directionally correct values (2.41 vs current 2.50), while the table showed 1.28 — suggesting the chart and table compute true odds through independent, divergent paths. Investigation pointed to potential Over/Under swap logic errors in the table's code path, or wrong sharp book selection for the devig computation.
+
+This is the eighth documented manifestation of client-server divergence, and the most severe in terms of output magnitude.
+
 ## Sources
 
 - [[daily/lcash/2026-04-15.md]] - Pinnacle theory showing AU soft books instead of prediction markets; `loadTheories()` dropping 6 fields via JS destructuring; client-side EV ≠ server-side EV divergence; fix deployed; zero Pinnacle picks correct (games outside 3h window); deploy killed all workers requiring manual restart; NRL scheduled task re-enable needed (Session 22:03/16:20+)
@@ -147,3 +158,4 @@ Additionally, the MLB game scraper was discovered to be using `BET365_2_BOOK_ID 
 - [[daily/lcash/2026-04-19.md]] - True-odds display inconsistency: same bet (LOUD vs MIBR moneyline) showing different true odds (4.44 vs 5.33) on Kalshi vs Polymarket under the same Pinnacle theory; cause: sharp data freshness varies between render cycles → different sharp books selected for same market → different devigged true probability displayed; confirmed trail data unaffected (trails store raw odds, resolver devigs server-side consistently); separation between ephemeral dashboard JS computation and persistent server-side pipeline is an architectural strength (Session 07:26)
 - [[daily/lcash/2026-04-22.md]] - Pick flashing from 5 stacking bugs: SSE snapshot clear-on-reconnect, reconcile_sport aggressive removal, frozen stored pick odds (Harrison Barnes 2.45 vs live 1.833), market key format mismatch (underscores vs spaces), `captured_at: time.time()` override at state.py:2115 masking 111-min sharp staleness; dashboard lacks sharp book staleness check (Sessions 09:42, 10:31, 11:06)
 - [[daily/lcash/2026-04-27.md]] - Six-dimension dual-codebase drift audit: Poisson interpolation fallback removed, line-gap penalty changed from prob-shrink to weight-decay, EV cap removed, freshness tightened 600→300s, cross-validation check added, is_over case-insensitive; trail chart interpolation + Under devig arg swap fixed; MLB BET365_2_BOOK_ID was 365 instead of 366 making data invisible (Sessions 08:10, 08:45, 09:23, 11:34)
+- [[daily/lcash/2026-04-29.md]] - **Critical `computeTrueProb()` bug**: Pinnacle true odds showed 1.28 (47.7% EV) vs manually computed 1.749 (8.2% EV) — 39.5pp discrepancy; Aggressive showed +7.6% vs correct -0.9%; chart vs table use divergent code paths; undermines ALL displayed EV values (Sessions 13:29, 14:18)
