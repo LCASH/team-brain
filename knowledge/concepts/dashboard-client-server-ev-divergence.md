@@ -11,8 +11,9 @@ sources:
   - "daily/lcash/2026-04-22.md"
   - "daily/lcash/2026-04-27.md"
   - "daily/lcash/2026-04-29.md"
+  - "daily/lcash/2026-04-30.md"
 created: 2026-04-15
-updated: 2026-04-29
+updated: 2026-04-30
 ---
 
 # Dashboard Client-Server EV Divergence
@@ -159,3 +160,4 @@ This is the eighth documented manifestation of client-server divergence, and the
 - [[daily/lcash/2026-04-22.md]] - Pick flashing from 5 stacking bugs: SSE snapshot clear-on-reconnect, reconcile_sport aggressive removal, frozen stored pick odds (Harrison Barnes 2.45 vs live 1.833), market key format mismatch (underscores vs spaces), `captured_at: time.time()` override at state.py:2115 masking 111-min sharp staleness; dashboard lacks sharp book staleness check (Sessions 09:42, 10:31, 11:06)
 - [[daily/lcash/2026-04-27.md]] - Six-dimension dual-codebase drift audit: Poisson interpolation fallback removed, line-gap penalty changed from prob-shrink to weight-decay, EV cap removed, freshness tightened 600→300s, cross-validation check added, is_over case-insensitive; trail chart interpolation + Under devig arg swap fixed; MLB BET365_2_BOOK_ID was 365 instead of 366 making data invisible (Sessions 08:10, 08:45, 09:23, 11:34)
 - [[daily/lcash/2026-04-29.md]] - **Critical `computeTrueProb()` bug**: Pinnacle true odds showed 1.28 (47.7% EV) vs manually computed 1.749 (8.2% EV) — 39.5pp discrepancy; Aggressive showed +7.6% vs correct -0.9%; chart vs table use divergent code paths; undermines ALL displayed EV values (Sessions 13:29, 14:18)
+- [[daily/lcash/2026-04-30.md]] - **Cross-sport team name mapping bug**: MLB teams rendered as NBA names (MIL→"Bucks" not "Brewers", PHI→"76ers" not "Phillies", HOU→"Rockets" not "Astros"); root cause: `resolveTeam` had only NBA team map + fuzzy `startsWith`/`endsWith` matching; fix: separate `MLB_TEAM_MAP`, sport-aware `resolveTeam` with explicit `sport` parameter. Remote CCR agents run in Anthropic cloud with zero local access — only VPS endpoints/Supabase (Session 22:05)

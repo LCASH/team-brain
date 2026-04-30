@@ -5,8 +5,9 @@ tags: [superwin, racing, analytics, methodology, backtesting]
 sources:
   - "daily/lcash/2026-04-27.md"
   - "daily/lcash/2026-04-29.md"
+  - "daily/lcash/2026-04-30.md"
 created: 2026-04-27
-updated: 2026-04-29
+updated: 2026-04-30
 ---
 
 # SuperWin Racing Profitability Dimensions
@@ -128,3 +129,4 @@ The best-performing filter on this difficult day was **Cash Multiplier + liquidi
 
 - [[daily/lcash/2026-04-27.md]] - Comprehensive 16-dimension profitability analysis across 487 picks: harness=83% of profit from 21% of picks (+152% ROI), $750-$1K Betfair liquidity goldmine (+170% ROI, +28% CLV), Cash Multiplier best mode (+70.3% ROI), 4-5 detection scans = +108% ROI, EV sweet spot 12-15%, positive CLV = +54% ROI, optimal composite filter at 339% ROI (17 picks); 10 theories codified in edge-pick-theories.md (Session 13:36). Day 6 validation: 341 picks, -112u worst day; 3 of 10 theories contradicted ($8-12 odds → $3-5 profitable, 5-10min MTJ → 1-2min only profitable, harness first losing day -30u ROI halved to 69%); CLV paradox +12% CLV but -109u; volume amplification from time gate removal; Cash Multi + liq≥750 + MTJ<2 = 38% WR, +93% ROI; cumulative 769 picks +68.8u (Session 22:52)
 - [[daily/lcash/2026-04-29.md]] - Expanded to 8D matrix with trail-derived dimensions (EV trajectory, volatility, lay depth, speed to peak); 60% of picks lack trail data (45% pre-deploy Apr 23-26, 15% single-scan); 3% EV threshold NOT the bottleneck (only 19 picks blocked); single-scan picks confirmed noise at -29% ROI / -43u; **Harness + $12-20 + liq$500-1.5K + mtj 2-10min + sc2+** = 485% ROI on 10 picks; CLV is portfolio filter not pick predictor (76% of profit from CLV≥15%); CLV×Liquidity interaction: liq $500-1.5K + CLV 0-10% = +128% ROI; ev_flat + vol_med consistently profitable (Session 12:02)
+- [[daily/lcash/2026-04-30.md]] - 993-pick reassessment: efficiency cliff at $1.5K now **negative** (-2.1% ROI on 388 picks above threshold) — not just low edge, actively losing money. Normal mode underperforming (-5% ROI, -11u) while Cash Multiplier (+20% ROI) and SuperPicks (+20.4% ROI) carry portfolio. Best single day: +91.9u, +45% ROI on 215 picks (45 winners). 8D combos have insufficient sample (10-39 picks each) — need 50+. Next reassessment milestone: 2,000 picks (est. next week). Broader theories (T1-T4 at 150-320 picks) are reliable signal; 8D combos are hypothesis-stage (Sessions 12:30, 15:51)

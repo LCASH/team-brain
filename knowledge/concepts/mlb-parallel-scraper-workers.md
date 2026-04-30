@@ -8,8 +8,9 @@ sources:
   - "daily/lcash/2026-04-27.md"
   - "daily/lcash/2026-04-28.md"
   - "daily/lcash/2026-04-29.md"
+  - "daily/lcash/2026-04-30.md"
 created: 2026-04-21
-updated: 2026-04-29
+updated: 2026-04-30
 ---
 
 # MLB Parallel Scraper Workers
@@ -86,6 +87,24 @@ The key architectural changes from the cycling model:
 
 MLB 15-19 games × 2min = 30+ min for full setup, but odds flow incrementally from each game as it completes. See [[concepts/persistent-page-chrome-scraper-architecture]] for the full architectural design.
 
+### Concurrent Navigation Rate-Limiting (2026-04-29)
+
+On 2026-04-29, the full rewrite's orchestrator testing revealed a new anti-scraping behavior: bet365 rate-limits concurrent page navigation. When 15 game scrapers fired `Page.navigate` simultaneously via `asyncio.gather`, half the API responses came back empty — odds count dropped from 12,401 to 6,145. This is not a code bug or a network issue; bet365's server-side anti-scraping detects rapid-fire concurrent requests from the same Chrome session and degrades responses for a subset.
+
+Three concurrency strategies were tested:
+
+| Strategy | Behavior | Odds Count | Assessment |
+|----------|----------|------------|------------|
+| Full parallel (`asyncio.gather`, 15 games) | All navigations fire simultaneously | 6,145 (50% degraded) | Triggers anti-scraping |
+| Sequential with 1s gaps | One game at a time, 1-second delay between | ~900/game (full data) | Safe but slow (~15s/cycle) |
+| **Bounded semaphore (sem=3)** | Max 3 concurrent navigations | 914/880/901 per game (full data) | **Optimal — fast + safe** |
+
+The critical distinction is between **setup** (one-time page creation) and **refresh** (repeated navigation). Parallel setup is safe because each game page is created once; the SPA's initial load is expected to be concurrent (users open multiple tabs). Parallel refresh is dangerous because it produces the same concurrent-navigation pattern every cycle, which bet365's anti-scraping flags as bot behavior.
+
+An additional operational finding: scrapers must be registered to the `self.scrapers` dict **before** their async setup completes. Otherwise, a kill signal mid-setup finds no scrapers to close, orphaning Chrome tabs that aren't yet tracked.
+
+The user explicitly rejected the suggestion to port incremental wins back into the existing production code, preferring a full capability-by-capability validated rewrite: "production was not reliable. not one bit of it… keep moving closer test by test."
+
 ## Related Concepts
 
 - [[concepts/bet365-mlb-batch-api-co-format]] - The batch API format that the parallel workers scrape; each worker captures the full batch response per game
@@ -97,6 +116,7 @@ MLB 15-19 games × 2min = 30+ min for full setup, but odds flow incrementally fr
 - [[concepts/bet365-headless-detection]] - All workers must run in headed mode; cannot use headless Chrome for parallel workers
 - [[concepts/chrome-tab-leak-accumulation]] - Tab leaks compound the single-worker limitation; even one worker can accumulate stale tabs over time
 - [[concepts/bet365-shared-chrome-single-session]] - Shared Chrome on port 9223 is why multiple workers crash — both NBA and MLB scrapers compete for Chrome resources
+- [[connections/anti-scraping-driven-architecture]] - Concurrent navigation rate-limiting is a new defensive behavior: 15 simultaneous navigations → 50% empty responses; bounded semaphore (sem=3) avoids detection
 
 ## Sources
 
@@ -104,4 +124,5 @@ MLB 15-19 games × 2min = 30+ min for full setup, but odds flow incrementally fr
 - [[daily/lcash/2026-04-22.md]] - Overnight validation confirmed: 6,669 odds, 12 prop types, 13-14/15 games; workers 500-850+ odds/game; Dodgers@SF peak at 851 odds/16 markets/168KB; no crashes, no memory issues; dynamic scaling `min(N_WORKERS, len(game_list))`; market expansion gap persists (0-7 vs 15-17 local) (Session 08:48)
 - [[daily/lcash/2026-04-27.md]] - N_WORKERS reverted 3→1: multiple workers crash shared Chrome context on port 9223; single worker cycles 8 games in ~5 min; 3-tier MG click strategy (native → coordinate → MouseEvent dispatch); tab-filtered MG names (Batter Props capital P, Pitcher props lowercase p); MLB book ID bug: BET365_2_BOOK_ID was 365 (betstamp) instead of 366 (Bet365 2.0) making all MLB data invisible on dashboard (Sessions 09:23, 17:03)
 - [[daily/lcash/2026-04-28.md]] - Worker-cycling model fully replaced with persistent-page-per-game architecture; `_game_pages` dict + `_refresh_loop` replaces `_WorkerPage` cycling; non-blocking setup serves odds incrementally; per-game fault tolerance; separate Chrome instances restored (NBA 9223, MLB 9224); AU soft books confirmed thin (Sportsbet 82, Neds 5, Ladbrokes 5); deploy file mismatch (`state.py` extra kwarg) caused MLB crash loop (Sessions 08:16, 08:47, 11:33, 11:36, 12:07)
-- [[daily/lcash/2026-04-29.md]] - Direct URL navigation with `/I0/` suffix eliminates SPA boot + team-click flow; in-play detection via page content (not URL redirect, not event_id length); hash-nav MG fetching with 25 G-ids replaces DOM click-expand at ~1.3s/fetch; raw CDP WebSocket replaces Playwright for game page management eliminating EPIPE crashes; hybrid architecture: Playwright for discovery only, raw CDP for everything else; 0-odds pages auto-closed (Sessions 10:29, 10:59, 11:32, 16:07, 18:02)
+- [[daily/lcash/2026-04-29.md]] - Direct URL navigation with `/I0/` suffix eliminates SPA boot + team-click flow; in-play detection via page content (not URL redirect, not event_id length); hash-nav MG fetching with 25 G-ids replaces DOM click-expand at ~1.3s/fetch; raw CDP WebSocket replaces Playwright for game page management eliminating EPIPE crashes; hybrid architecture: Playwright for discovery only, raw CDP for everything else; 0-odds pages auto-closed (Sessions 10:29, 10:59, 11:32, 16:07, 18:02). Concurrent navigation rate-limiting discovered: 15 simultaneous `Page.navigate` → 50% empty responses (12,401→6,145 odds); bounded semaphore sem=3 restores full data (914/880/901 per game); parallel setup safe, sequential-ish refresh required; register scrapers to dict before async setup completes; user rejected production patching in favor of full capability-by-capability rewrite (Session 18:40)
+- [[daily/lcash/2026-04-30.md]] - v3 capability ladder: 11/12 passed, 1 conditional; concurrency=3 validated at 11,018 odds / 0% drift / 704s run; diversion tab + partial-result shield (70% floor) reduced drift -50%→-3.3%; error recovery validated (3-strike dead tab, orphan cleanup, kill mid-setup); parity test 27% dupe rate from CO alt-line expansion; 3-strike scoped to zero-data scrapers only; skip games >6h away (Sessions 07:59, 08:46). MLB v3 deployed to mini PC: Playwright EPIPE from Node v24 + Windows pipe semantics; fixed by disabling diversion tab + replacing Playwright discovery with raw CDP; zombie Python on port 8803 blocked startup; `docs/BET365_SCRAPER_V3_LEARNINGS.md` created — 12-section guide (Session 10:32). Pitcher Outs O/U (G160297) and Pitcher Record Win (G160294) added — odds 2,208→6,706; Record Win unusable (no sharp); CO vs O/U pairing audit: FanDuel 1%, bet365 76%/8%(Bases), Coolbet 100% (Session 16:23)

@@ -5,8 +5,9 @@ tags: [bet365, mlb, scraping, reverse-engineering, data-format]
 sources:
   - "daily/lcash/2026-04-21.md"
   - "daily/lcash/2026-04-29.md"
+  - "daily/lcash/2026-04-30.md"
 created: 2026-04-21
-updated: 2026-04-29
+updated: 2026-04-30
 ---
 
 # bet365 MLB Batch API and CO Segment Format
@@ -83,3 +84,4 @@ Additionally, two formats per stat were confirmed to exist: CO milestones (thres
 
 - [[daily/lcash/2026-04-21.md]] - Implementation plan: old `matchbettingcontentapi` → new `batchmatchbettingcontentapi` with MG/MA/CO/PA segment hierarchy; debug dump analysis showing CO NA=1→8 structure; PA ID consistency between player list and odds grid; fractional odds format (Session 09:13). CO segment handler added as ~8 lines at `bet365_mlb_game.py:216-224`; threshold N maps to line N-0.5; 333 odds from single game confirmed locally; pitcher props auto-load without expansion, batter props need expansion clicks (Session 09:27). Parser confirmed working with 333 odds from a single game locally (Session 10:41)
 - [[daily/lcash/2026-04-29.md]] - RBIs name mismatch: bet365 renamed "Runs Batted In" → "RBIs" silently dropping ~109 records/game; two formats per stat (CO milestones vs O/U) confirmed; games-list only has O/U, per-game tabs have both (Session 18:02)
+- [[daily/lcash/2026-04-30.md]] - Two new pitcher G-ids added: G160297 (Pitcher Outs O/U) and G160294 (Pitcher to Record the Win); both already had parser mappings, only catalogue entries were missing; odds expanded 2,208→6,706; Record Win unusable (no sharp book coverage); Player Total Bases Match Up (head-to-head) skipped (different schema). Cross-book CO vs O/U pairing analysis: FanDuel 1%, Sportsbet AU 1%, DraftKings 29%, bet365 76% overall / 8% for Bases, Coolbet 100%; CO milestones flood one-sided Overs drowning paired O/U entries. See [[concepts/co-milestone-one-sided-pairing-imbalance]] for full analysis (Session 16:23)

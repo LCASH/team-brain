@@ -11,8 +11,10 @@ sources:
   - "daily/lcash/2026-04-14.md"
   - "daily/lcash/2026-04-15.md"
   - "daily/lcash/2026-04-21.md"
+  - "daily/lcash/2026-04-29.md"
+  - "daily/lcash/2026-04-30.md"
 created: 2026-04-12
-updated: 2026-04-21
+updated: 2026-04-30
 ---
 
 # Connection: Anti-Scraping Defenses Drive Adapter Architecture
@@ -33,6 +35,18 @@ The non-obvious insight is that bet365's anti-scraping operates at **six indepen
 6. **WebSocket instance isolation (runtime layer):** SPA creates WS inside closures and never exposes globally; cross-origin WS creation from the page fails because cookies aren't sent to `365lpodds.com` from `bet365.com.au`; prototype monkey-patching fails because `send` is bound at instance creation → forces pre-page-load constructor injection via `Page.addScriptToEvaluateOnNewDocument` (see [[concepts/websocket-constructor-injection]])
 
 No single defense is insurmountable, but each one eliminates a class of simpler solutions. Direct HTTP? Blocked by layers 1 and 3. Headless Playwright? Blocked by layers 1 and 2. Headed browser with fetch()? Blocked by layer 3. Headed browser with navigation? Works for HTTP but hits layer 4 at scale and can't stream via layer 5. Open a new WS from page JS? Blocked by layer 6 (cross-origin). Find the SPA's existing WS at runtime? Blocked by layer 6 (closure-hidden). The only architecture that survives all six layers is: anti-detection browser (layer 1) + headed mode (layer 2) + real SPA navigation (layer 3) + navigate-away cache busting (layer 4) + constructor-injected WS capture before page load (layers 5+6).
+
+Two additional defensive behaviors were discovered on 2026-04-29:
+
+- **Request context validation (layer 3 refinement):** `fetch()` via CDP `Runtime.evaluate` returns HTTP 200 with an empty body — bet365 validates not just the navigation state but the request origin. Programmatic `fetch()` calls from within the page context are distinguished from the SPA's own HTTP requests. The hash-nav approach works because it triggers the SPA's own internal request pipeline, not a programmatic fetch. Similarly, same-URL `page.goto()` re-navigation doesn't re-fire the API — the SPA detects the duplicate URL and serves cached content. Refresh loops must cycle through different URLs (bounce strategy) to trigger fresh HTTP requests. See [[concepts/bet365-mlb-hash-nav-mg-fetching]].
+
+- **Concurrent navigation rate-limiting:** When 15 game pages fire `Page.navigate` simultaneously via `asyncio.gather`, bet365's server returns empty responses for approximately half the requests (odds count dropped from 12,401 to 6,145). This is not network congestion — it is server-side detection of concurrent bulk navigation from a single browser session. A bounded semaphore (sem=3, maximum 3 concurrent navigations) restores full data quality. This defense is distinct from all six layers above: it doesn't block access entirely, but **degrades response quality** when navigation patterns exceed what a human user would produce. Validated on 2026-04-30 via the v3 capability ladder: 11,018 odds at 0% drift over 704 seconds with sem=3, confirming the pattern holds at production scale. See [[concepts/mlb-parallel-scraper-workers]] and [[concepts/bet365-v3-scraper-capability-ladder]].
+
+**Countermeasures (2026-04-30):** Two countermeasures were validated against the defense stack:
+
+- **Diversion tab**: A background tab that periodically navigates to non-sport pages simulating natural browsing patterns. Combined with cross-sport activity from parallel sport servers, this provides behavioral camouflage. The v3 stability test showed -3.3% drift (with diversion) vs -50% cliff-drop (without). However, the diversion tab caused Playwright EPIPE crashes on Windows/Node v24 (see [[concepts/playwright-node-pipe-crash-vector]]) and was disabled in multi-server production where other sport servers provide sufficient cross-sport activity naturally.
+
+- **Partial-result shield**: Rejects API responses that return significantly fewer results than the prior capture (e.g., 67% of previous odds count, below a 70% floor). Prevents bet365's occasional degraded responses from overwriting good cached data. This is distinct from all six defense layers — it doesn't counter a specific defense but mitigates the data quality degradation that occurs when detection is partial rather than complete.
 
 Additionally, even after surviving all six layers, a **seventh constraint** limits what can be streamed: session-bound topic authorization (see [[concepts/bet365-ws-topic-authorization]]) means the backend only permits WS subscriptions for topics the SPA has registered via `P-ENDP` frames. Racing runner tiles get per-participant registrations (WS works); NBA props are bulk-fetched via BB wizard HTTP (WS silently drops). This is not a defense per se, but a rendering architecture difference that determines WS viability per sport.
 
@@ -63,4 +77,6 @@ Each discovery was empirical: the defense was only understood after the simpler 
 - [[concepts/bet365-headless-detection]] - Defense layer 2: headless Chrome detection serving empty data
 - [[concepts/bet365-ws-topic-authorization]] - Session-bound topic authorization limiting WS streaming to registered render topics
 - [[connections/ws-viability-sport-rendering-divergence]] - How the defense stack's WS layer interacts differently with racing vs NBA props
+- [[concepts/mlb-parallel-scraper-workers]] - Concurrent navigation rate-limiting discovered during MLB scraper rewrite; bounded semaphore (sem=3) avoids detection
+- [[concepts/bet365-mlb-hash-nav-mg-fetching]] - Request context validation: `fetch()` via `Runtime.evaluate` returns 200-but-empty; hash-nav triggers SPA's own requests
 

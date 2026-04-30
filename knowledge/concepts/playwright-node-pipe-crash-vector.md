@@ -4,8 +4,9 @@ aliases: [playwright-epipe, node-pipe-overflow, playwright-cdp-conflict, raw-cdp
 tags: [value-betting, bet365, playwright, cdp, chrome, reliability, architecture]
 sources:
   - "daily/lcash/2026-04-29.md"
+  - "daily/lcash/2026-04-30.md"
 created: 2026-04-29
-updated: 2026-04-29
+updated: 2026-04-30
 ---
 
 # Playwright Node.js Pipe Crash Vector
@@ -74,6 +75,14 @@ loop.set_exception_handler(lambda loop, ctx: None)  # suppress pipe errors
 
 This extended the crash interval from ~1 minute to ~4 minutes by preventing the `ValueError` from killing the event loop. However, it only delays the inevitable — once the Node.js pipe is dead, Playwright can no longer communicate with Chrome, and subsequent operations fail silently. The raw CDP migration is the root cause fix; the exception handler was a pragmatic interim while the migration was being built.
 
+### Node v24 Strict Pipe Error Handling (2026-04-30)
+
+On 2026-04-30, the EPIPE crash vector manifested differently during MLB v3 deployment to the Windows mini PC. The scraper worked on Mac (development) but crashed immediately on the mini PC with Playwright EPIPE. The root cause was **Node v24.13.0's stricter pipe error handling**: where older Node versions silently logged pipe write errors, Node v24 throws "unhandled error" events on Socket that propagate fatally. Combined with Windows pipe semantics (different buffer behavior than macOS) and rapid diversion tab cycling racing with Playwright session cleanup, the pipe overflow occurred faster and crashed harder.
+
+The fix had two layers: (1) **quick fix**: disable the diversion tab entirely — other running sport servers (NBA, NRL, AFL) provide cross-sport browsing activity naturally, removing the rapid pipe activity that triggered the race condition; (2) **structural fix**: replace Playwright in `_discover_games()` with raw CDP HTTP+WebSocket — the same pattern game scrapers already use successfully, eliminating the Node subprocess and the entire EPIPE bug class from discovery. Port 8803 zombie Python processes from failed earlier attempts also blocked server startup and needed killing.
+
+This is a concrete example of environment parity risk: Mac development (older Node, Unix pipe semantics) → Windows production (Node v24, Windows pipe semantics) surfaced a crash that was structurally present but latent. The learnings were documented in `docs/BET365_SCRAPER_V3_LEARNINGS.md`.
+
 ### Silent Post-Startup Server Death
 
 After the raw CDP migration achieved clean startup (6 tabs, 2,060 odds), the server died silently ~42 minutes later with no error in logs. The game setup via raw CDP was confirmed stable — the crash happened post-setup, not during. The cause is under investigation; candidates include a lingering Playwright process from the discovery reconnect cycle or an OS-level watchdog interaction.
@@ -91,3 +100,4 @@ After the raw CDP migration achieved clean startup (6 tabs, 2,060 odds), the ser
 ## Sources
 
 - [[daily/lcash/2026-04-29.md]] - Root cause identified: Playwright Node.js subprocess pipe overflow from CDP tab creation; raw CDP WebSocket via `websockets` library eliminates crash vector; hybrid architecture: Playwright for discovery, raw CDP for game pages; before/after: tabs=21/4 with crashes → tabs=5/4→6/6 with zero crashes and 2,060 odds (Sessions 11:32, 13:13, 13:30). Custom asyncio exception handler as interim: extended crash interval 1min→4min; MLB 45 pages most vulnerable; server silent death ~42min post-startup under investigation (Sessions 13:13, 13:30). `Page.navigate` fires `Network.responseReceived` but `Page.reload` alone doesn't (needs `Page.enable`); tab count matching confirmed as health indicator (Session 11:32)
+- [[daily/lcash/2026-04-30.md]] - Node v24.13.0 strict pipe error handling on Windows: silent errors become fatal "unhandled error events" on Socket; diversion tab cycling + Playwright session cleanup race condition triggered EPIPE on mini PC that didn't occur on Mac; quick fix: disable diversion tab; structural fix: replace Playwright in `_discover` with raw CDP; zombie Python processes on port 8803 blocked startup; environment parity risk: Mac dev → Windows prod surfaces Node version + OS pipe semantics differences (Session 10:32)
