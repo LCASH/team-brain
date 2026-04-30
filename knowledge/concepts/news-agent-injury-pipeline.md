@@ -7,8 +7,9 @@ sources:
   - "daily/lcash/2026-04-25.md"
   - "daily/lcash/2026-04-27.md"
   - "daily/lcash/2026-04-29.md"
+  - "daily/lcash/2026-04-30.md"
 created: 2026-04-24
-updated: 2026-04-29
+updated: 2026-04-30
 ---
 
 # News Agent Injury-to-Pick Pipeline
@@ -118,6 +119,19 @@ The gap was operationally significant: during the period with zero monitoring, m
 
 This failure follows the scanner's established "zero output, zero errors" pattern documented in [[concepts/silent-worker-authentication-failure]]: the process was alive, the logs showed activity (polling loop running), but a missing prerequisite (cookies) silently prevented all data flow. The cookie rotator (see [[concepts/twitter-multi-account-cookie-rotation]]) works correctly once cookies exist — the issue was purely a deployment gap where cookies were not part of the mini PC setup procedure.
 
+### Stage 2 Systemic Failure and Mac-Based Live Polling (2026-04-30)
+
+On 2026-04-30, lcash investigated the news agent's production performance and discovered a **systemic Stage 2 failure**: 15 classified events from April 29 all had `picks_generated=0`. Stage 1 (Haiku classifier) was working correctly — events were being classified, passed to Stage 2, and posted to Discord as PASSED. But Stage 2 (Sonnet research agent → pick generation) silently produced zero picks for every single event. The root cause is under investigation; candidates include the `claude -p` subprocess invocation failing, workspace file build errors, or guardrail logic rejecting all recommendations.
+
+This failure pattern is distinct from the cookie deployment failure (2026-04-27) and the classifier vocabulary gaps (2026-04-29). In those cases, events were either not reaching Stage 1 at all (no cookies → no tweet scraping) or being misclassified at Stage 1 (vocabulary gaps → wrong event types). Here, Stage 1 works perfectly — the pipeline correctly identifies and classifies injury events — but the handoff to Stage 2 or Stage 2's internal processing silently fails. The 0/15 success rate indicates a systemic issue, not selective filtering.
+
+The investigation also revealed operational issues:
+- The NBA server on the mini PC (port 8800) had **silently died** — no process was running on the port despite the schtasks entry existing. Restarted via `schtasks /Run /TN NBA_Server`.
+- A zombie Python process (PID 60781) running a deleted `/tmp/twitter_adspower.py` script had been active for 5 days — killed manually.
+- Live news agent polling was started on **Mac** (not mini PC) via `nohup`/`disown` because Twitter cookies and the Claude CLI both reside on Mac. This creates a reliability vulnerability: the news agent dies if the Mac sleeps or reboots. Six accounts were enabled for monitoring: @UnderdogNBA, @ShamsCharania, @JeffPassan, @Ken_Rosenthal, @FantasyLabsNBA, @MLBTradeRumors, polling with an 87-cookie rotation pool.
+
+The Mac-based deployment is a pragmatic interim: the mini PC has Claude CLI but the Twitter cookies pool (`.twitter_cookies_pool.json`) was built on Mac and contains Mac-specific AdsPower session artifacts. A production-ready deployment requires either moving the cookie pool to the mini PC or building a persistent process manager on Mac.
+
 ## Related Concepts
 
 - [[concepts/news-driven-pre-sharp-ev-thesis]] - The strategic thesis that the news agent implements: beating sharps to news, conviction-based picks validated retroactively by CLV
@@ -134,3 +148,4 @@ This failure follows the scanner's established "zero output, zero errors" patter
 - [[daily/lcash/2026-04-25.md]] - Major pipeline overhaul: EV validation gate removed (thesis: beating sharps to news, not reacting to current EV); 7 flaws identified and fixed; workspace trimmed 90KB→48KB fixing Sonnet timeout; timeout increased 300s→600s; Stage 1 reduced to pure binary gate; full sportsbook odds workspace pre-computed with Pinnacle devig (Sessions 08:32, 09:08). Multi-sport expansion: MLB support added (30 teams, sport-aware classifier, MLB event types); 22 Twitter sources (10 NBA + 12 MLB); live mode auto-detects sport from source; national insiders first, beat writers planned (Session 14:48). Mini PC deployment: residential IP advantage; Node.js portable install; Claude CLI authenticated; curl_cffi installed; scraper reads enabled accounts from Supabase; `030_twitter_accounts.sql` migration with 9 seed accounts; all accounts disabled pending MLB validation (Sessions 10:46, 11:55, 12:26, 14:15, 15:43). Jalen Williams (OKC) ruled out Game 3, KD (Rockets) questionable Game 3 — live injury events processed (Sessions 08:41, 08:50). MLB beat writer hierarchy: DiComo (Mets), Matheson (Blue Jays), Sharma (Cubs) break news before national insiders; beat writer crawl job planned (Sessions 16:16, 20:45)
 - [[daily/lcash/2026-04-27.md]] - Full E2E test with KD ruled out Game 4: 4 picks generated; cost ~$1.04/event ($0.01 Haiku + $1.03 Sonnet); dedup timezone bug (±1 day window fix); classifier hallucinated KD on Suns (stale training data); sharp snapshot fields added to pick_writer.py; deployed with 87 rotating Twitter accounts monitoring @UnderdogNBA + @FantasyLabsMLB + @ShamsCharania; news dashboard at /news.html + "News Edge" tab (Sessions 10:37, 11:03, 12:15, 14:51). Cookie deployment failure: cookies only on Mac, not mini PC — scraper stuck in "No accounts resolved" loop; only 3/17 accounts enabled in Supabase; missed Edwards OUT, Reaves OUT, Embiid returning, KD OUT, Wembanyama cleared, DiVincenzo surgery (Session 22:19)
 - [[daily/lcash/2026-04-29.md]] - Classifier fixes: KD→Suns stale team mapping fixed with live roster injection from VPS odds API (commit `f57f557`) + "trust tweet team name" prompt rule; `--sport default="nba"` broke MLB auto-detection via `or` short-circuit (fixed to `None`); roster transaction vocabulary gap (outrighted→scratched, debut→return, firing→signing) fixed with explicit BLOCK rules; Discord webhook monitoring at every pipeline decision point; 3 silent early-exit paths now all post notifications; MLB accounts enabled (Passan, Rosenthal, Heyman, Feinsand, Buster_ESPN, MLBTradeRumors, BNightengale); stale `.pyc` must be cleared on deploy; `twitter_scraper.py:165-166` swallows all exceptions silently — GraphQL qid rotation would kill agent with zero indication (Sessions 09:57, 12:38, 14:21, 15:32)
+- [[daily/lcash/2026-04-30.md]] - Stage 2 systemic failure: 15 classified events from Apr 29 all had `picks_generated=0`; Stage 1 (Haiku) working, Stage 2 (Sonnet) silently producing zero picks for every event; root cause under investigation (claude -p subprocess, workspace build, or guardrails). NBA server (port 8800) silently died — restarted via schtasks. Live polling started on Mac with `nohup`/`disown` (PID 65706) because cookies + Claude CLI reside there; 6 accounts enabled (@UnderdogNBA, @ShamsCharania, @JeffPassan, @Ken_Rosenthal, @FantasyLabsNBA, @MLBTradeRumors) with 87-cookie rotation pool; zombie PID 60781 running deleted twitter_adspower.py for 5 days killed (Session 22:38)

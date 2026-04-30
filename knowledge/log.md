@@ -308,3 +308,10 @@
 - Developer: lcash
 - Articles created: [[concepts/bet365-v3-scraper-capability-ladder]], [[concepts/bet365-nba-bb-wizard-v3-rewrite]], [[concepts/co-milestone-one-sided-pairing-imbalance]]
 - Articles updated: [[concepts/playwright-node-pipe-crash-vector]] (Node v24 strict pipe handling on Windows: silent errors become fatal; diversion tab cycling + Playwright cleanup race; environment parity Mac→Windows), [[concepts/mlb-parallel-scraper-workers]] (v3 capability ladder validated 11/12 at 11K odds; production deployment with Node v24 EPIPE fix; Pitcher Outs/Record Win G-ids added; CO vs O/U pairing audit), [[concepts/dashboard-client-server-ev-divergence]] (cross-sport team name mapping: MLB names as NBA names from shared fuzzy team map; separate MLB_TEAM_MAP + sport-aware resolveTeam; remote CCR agent local access limitation), [[concepts/superwin-racing-profitability-dimensions]] (993-pick reassessment: efficiency cliff now negative above $1.5K; Normal mode -5% ROI underperforming; Cash Multi +20%/SuperPicks +20.4% carrying; best day +91.9u), [[concepts/bet365-mlb-batch-api-co-format]] (Pitcher Outs G160297 and Record Win G160294 added; Record Win unusable; CO vs O/U pairing analysis cross-referenced to new concept article), [[connections/anti-scraping-driven-architecture]] (diversion tab + partial-result shield validated as countermeasures; concurrent navigation sem=3 confirmed at 11K odds over 704s; Node v24 environment parity note)
+
+## [2026-04-30T23:11:30+10:00] compile | daily/lcash/2026-04-30.md (incremental)
+- Source: daily/lcash/2026-04-30.md
+- Developer: lcash
+- Note: Incremental recompile — Sessions 07:59 through 22:05 were compiled in prior pass; this pass covers Session 22:38 (news agent Stage 2 systemic failure, NBA server silent death, live polling migration to Mac)
+- Articles created: (none)
+- Articles updated: [[concepts/news-agent-injury-pipeline]] (Stage 2 systemic failure: 0/15 events produced picks despite Stage 1 working; live polling started on Mac with 6 accounts + 87-cookie rotation; NBA server silently died on mini PC)
