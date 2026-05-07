@@ -5,8 +5,11 @@ tags: [value-betting, bet365, playwright, cdp, chrome, reliability, architecture
 sources:
   - "daily/lcash/2026-04-29.md"
   - "daily/lcash/2026-04-30.md"
+  - "daily/lcash/2026-05-01.md"
+  - "daily/lcash/2026-05-05.md"
+  - "daily/lcash/2026-05-07.md"
 created: 2026-04-29
-updated: 2026-04-30
+updated: 2026-05-07
 ---
 
 # Playwright Node.js Pipe Crash Vector
@@ -96,8 +99,12 @@ After the raw CDP migration achieved clean startup (6 tabs, 2,060 odds), the ser
 - [[connections/browser-automation-reliability-cost]] - Raw CDP migration eliminates the sixth reliability dimension (Playwright pipe crashes) while the others (JS hangs, stale sessions, warmup, crash loops, session expiry) remain
 - [[connections/chrome-lifecycle-management-pattern]] - The unified lifecycle pattern (fresh Chrome + persistent profile + explicit pages) now includes "raw CDP for page management" as a fourth rule
 - [[concepts/cdp-browser-data-interception]] - CDP response interception (`Network.responseReceived` + `Network.getResponseBody`) is the same technique used here, now without the Playwright intermediary
+- [[concepts/cdpsession-playwright-pipe-contention]] - A non-fatal variant of the pipe problem: CDPSession traffic saturates the pipe without breaking it, causing indefinite hangs instead of EPIPE crashes
 
 ## Sources
 
 - [[daily/lcash/2026-04-29.md]] - Root cause identified: Playwright Node.js subprocess pipe overflow from CDP tab creation; raw CDP WebSocket via `websockets` library eliminates crash vector; hybrid architecture: Playwright for discovery, raw CDP for game pages; before/after: tabs=21/4 with crashes → tabs=5/4→6/6 with zero crashes and 2,060 odds (Sessions 11:32, 13:13, 13:30). Custom asyncio exception handler as interim: extended crash interval 1min→4min; MLB 45 pages most vulnerable; server silent death ~42min post-startup under investigation (Sessions 13:13, 13:30). `Page.navigate` fires `Network.responseReceived` but `Page.reload` alone doesn't (needs `Page.enable`); tab count matching confirmed as health indicator (Session 11:32)
 - [[daily/lcash/2026-04-30.md]] - Node v24.13.0 strict pipe error handling on Windows: silent errors become fatal "unhandled error events" on Socket; diversion tab cycling + Playwright session cleanup race condition triggered EPIPE on mini PC that didn't occur on Mac; quick fix: disable diversion tab; structural fix: replace Playwright in `_discover` with raw CDP; zombie Python processes on port 8803 blocked startup; environment parity risk: Mac dev → Windows prod surfaces Node version + OS pipe semantics differences (Session 10:32)
+- [[daily/lcash/2026-05-01.md]] - **Worker exit cascading to full server shutdown**: bet365 subprocess exit (EPIPE from Playwright on Node v24) triggered the entire NBA server to shut down — worker exit code 0 → server logs "restarting in 10s" → whole server receives shutdown signal and dies. Worker exit should NOT cascade to server shutdown; the restart logic should handle subprocess exits gracefully without killing the FastAPI server. NBA server died twice in one session from this pattern. Root cause confirmed: mini PC still had the OLD pre-v3 `bet365_game_worker.py` that imported legacy Playwright-based `GameBet365Scraper` instead of the v3 raw CDP module; `NBA_V3` env toggle existed but the worker file never checked it. Deploying updated worker file with v3 import path fixed the EPIPE source (Session 08:25)
+- [[daily/lcash/2026-05-05.md]] - **`pw.stop()` on `connect_over_cdp` sends `Browser.close`**: Playwright sends the `Browser.close` CDP command even when connected to an external Chrome via `connect_over_cdp`, killing all tabs and causing Chrome to exit. Discovered during V3 deployment when NBA Chrome kept dying after login completion; fix: never call `pw.stop()` when reusing an existing browser — Node.js subprocess is a child of Python and cleans up on exit; keep `pw` alive at module level via `_pw_instances` list to prevent GC `__del__` path from triggering cleanup (Session 18:25)
+- [[daily/lcash/2026-05-07.md]] - **CDPSession pipe contention** (non-fatal variant): active CDPSession WS frame listener on a page saturates the pipe without breaking it, causing `page.evaluate()` and `page.goto()` to hang indefinitely (not crash). MLB discovery hung at `page.evaluate("location.hash = '/'")` because orchestrator's CDPSession consumed the pipe. Fix: dedicated fresh page for discovery + CDPSession `Network.disable`/`Network.enable` pause during navigation (Sessions 09:18, 09:23)

@@ -8,8 +8,9 @@ sources:
   - "daily/lcash/2026-04-18.md"
   - "daily/lcash/2026-04-19.md"
   - "daily/lcash/2026-04-21.md"
+  - "daily/lcash/2026-05-06.md"
 created: 2026-04-16
-updated: 2026-04-21
+updated: 2026-05-07
 ---
 
 # Pinnacle Prop-Type Sharpness Variance
@@ -133,3 +134,4 @@ Per-league variance was also extreme: Dota 2 (+53.2%), Valorant (+37.5%), ATP Te
 - [[daily/lcash/2026-04-18.md]] - Sharp CLV theory ranking across 7,724 resolved picks: AltLine-V1 +28.4% CLV (sharpest), Conservative 72.7% CLV>0 rate (most consistent), Aggressive-Wide -9.3% (no edge despite 62% WR); MLB Calibrated +6.4% CLV and MLB Conservative +6.5% CLV confirmed as sharpest MLB theories; sharp CLV validated as superior to soft CLV (~0% for AU books) (Sessions 17:04, 17:35, 21:07). NHL AU book efficiency: 381 markets, 354 with both sharp+soft, only 3 +EV (all false positives); Sportsbet prices NHL tightly; 168 one-sided Goals markets unevaluable without one-sided devig in dashboard JS (Session 22:20)
 - [[daily/lcash/2026-04-19.md]] - NHL dashboard integration confirmed: 309/381 markets had no soft book match; 3 that passed +EV were false positives (100%+ EV from line mismatches); NHL Goals Over-only markets need `one_sided_consensus` devig method (not yet implemented as dashboard-side theory); NHL doesn't warrant special +EV attention — AU soft books too sharp; `nhl` added to ACTIVE_SPORTS across code defaults, .env, and systemd service (Sessions 07:26, 07:57)
 - [[daily/lcash/2026-04-21.md]] - Prediction market ROI validation: +8.1% ROI, +92.8u across 1,146 picks; MLB HR +46.4% (avg odds 6.26, strongest single edge), NBA Rebounds +32.6%; losing leagues: LoL -31.9%, NHL -21.0%, ATP Challenger -34.3% recommended for deactivation; profitable: Dota 2 +53.2%, Valorant +37.5%, ATP Tennis +33.0%, CBA +28.6%; extends sport-level efficiency variance to prediction markets (Session 12:01)
+- [[daily/lcash/2026-05-06.md]] - Pinnacle MLB API audit: public key `CmX2KcMrXuFmNg6YFbmTxE0y9CIrOi0R` discovered; props encoded as "specials" via `/matchups/{id}/related`; 1/14 MLB games had specials, only 6/29 returned lines, $250 max bet confirms minimal investment; OpticOdds NBA 42/43 exact match but PAR combo gap (~12 props/game never ingested); MLB sharp hierarchy: Novig (119) > DK (241) > FD (187) > Kalshi (34) > Sporttrade (72); Polymarket/BetMGM/BetRivers = 0 MLB props (Session 14:46)

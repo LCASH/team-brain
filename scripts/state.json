@@ -109,9 +109,34 @@
       "hash": "9d5dfb0ed40004c5",
       "compiled_at": "2026-04-30T23:54:36+10:00",
       "cost_usd": 2.5651185
+    },
+    "lcash/2026-05-01.md": {
+      "hash": "2e80393ea9a838c8",
+      "compiled_at": "2026-05-07T18:54:10+10:00",
+      "cost_usd": 3.4310140000000002
+    },
+    "lcash/2026-05-02.md": {
+      "hash": "f0dfaa8e673ceca5",
+      "compiled_at": "2026-05-07T19:03:33+10:00",
+      "cost_usd": 4.892568249999999
+    },
+    "lcash/2026-05-03.md": {
+      "hash": "79dc812eb7da70e5",
+      "compiled_at": "2026-05-07T19:11:13+10:00",
+      "cost_usd": 4.59078875
+    },
+    "lcash/2026-05-05.md": {
+      "hash": "f68388b320cbf6ac",
+      "compiled_at": "2026-05-07T19:19:33+10:00",
+      "cost_usd": 5.7137554999999995
+    },
+    "lcash/2026-05-06.md": {
+      "hash": "fb7c41e148cee1cb",
+      "compiled_at": "2026-05-07T19:32:12+10:00",
+      "cost_usd": 7.878099950000001
     }
   },
   "query_count": 0,
   "last_lint": null,
-  "total_cost": 153.79827790000004
+  "total_cost": 180.30450435000006
 }

@@ -4,8 +4,9 @@ aliases: [state-py-mismatch, deploy-dependency-gap, coupled-file-deploy, extra-k
 tags: [value-betting, deployment, operations, anti-pattern, windows, reliability]
 sources:
   - "daily/lcash/2026-04-28.md"
+  - "daily/lcash/2026-05-01.md"
 created: 2026-04-28
-updated: 2026-04-28
+updated: 2026-05-01
 ---
 
 # Deploy File Dependency Mismatch
@@ -67,3 +68,4 @@ Three mitigation strategies:
 ## Sources
 
 - [[daily/lcash/2026-04-28.md]] - MLB server infinite crash loop from `state.py` not deployed alongside `main.py`; `extra` kwarg TypeError on every bet365 write; watchdog masked the deterministic crash; both NBA and MLB confirmed stable after deploying updated `state.py`; MINI_PC_CHROME_SETUP.md profile paths didn't match code; bet365 allows simultaneous sessions from two Chrome profiles confirmed (Sessions 11:33, 11:36, 12:07)
+- [[daily/lcash/2026-05-01.md]] - Second instance: `bet365_nba_v3.py` module deployed to mini PC but `bet365_game_worker.py` (the worker file that imports the module) was NOT updated — worker hardcoded `from ev_scanner.bet365_game import GameBet365Scraper` and never imported v3. Despite `NBA_V3=1` env toggle being set, the old worker bypassed v3 entirely. Diagnosis: check `ev_scanner.bet365_nba_v3` in log lines to verify which code path is active vs legacy `ev_scanner.bet365_game`. Additionally, `start_nba.bat` had no stdout/stderr redirection → crashes vanished silently with no log trail; added redirection to `nba_server.log` (Session 08:25)

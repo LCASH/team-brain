@@ -6,8 +6,9 @@ sources:
   - "daily/lcash/2026-04-15.md"
   - "daily/lcash/2026-04-16.md"
   - "daily/lcash/2026-04-27.md"
+  - "daily/lcash/2026-05-01.md"
 created: 2026-04-15
-updated: 2026-04-27
+updated: 2026-05-01
 ---
 
 # Watchdog Environment Variable Stripping
@@ -96,3 +97,4 @@ Additionally, `taskkill /im python.exe` is a sledgehammer — it kills ALL Pytho
 - [[daily/lcash/2026-04-15.md]] - bet365_game went dark: watchdog restarted with bare `cmd /c python -m server.main` stripping all env vars; `nba_out.log` showed stale output from dead process while live process logged to `server.log`; 15 orphaned Chrome processes; naming zoo documented (bet365_game / GameBet365Scraper / "Bet365 2.0" / NBA_Server / book_id 366); fixed via full kill + `schtasks /Run /TN NBA_Server`; watchdog needs fixing to use batch file (Session 23:17)
 - [[daily/lcash/2026-04-16.md]] - Identical recurrence: 7.2 hours without bet365 data; same misdirection via stale `nba_out.log`; same resolution (kill orphans + schtasks restart); confirms root fix (watchdog.py update) still unresolved (Session 11:56)
 - [[daily/lcash/2026-04-27.md]] - Third recurrence: `taskkill /im python.exe` killed all processes; watchdog restarted without SPORT env var → tracker 0 cycles; canonical symptom: "0 tracker cycles = started without SPORT env var"; watchdog broken since March 25 (disabled schtask, wrong Python path, Popen without env vars); fix: `schtasks /Run` instead of `subprocess.Popen`; `taskkill /im python.exe` kills ALL Python processes (Sessions 12:15, 14:51, 15:23)
+- [[daily/lcash/2026-05-01.md]] - New discovery: `schtasks /End` does NOT kill child Python processes — only terminates the Windows Task Scheduler wrapper while the child Python process (PID 8312) continues running the old code in memory. Must use `Get-Process python | Select Id, StartTime` and hard-kill PIDs older than the deploy timestamp. This caused a deploy failure where new code was deployed but the old Python process kept running with stale code — the operator was monitoring the wrong log file (`news_agent.log` stopped at 10:01:23) while a different PID was the active worker. Cross-reference Supabase event timestamps to identify the real active process, not log files (Session 08:18)

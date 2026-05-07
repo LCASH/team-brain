@@ -9,8 +9,10 @@ sources:
   - "daily/lcash/2026-04-28.md"
   - "daily/lcash/2026-04-29.md"
   - "daily/lcash/2026-04-30.md"
+  - "daily/lcash/2026-05-05.md"
+  - "daily/lcash/2026-05-06.md"
 created: 2026-04-21
-updated: 2026-04-30
+updated: 2026-05-06
 ---
 
 # MLB Parallel Scraper Workers
@@ -117,6 +119,7 @@ The user explicitly rejected the suggestion to port incremental wins back into t
 - [[concepts/chrome-tab-leak-accumulation]] - Tab leaks compound the single-worker limitation; even one worker can accumulate stale tabs over time
 - [[concepts/bet365-shared-chrome-single-session]] - Shared Chrome on port 9223 is why multiple workers crash — both NBA and MLB scrapers compete for Chrome resources
 - [[connections/anti-scraping-driven-architecture]] - Concurrent navigation rate-limiting is a new defensive behavior: 15 simultaneous navigations → 50% empty responses; bounded semaphore (sem=3) avoids detection
+- [[concepts/bet365-ws-native-scraper-migration]] - The WS-native architecture that replaces all HTTP polling and CDP scraping; WSMLBOrchestrator deployed on 2026-05-06
 
 ## Sources
 
@@ -126,3 +129,5 @@ The user explicitly rejected the suggestion to port incremental wins back into t
 - [[daily/lcash/2026-04-28.md]] - Worker-cycling model fully replaced with persistent-page-per-game architecture; `_game_pages` dict + `_refresh_loop` replaces `_WorkerPage` cycling; non-blocking setup serves odds incrementally; per-game fault tolerance; separate Chrome instances restored (NBA 9223, MLB 9224); AU soft books confirmed thin (Sportsbet 82, Neds 5, Ladbrokes 5); deploy file mismatch (`state.py` extra kwarg) caused MLB crash loop (Sessions 08:16, 08:47, 11:33, 11:36, 12:07)
 - [[daily/lcash/2026-04-29.md]] - Direct URL navigation with `/I0/` suffix eliminates SPA boot + team-click flow; in-play detection via page content (not URL redirect, not event_id length); hash-nav MG fetching with 25 G-ids replaces DOM click-expand at ~1.3s/fetch; raw CDP WebSocket replaces Playwright for game page management eliminating EPIPE crashes; hybrid architecture: Playwright for discovery only, raw CDP for everything else; 0-odds pages auto-closed (Sessions 10:29, 10:59, 11:32, 16:07, 18:02). Concurrent navigation rate-limiting discovered: 15 simultaneous `Page.navigate` → 50% empty responses (12,401→6,145 odds); bounded semaphore sem=3 restores full data (914/880/901 per game); parallel setup safe, sequential-ish refresh required; register scrapers to dict before async setup completes; user rejected production patching in favor of full capability-by-capability rewrite (Session 18:40)
 - [[daily/lcash/2026-04-30.md]] - v3 capability ladder: 11/12 passed, 1 conditional; concurrency=3 validated at 11,018 odds / 0% drift / 704s run; diversion tab + partial-result shield (70% floor) reduced drift -50%→-3.3%; error recovery validated (3-strike dead tab, orphan cleanup, kill mid-setup); parity test 27% dupe rate from CO alt-line expansion; 3-strike scoped to zero-data scrapers only; skip games >6h away (Sessions 07:59, 08:46). MLB v3 deployed to mini PC: Playwright EPIPE from Node v24 + Windows pipe semantics; fixed by disabling diversion tab + replacing Playwright discovery with raw CDP; zombie Python on port 8803 blocked startup; `docs/BET365_SCRAPER_V3_LEARNINGS.md` created — 12-section guide (Session 10:32). Pitcher Outs O/U (G160297) and Pitcher Record Win (G160294) added — odds 2,208→6,706; Record Win unusable (no sharp); CO vs O/U pairing audit: FanDuel 1%, bet365 76%/8%(Bases), Coolbet 100% (Session 16:23)
+- [[daily/lcash/2026-05-06.md]] - **WS-native MLB scraper deployed**: `WSMLBOrchestrator` on port 9223 with 5,249 bet365 MLB markets streaming; MLB discovery fixed (direct URL navigation via `window.location.href` for SPA hash URLs, not CDP `Page.navigate`); parallel refresh reduced cycle time 24min→3-4min; `startup.py` page-passing bug fixed (must pass `orchestrator.page`, not `orchestrator`); `Target.activateTarget` wrong-port bug fixed; CO markets removed from `MLB_MG_NAME_MAP` (8 combo/accumulator markets with no OpticOdds equivalent) (Sessions 11:20, 11:40, 18:38)
+- [[daily/lcash/2026-05-05.md]] - **V3 MLB multi-URL cycle**: V3 initially only loaded I0 tab (2 markets/game); V2 cycled 26 MGs per game (I0 + 19 batter + 7 pitcher hash-nav URLs). After implementing multi-URL cycle in `MLBGameScraper` overriding `setup()`/`refresh()`, coverage jumped 2→1,120+ markets per game (~7,400 raw odds total across 15 games). `SETUP_CONCURRENCY` bumped 3→5, reducing startup from ~25 to ~15 min. **BB wizard vs partial endpoint auth**: `betbuilderpregamecontentapi` (NBA BB wizard) requires authenticated session; `matchbettingcontentapi/partial` (MLB) serves anonymous users — explains why MLB works without login but NBA doesn't. Stealth probe confirmed: `betbuilderpregamecontentapi/wizard` fires on I0 ("Bet Builder") tab click, returning 457 PA records per game (Sessions 16:54, 22:25)

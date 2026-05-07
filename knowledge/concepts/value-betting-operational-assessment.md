@@ -10,8 +10,10 @@ sources:
   - "daily/lcash/2026-04-22.md"
   - "daily/lcash/2026-04-24.md"
   - "daily/lcash/2026-04-25.md"
+  - "daily/lcash/2026-05-02.md"
+  - "daily/lcash/2026-05-03.md"
 created: 2026-04-12
-updated: 2026-04-25
+updated: 2026-05-03
 ---
 
 # Value Betting System Operational Assessment
@@ -107,6 +109,33 @@ This continues the pattern of weakness #2 (no monitoring): the SSE streams were 
 
 The new OpticOdds API key unlocked baseball access (15 leagues including MLB, KBO, NPB) alongside expanded basketball coverage (111 leagues). This partially addresses weakness #1 (OpticOdds SPOF): the scanner is no longer NBA-only, significantly expanding the market universe. MLB sharp data now flows through OpticOdds with all 17 prop type mappings confirmed working. However, NRL/AFL remain dead, and soccer/tennis/hockey are still inaccessible.
 
+### Monitoring Overhaul and 2-Day Outage Recovery (2026-05-02)
+
+On 2026-05-02, a 2-day NBA outage was discovered — the longest undetected outage to date. Root cause: `start_nba.bat` missing OpenBLAS thread limit settings, combined with a silently disabled watchdog. Four targeted fixes were deployed rather than an architecture rewrite:
+
+1. **Discord webhook alerting** — `ALERT_WEBHOOK_URL` in `.env` with `_send_discord_alert()` on task death. First real-time failure notification system in the scanner's history.
+2. **`/api/v1/mini-pc` endpoint** — HTTP health check eliminating SSH for status visibility. Reports per-component status with `all_ok=false` when tracker dead >5 minutes.
+3. **ev_periods state leak fix** — open periods never closed when games went live, creating permanent state accumulation.
+4. **Batch files in repo** — all batch files (`start_nba.bat`, `start_nrl.bat`, `start_afl.bat`, `start_push.bat`) checked into version control as single source of truth.
+
+A subsequent log noise analysis revealed that real signals were buried under dead-sport errors (NHL off-season), unavailable book names, and 521 auto-discovered sports. A 3-phase monitoring plan was designed: Phase 1 kills noise (demote to DEBUG, scope auto-discovery), Phase 2 adds structured metrics (picks/5min, trails/5min, markets/cycle), Phase 3 builds a dashboard health grid with smart alerts.
+
+Critical gap remaining: Discord alerting covers task death but NOT login failures — NBA scraper was dead 5 days (since April 27) with no notification because `_send_discord_alert()` only fires for background task crashes, not session expiry. See [[concepts/vps-monitoring-log-noise-elimination]] for the full monitoring design and [[concepts/bet365-session-login-detection-gap]] for the login alerting gap.
+
+### Continued Silent Multi-Day Outage and Deployment Automation (2026-05-03)
+
+On 2026-05-03, the same multi-day outage pattern recurred: the bet365 scraper had been dead since April 27 (6 days) and the push worker since April 30 (3 days) — with zero Discord notifications because `ALERT_WEBHOOK_URL` was still not configured in the mini PC's `.env`. This prompted three operational improvements:
+
+1. **Discord webhook deployed on mini PC** — `ALERT_WEBHOOK_URL` added to `.env`; login failure detection wired to alerts in both `bet365_nba_v3.py` and `bet365_mlb_v3.py`. Closes the gap identified on 2026-05-02.
+2. **Three-tier deployment verification** — `verify_mini_pc_sync.sh` (check-only), `verify_mini_pc_sync.sh --fix` (auto-cleanup), `sync_and_verify.sh` (full deployment). See [[concepts/deployment-verification-automation]].
+3. **Unified odds aggregator** — single aggregator on port 8899 replaces per-sport push workers, reducing the process management surface. See [[concepts/unified-odds-aggregator-pipeline]].
+
+A recurring theory misconfiguration was also found: `max_line_gap=NULL` on the Pinnacle MLB theory caused 0 MLB picks despite 3,684 markets — the third occurrence of this bug. See [[concepts/theory-auto-creation-pollution]].
+
+Health endpoint aggregate masking was identified as a new observability gap: the health endpoint showed 4,082 markets and 8,272 line matches, but the user corrected that "Bet365 scrapers are actually struggling." See [[concepts/worker-status-observability]].
+
+The dashboard had a 25-day-stale `data.json` because VPS restarts don't automatically restart background tasks. See [[concepts/dashboard-background-task-persistence-gap]].
+
 ## Related Concepts
 
 - [[concepts/opticodds-critical-dependency]] - Weakness #1: the single-provider risk
@@ -119,6 +148,10 @@ The new OpticOdds API key unlocked baseball access (15 leagues including MLB, KB
 - [[concepts/vps-sse-cascade-silent-crash]] - VPS killed by SSE 400 cascade, dead 10+ hours with no alerting
 - [[concepts/opticodds-api-key-sport-scoping]] - API key only covers NBA — scanner is effectively single-sport despite multi-sport infrastructure
 - [[concepts/bet365-shared-chrome-single-session]] - Single-session-per-account constraint drove Chrome consolidation; positive fix from thorough health checking
+- [[concepts/vps-monitoring-log-noise-elimination]] - The comprehensive monitoring overhaul triggered by the 2-day outage; Discord alerts, mini-pc endpoint, log noise elimination
+- [[concepts/deployment-verification-automation]] - Three-tier verification scripts created after the 2026-05-03 multi-day outage recovery
+- [[concepts/unified-odds-aggregator-pipeline]] - Aggregator replacing per-sport push workers for simplified process management
+- [[concepts/dashboard-background-task-persistence-gap]] - VPS restarts lose background tasks; data.json 25 days stale
 
 ## Sources
 
@@ -129,3 +162,5 @@ The new OpticOdds API key unlocked baseball access (15 leagues including MLB, KB
 - [[daily/lcash/2026-04-22.md]] - VPS SSE 400 cascade crash: dead 10+ hours (23:08→09:21), 0 picks/0 alerting; reinforces weakness #2 and #6; no process supervisor for auto-restart; client-facing SSE errors cascaded to kill backend tracker (Session 09:21)
 - [[daily/lcash/2026-04-24.md]] - Third triple overnight failure (push worker + Chrome sessions + OpticOdds); OpticOdds API key only covers NBA — MLB/NRL/AFL all dead; scanner is effectively NBA-only; bet365 single-session-per-account forced Chrome consolidation; user correction: "never assume the system is good" (Sessions 09:10, 14:40)
 - [[daily/lcash/2026-04-25.md]] - VPS SSE streams all broken (22 streams returning 400, 5,056 errors/24h); disk at 77% (2.1GB free); 4 restarts in one day; high load 6.81 from SSE retry loops; process liveness ≠ data flow confirmed again. Positive: baseball unlocked on new API key (15 leagues), basketball expanded to 111 leagues — scanner no longer NBA-only (Session 16:18)
+- [[daily/lcash/2026-05-02.md]] - 2-day NBA outage (longest undetected): missing OpenBLAS + disabled watchdog; 4 targeted fixes deployed (Discord alerting, /api/v1/mini-pc endpoint, ev_periods leak, batch files in repo); 3-phase monitoring plan designed; NBA scraper dead 5 days without alerting (login failures not wired to Discord); 647 broken theories cleaned; deploy.sh killing push worker cascade (Sessions 08:21, 12:26, 13:29, 14:23, 16:08, 23:14)
+- [[daily/lcash/2026-05-03.md]] - Continued multi-day outage: bet365 dead since Apr 27 (6 days), push worker since Apr 30 (3 days); Discord webhook deployed on mini PC; three-tier verification scripts created; unified aggregator on port 8899; max_line_gap=NULL on Pinnacle MLB (third occurrence); health endpoint aggregate masking identified; dashboard data.json 25 days stale (Sessions 08:10, 08:29, 08:40, 11:56, 12:12)

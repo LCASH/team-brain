@@ -12,8 +12,9 @@ sources:
   - "daily/lcash/2026-04-27.md"
   - "daily/lcash/2026-04-29.md"
   - "daily/lcash/2026-04-30.md"
+  - "daily/lcash/2026-05-03.md"
 created: 2026-04-15
-updated: 2026-04-30
+updated: 2026-05-03
 ---
 
 # Dashboard Client-Server EV Divergence
@@ -150,6 +151,14 @@ The bug undermines trust in ALL displayed EV values on the dashboard. The chart 
 
 This is the eighth documented manifestation of client-server divergence, and the most severe in terms of output magnitude.
 
+### Dashboard data.json Staleness and Background Task Gap (2026-05-03)
+
+On 2026-05-03, the dashboard displayed zero MLB picks despite 877+ picks in Supabase with valid 1-3% EV. The root cause was `dashboard/data.json` being **25 days stale** (last updated April 8). No background task was continuously syncing Supabase picks to the file, and VPS restarts lost any previously registered background tasks.
+
+The fix added `_dashboard_update_loop()` — a background task querying Supabase every 30 seconds. The initial version failed silently because it referenced a non-existent `theory_name` column (Supabase returned empty results, no error). After fixing the query and reformatting to the `ev_picks` key the dashboard expects, picks populated within 30 seconds. See [[concepts/dashboard-background-task-persistence-gap]] for the full analysis.
+
+Additional issues in the same session: sport filtering was broken (NBA picks appeared in MLB queries), and EV values in `data.json` showed 990%+ artifacts from the wrong output key format. A Games tab feature was also deployed with market grouping by game and cross-bookmaker prop comparison, but showed empty due to an upstream mini PC aggregator failure.
+
 ## Sources
 
 - [[daily/lcash/2026-04-15.md]] - Pinnacle theory showing AU soft books instead of prediction markets; `loadTheories()` dropping 6 fields via JS destructuring; client-side EV ≠ server-side EV divergence; fix deployed; zero Pinnacle picks correct (games outside 3h window); deploy killed all workers requiring manual restart; NRL scheduled task re-enable needed (Session 22:03/16:20+)
@@ -161,3 +170,4 @@ This is the eighth documented manifestation of client-server divergence, and the
 - [[daily/lcash/2026-04-27.md]] - Six-dimension dual-codebase drift audit: Poisson interpolation fallback removed, line-gap penalty changed from prob-shrink to weight-decay, EV cap removed, freshness tightened 600→300s, cross-validation check added, is_over case-insensitive; trail chart interpolation + Under devig arg swap fixed; MLB BET365_2_BOOK_ID was 365 instead of 366 making data invisible (Sessions 08:10, 08:45, 09:23, 11:34)
 - [[daily/lcash/2026-04-29.md]] - **Critical `computeTrueProb()` bug**: Pinnacle true odds showed 1.28 (47.7% EV) vs manually computed 1.749 (8.2% EV) — 39.5pp discrepancy; Aggressive showed +7.6% vs correct -0.9%; chart vs table use divergent code paths; undermines ALL displayed EV values (Sessions 13:29, 14:18)
 - [[daily/lcash/2026-04-30.md]] - **Cross-sport team name mapping bug**: MLB teams rendered as NBA names (MIL→"Bucks" not "Brewers", PHI→"76ers" not "Phillies", HOU→"Rockets" not "Astros"); root cause: `resolveTeam` had only NBA team map + fuzzy `startsWith`/`endsWith` matching; fix: separate `MLB_TEAM_MAP`, sport-aware `resolveTeam` with explicit `sport` parameter. Remote CCR agents run in Anthropic cloud with zero local access — only VPS endpoints/Supabase (Session 22:05)
+- [[daily/lcash/2026-05-03.md]] - `data.json` 25 days stale (last updated April 8); `_dashboard_update_loop()` added but initial query failed silently on non-existent `theory_name` column; output key format mismatch caused 990%+ EV artifacts; sport filtering broken (NBA in MLB queries); Games tab deployed but empty from aggregator failure (Sessions 12:12, 16:47, 17:35)

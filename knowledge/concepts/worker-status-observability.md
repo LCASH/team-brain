@@ -5,8 +5,9 @@ tags: [value-betting, observability, operations, monitoring]
 sources:
   - "daily/lcash/2026-04-13.md"
   - "daily/lcash/2026-04-19.md"
+  - "daily/lcash/2026-05-03.md"
 created: 2026-04-13
-updated: 2026-04-19
+updated: 2026-05-03
 ---
 
 # Worker Status Observability
@@ -54,6 +55,18 @@ The diagnostic indicator was the `0.0ms` scrape time: a real Chrome page refresh
 
 This discovery suggests a fifth state or an additional health dimension: a `data_age` metric that measures the actual freshness of the data being served, independent of process state. A scraper can be `streaming` (process healthy, executing its loop) while simultaneously serving hours-old data. See [[concepts/game-scraper-chrome-crash-recovery]] for the auto-recovery fix.
 
+### Health Endpoint Aggregate Masking (2026-05-03)
+
+On 2026-05-03, a third variant of the status observability problem was discovered — at the health endpoint aggregate level rather than the individual worker level. The health endpoint reported healthy-looking aggregate metrics: 4,082 Bet365 markets, 8,272 line matches, push worker active. The investigation initially focused on theory configuration and tracker logic. The user corrected: "Bet365 scrapers are actually struggling to connect/match/push odds."
+
+The aggregate metrics masked component-level failures. This is a more insidious variant than the previous two patterns:
+
+- **Pattern 1 (hardcoded status):** Worker reports "streaming" when idle — the status itself is wrong
+- **Pattern 2 (stale data behind streaming):** Worker reports "streaming" while serving 3.7h-old data — status technically correct, data is stale
+- **Pattern 3 (aggregate masking):** Health endpoint reports thousands of markets — the aggregate numbers look plausible and large, hiding which components are healthy vs failing
+
+Pattern 3 requires domain knowledge to detect: "4,082 markets" sounds healthy unless you know the expected count should be 8,000+. Health endpoints need per-component breakdowns (per-scraper market counts, per-scraper last successful fetch time, per-scraper error counts) rather than just aggregate totals.
+
 ## Related Concepts
 
 - [[concepts/silent-worker-authentication-failure]] - The more severe variant: workers with zero output instead of misleading output
@@ -64,5 +77,6 @@ This discovery suggests a fifth state or an additional health dimension: a `data
 
 ## Sources
 
+- [[daily/lcash/2026-05-03.md]] - Health endpoint showed 4,082 Bet365 markets, 8,272 line matches, push worker active — aggregate metrics masked component-level scraper failures; user corrected investigation direction: "Bet365 scrapers are actually struggling" (Sessions 08:29, 08:40)
 - [[daily/lcash/2026-04-13.md]] - bet365_mlb_game reporting hardcoded "streaming" when idle; replaced with actual states (idle_no_fixtures/streaming/stale/error); main.py was overwriting worker status; deployed as commit 88e85c8; bet365 publishes MLB fixtures 6-12h before game time (Session 16:31)
 - [[daily/lcash/2026-04-19.md]] - Game scraper (Bet365 2.0) reported `status=streaming` and `age=1s` while data was 3.7 hours old; the four-state system correctly reports the process state but doesn't validate data freshness; `0.0ms` scrape time is a diagnostic smoking gun for stale cached data (real Chrome refresh takes 500ms+); status must verify data freshness not just process liveness. See [[concepts/game-scraper-chrome-crash-recovery]] for the auto-recovery fix (Sessions 14:57, 20:07)

@@ -7,8 +7,10 @@ sources:
   - "daily/lcash/2026-04-15.md"
   - "daily/lcash/2026-04-19.md"
   - "daily/lcash/2026-04-26.md"
+  - "daily/lcash/2026-05-02.md"
+  - "daily/lcash/2026-05-05.md"
 created: 2026-04-12
-updated: 2026-04-26
+updated: 2026-05-05
 ---
 
 # Configuration Drift from Manual Launch
@@ -66,6 +68,16 @@ The systemd directive takes precedence because it injects variables into the pro
 
 The fix required updating all three layers: (1) code default to include NHL, (2) `.env` on VPS, (3) systemd service `Environment=` line, followed by `systemctl daemon-reload && systemctl restart`. This is the Linux equivalent of the Windows batch file problem — both are cases where the actual launch mechanism bypasses the developer's expected configuration source.
 
+### Sixth and Seventh Drift Vectors: DISABLE_TRACKER and OpenBLAS (2026-05-02)
+
+On 2026-05-02, two new configuration drift instances were discovered simultaneously:
+
+**DISABLE_TRACKER in MLB batch file:** The MLB batch file (`start_mlb.bat`) contained `DISABLE_TRACKER=1` and `DISABLE_RESOLVER=1` flags that the NBA batch file did not have. This completely prevented the MLB tracker from initializing — picks were never generated and Bet365 game props never flowed to the VPS relay. The flags were likely added during a debugging session and never removed.
+
+**Missing OpenBLAS settings in NBA batch file:** The NBA server's `start_nba.bat` was missing OpenBLAS thread limit settings, causing a 2-day outage that went completely undetected. The NBA server silently failed to start correctly, and with the watchdog disabled, no auto-restart occurred. The outage was only discovered through manual investigation.
+
+The root cause for both was the same as the original pattern: batch files existed only on the mini PC and were not version-controlled. After this incident, all batch files were checked into the repository as the single source of truth — finally closing the configuration drift loop that had persisted since April 12.
+
 ## Related Concepts
 
 - [[concepts/opticodds-critical-dependency]] - The key rotation event that triggered the restart and exposed the drift
@@ -73,6 +85,7 @@ The fix required updating all three layers: (1) code default to include NHL, (2)
 - [[concepts/silent-worker-authentication-failure]] - The second drift layer: workers launching but silently failing without API keys
 - [[connections/operational-compound-failures]] - How this drift compounds with silent failures and missing monitoring
 - [[concepts/watchdog-environment-stripping]] - The third drift vector: watchdog bypassing the batch file on automatic restarts
+- [[concepts/vps-monitoring-log-noise-elimination]] - Batch files checked into repo as part of the 2026-05-02 monitoring overhaul
 
 ## Sources
 
@@ -80,3 +93,5 @@ The fix required updating all three layers: (1) code default to include NHL, (2)
 - [[daily/lcash/2026-04-15.md]] - Third drift vector: watchdog restarts with bare `cmd /c python -m server.main` stripping all env vars; bet365_game went dark; stale `nba_out.log` from dead process misdirected diagnosis; fixed via full kill + `schtasks /Run /TN NBA_Server` (Session 23:17)
 - [[daily/lcash/2026-04-19.md]] - Fourth drift vector (Linux/VPS): systemd `Environment=` directive overrides `.env` file. Three-layer precedence: code defaults < `.env` file < systemd `Environment=`. Adding NHL to ACTIVE_SPORTS required updating all three layers; `systemctl restart` reads the systemd unit file env vars, NOT `.env` — fixing `.env` alone was insufficient (Session 07:57)
 - [[daily/lcash/2026-04-26.md]] - Fifth recurrence: TAB scraper not running because `ENABLE_DIRECT_SCRAPERS=1` env var was missing from `start_nba.bat`; direct scrapers require both sport config AND the env var (line 1445 in main.py); also `curl_cffi` missing on scanner-ms; same pattern: feature enabled in code but batch file doesn't pass the flag (Session 11:03)
+- [[daily/lcash/2026-05-02.md]] - Sixth recurrence: MLB batch file had `DISABLE_TRACKER=1` and `DISABLE_RESOLVER=1` preventing MLB tracker initialization; seventh: NBA batch missing OpenBLAS settings causing 2-day undetected outage; all batch files finally checked into repo as version-controlled source of truth (Sessions 11:51, 13:29, 14:23)
+- [[daily/lcash/2026-05-05.md]] - Eighth recurrence (V3 migration): V3 `.env.v3` missing bet365 credentials (`BET365_USERNAME`, `BET365_PASSWORD`) that existed in V2's `.env` — V2→V3 credential migration was not automatic; V3 bat file called wrong startup path and omitted `ENABLED_SPORTS` env var; venv missing `playwright` dependency required falling back to system Python; three sequential startup failures from configuration gaps before V3 came online (Sessions 17:52, 17:55)

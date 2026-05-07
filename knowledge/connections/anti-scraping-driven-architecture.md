@@ -13,8 +13,10 @@ sources:
   - "daily/lcash/2026-04-21.md"
   - "daily/lcash/2026-04-29.md"
   - "daily/lcash/2026-04-30.md"
+  - "daily/lcash/2026-05-06.md"
+  - "daily/lcash/2026-05-07.md"
 created: 2026-04-12
-updated: 2026-04-30
+updated: 2026-05-07
 ---
 
 # Connection: Anti-Scraping Defenses Drive Adapter Architecture
@@ -79,4 +81,6 @@ Each discovery was empirical: the defense was only understood after the simpler 
 - [[connections/ws-viability-sport-rendering-divergence]] - How the defense stack's WS layer interacts differently with racing vs NBA props
 - [[concepts/mlb-parallel-scraper-workers]] - Concurrent navigation rate-limiting discovered during MLB scraper rewrite; bounded semaphore (sem=3) avoids detection
 - [[concepts/bet365-mlb-hash-nav-mg-fetching]] - Request context validation: `fetch()` via `Runtime.evaluate` returns 200-but-empty; hash-nav triggers SPA's own requests
+- [[concepts/bet365-istrusted-synthetic-click-detection]] - 8th defense layer: `isTrusted` check on DOM click events silently drops synthetic JS clicks; only CDP mouse events pass
+- [[concepts/bet365-ws-pre-game-coverage-gap]] - WS `OV_POPULAR_30_0` is global firehose, not per-game feeds; pre-game HTTP polling remains necessary
 
