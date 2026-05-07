@@ -47,7 +47,9 @@ The "zero in-game clicks" architecture eliminates isTrusted detection for all op
 
 ### Relationship to WebSocket.toString() Detection
 
-In the same session, a related detection was confirmed: bet365 checks `WebSocket.toString()` to detect constructor tampering. Any prototype wrapping (the technique documented in [[concepts/websocket-constructor-injection]]) triggers anti-bot detection and produces a blank page. This means the constructor injection technique that works for the racing adapter is now detected for the sports scraper — another narrowing of the viable automation surface.
+In Session 14:32, a related detection was observed: bet365 checks `WebSocket.toString()` to detect constructor tampering. Aggressive prototype wrapping (overriding `WebSocket.prototype.send` or replacing the constructor with a wrapper that changes `toString()` output) triggers anti-bot detection and produces a blank page.
+
+**However**, this finding was partially corrected in Session 20:23: the simpler `add_init_script` interceptor pattern — which stores WS instances in `window.__wsObjs` without modifying the WebSocket prototype — does **NOT** trigger bot detection. The page rendered 131KB body with both WS connections open and no blanking. The distinction is between **prototype wrapping** (detected) and **instance storage** (not detected). See [[concepts/bet365-ws-subscription-injection-viability]] for the full probe results and the 3-topic injection test that confirmed the server processes injected subscriptions on the SPA's existing WS connection.
 
 ### NST Direct Fetch Also Dead
 
@@ -61,8 +63,9 @@ This trio of detections (isTrusted clicks, WebSocket.toString(), NST fetch rejec
 - [[concepts/spa-navigation-state-api-access]] - The SPA navigation constraints that `page.goto()` satisfies; isTrusted is an additional constraint on any remaining click-based navigation
 - [[concepts/bet365-mlb-hash-nav-mg-fetching]] - Hash-nav MG fetching was designed to avoid clicks; isTrusted detection validates that design decision
 - [[concepts/bet365-ws-native-scraper-architecture]] - The WS-native scraper architecture that minimizes click interactions
-- [[concepts/websocket-constructor-injection]] - The constructor wrapping technique now detected by WebSocket.toString() check
+- [[concepts/websocket-constructor-injection]] - The constructor wrapping technique; aggressive prototype wrapping detected by WebSocket.toString() check, but simpler instance storage is not
+- [[concepts/bet365-ws-subscription-injection-viability]] - Session 20:23 correction: add_init_script interceptor works without triggering bot detection; 3-topic injection probe confirmed server processes injected subscriptions
 
 ## Sources
 
-- [[daily/lcash/2026-05-07.md]] - Sidebar navigation switched to CDP `mouse.click(x,y)` after `page.evaluate("el.click()")` silently failed; bet365 checks `isTrusted` on click events; user flagged bot detection on click interactions three times; all flows redesigned around `page.goto()` with zero in-game clicks; WebSocket.toString() check detects constructor hooks → blank page; NST direct fetch dead — CDP-initiated fetch returns 200/0bytes even with fresh 4s-old token (Sessions 14:32, 16:30)
+- [[daily/lcash/2026-05-07.md]] - Sidebar navigation switched to CDP `mouse.click(x,y)` after `page.evaluate("el.click()")` silently failed; bet365 checks `isTrusted` on click events; user flagged bot detection on click interactions three times; all flows redesigned around `page.goto()` with zero in-game clicks; WebSocket.toString() check detects constructor hooks → blank page (Sessions 14:32, 16:30). **Correction (Session 20:23)**: `add_init_script` interceptor storing WS instances in `window.__wsObjs` does NOT trigger bot detection — page renders 131KB body, both WS open, no blanking; the toString() check only detects aggressive prototype wrapping, not simple instance storage; NST direct fetch dead — CDP-initiated fetch returns 200/0bytes even with fresh 4s-old token (Session 16:30)

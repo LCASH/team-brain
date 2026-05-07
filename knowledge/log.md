@@ -374,3 +374,10 @@
   - `concepts/unabated-odds-api-architecture` → superseded by [[concepts/unabated-auth-architecture-analysis]]
 - Wikilinks fixed in: [[concepts/playwright-node-pipe-crash-vector]], [[concepts/bet365-ws-native-scraper-architecture]], [[connections/anti-scraping-driven-architecture]], [[concepts/spa-navigation-state-api-access]]
 - Canonical articles verified complete: All 5 canonical articles contain comprehensive content from the daily log with correct YAML frontmatter, wikilinks, and source citations
+
+## [2026-05-08T10:30:00+10:00] compile | daily/lcash/2026-05-07.md (incremental — Sessions 19:51, 20:23)
+- Source: daily/lcash/2026-05-07.md
+- Developer: lcash
+- Note: Prior compilation (22:30) captured Sessions 09:18 through 19:20. This pass compiles the remaining Sessions 19:51 and 20:23 which contain deep WS protocol reversal findings and a correction to the WebSocket.toString() bot detection claim.
+- Articles created: [[concepts/bet365-ws-subscription-injection-viability]] (interceptor-on-SPA-WS confirmed working, 3-topic injection probe, BS betslip topic prefix, disjoint PA_ID spaces as root cause of 0 overlap, standalone auth replay fails, betslip HTTP validation)
+- Articles updated: [[concepts/bet365-istrusted-synthetic-click-detection]] (CORRECTION: WebSocket.toString() only detects aggressive prototype wrapping, not simple instance storage via add_init_script; interceptor works without triggering bot detection), [[concepts/bet365-ws-pre-game-prop-streaming-limitation]] (added disjoint PA_ID space mechanism as root cause, betslip HTTP validation finding, per-G-ID navigation captures live trading IDs), [[concepts/bet365-ws-native-scraper-architecture]] (added disjoint PA_ID spaces explaining MLB G-ID walk's advantage over NBA I99 wizard)

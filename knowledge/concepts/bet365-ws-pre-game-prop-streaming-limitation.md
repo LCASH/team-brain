@@ -48,14 +48,20 @@ Pre-game player prop lines on bet365 are essentially static until approximately 
 
 This means WS monitoring of pre-game games would capture zero or near-zero delta updates even if per-game subscription were possible. The line movement that matters — when sharp action moves the market — happens close to game time and is better captured by HTTP polling at 10-15 second intervals.
 
-### PA_ID Range Analysis
+### PA_ID Range Analysis and Disjoint ID Spaces
 
 PA_IDs are date/time-specific ranges that help identify which era of data a WS frame refers to:
 - May 6 live trading: `1219xxx` range
 - May 7 pre-game: `1224xxx` range  
 - May 7 currently-live: `1235-1240xxx` range
 
-The non-overlap between WS frames (carrying `1235-1240xxx` live PA_IDs) and wizard responses (containing `1224xxx` pre-game PA_IDs) confirms that WS and HTTP serve different data populations — WS carries actively-trading markets while HTTP wizard returns the full pre-game prop surface.
+The non-overlap between WS frames (carrying `1235-1240xxx` live PA_IDs) and wizard responses (containing `1224xxx` pre-game PA_IDs) confirms that WS and HTTP serve **fundamentally disjoint data populations** — WS carries actively-trading markets while HTTP wizard returns the full pre-game prop surface. This disjoint ID space is the root cause of ALL "0 PA_ID overlap" findings across every probe test.
+
+Critically, per-G-ID `page.goto(/G{gid}/S^1/)` navigation captures PAs in the **live trading ID space** (`1238xxx` — same as WS), not the static wizard space (`1224xxx`). This is why the MLB scraper's 26 G-ID walk has always produced data that overlaps with WS deltas, while the NBA I99 wizard produces IDs that never overlap. The per-G-ID approach fires both an HTTP `partial?G{gid}` response AND activates SPA WS subscription for that market group simultaneously. See [[concepts/bet365-ws-subscription-injection-viability]] for the full disjoint ID space analysis.
+
+### Betslip HTTP Validation (Not WS)
+
+A significant operational finding from Session 19:51: bet365's "Place Bet" flow validates odds via an HTTP re-fetch at the moment of submission, NOT via real-time WS streaming. The betslip displays live odds from WS updates (via the `BS` betslip topic prefix), but the transactional price comes from HTTP. This means the "live odds" feel in the betslip UI is presentation — sub-second WS accuracy is not required for capturing the same prices bet365 uses for bet placement.
 
 ### The Hybrid Architecture Decision
 
@@ -79,7 +85,8 @@ The May 6 findings documenting "703 updates in 120s" with WS player prop data (s
 - [[concepts/bet365-nba-bb-wizard-v3-rewrite]] - The BB wizard endpoint (I99) that the HTTP refresh loop will use; CDN cache TTL ~5min bounds minimum useful refresh interval
 - [[connections/ws-viability-sport-rendering-divergence]] - The sport-rendering divergence that determines WS viability; pre-game prop streaming is non-viable for all sports, not just NBA
 - [[concepts/v3-scanner-centralized-architecture]] - The V3 architecture where the hybrid HTTP+WS approach will be deployed
+- [[concepts/bet365-ws-subscription-injection-viability]] - Deep protocol probe confirming disjoint PA_ID spaces as root cause of 0 overlap; interceptor-on-SPA-WS works for injection; betslip HTTP validation
 
 ## Sources
 
-- [[daily/lcash/2026-05-07.md]] - 275 frames captured, 0 PA_ID overlap with 404 wizard PAs; OV_POPULAR_30_0 is global firehose not per-game; per-fixture injection impossible (April 15 reconfirmed); testing methodology error: new blank tab vs existing tab with subscriptions; 132 frames/60s on live tab but for rendered page's markets only; pre-game lines mostly static; PA_ID ranges date-specific (1219xxx live May 6, 1224xxx pre-game May 7, 1235xxx live May 7); agreed hybrid: 10-15s HTTP refresh + WS supplement; yesterday's 703/120s was in-play trading, not generalizable (Sessions 18:40, 19:20)
+- [[daily/lcash/2026-05-07.md]] - 275 frames captured, 0 PA_ID overlap with 404 wizard PAs; OV_POPULAR_30_0 is global firehose not per-game; per-fixture injection impossible (April 15 reconfirmed); testing methodology error: new blank tab vs existing tab with subscriptions; 132 frames/60s on live tab but for rendered page's markets only; pre-game lines mostly static; PA_ID ranges date-specific (1219xxx live May 6, 1224xxx pre-game May 7, 1235xxx live May 7); agreed hybrid: 10-15s HTTP refresh + WS supplement; yesterday's 703/120s was in-play trading, not generalizable (Sessions 18:40, 19:20). **Disjoint PA_ID spaces confirmed as root cause**: HTTP wizard 1224xxx (static catalog) vs WS 1238-1240xxx (live trading) — fundamentally different populations; per-G-ID page.goto fires HTTP partial + activates WS subscription in live trading space; betslip validates via HTTP re-fetch at "Place Bet" click, not WS; BS prefix for betslip-specific WS topics (Session 19:51)
