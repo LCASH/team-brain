@@ -1,6 +1,6 @@
 ---
 title: "bet365 WS Subscription Injection Viability"
-aliases: [ws-injection, ws-subscribe-probe, bs-topic-prefix, interceptor-on-spa-ws, ws-auth-replay, disjoint-pa-id-spaces, ws-injection-dead, 4-sport-injection-test, empty-ack-semantics]
+aliases: [ws-injection, ws-subscribe-probe, bs-topic-prefix, interceptor-on-spa-ws, ws-auth-replay, disjoint-pa-id-spaces, ws-injection-dead, 4-sport-injection-test, empty-ack-semantics, mg-id-namespace-mismatch]
 tags: [value-betting, bet365, websocket, reverse-engineering, architecture, scraping]
 sources:
   - "daily/lcash/2026-05-07.md"
@@ -114,6 +114,24 @@ The 4-sport injection test also confirmed that bet365 operates **three separate 
 
 The same player prop (e.g., "Anthony Edwards 20+ Points") has a **different PA_ID in each namespace**. Injecting a subscribe for a static-catalog PA_ID on the WS will never produce deltas because the server's delta engine operates in the live-trading namespace. This is the root cause of ALL "0 PA_ID overlap" findings across every probe test since April 15.
 
+### MG_ID Namespace Mismatch (Session 21:27)
+
+A final investigation on 2026-05-07 (Session 21:27) revealed that the WS topic format `L{MG_ID}-{PA_ID}_30_0` has a **dual namespace problem**, not just a single one. The PA_ID namespace disjoint was already documented above, but the MG_ID component is ALSO in a different namespace between HTTP responses and WS topics:
+
+| MG ID Type | Range | Source | Population |
+|------------|-------|--------|------------|
+| Local MG IDs | 3-digit (`340`–`351`) | HTTP wizard body | Per-fixture page-local identifiers |
+| Global prop-template IDs | 5-6 digit (`181378`, `181551`) | HTTP wizard `MG;ID=` field | Shared templates (e.g., "Player Points O/U") |
+| Per-instance MG_IDs | 9-digit (`194110689`, `194110690`) | WS `L{X}-{PA_ID}` topics | Per-fixture, per-market-group instance IDs |
+
+The HTTP wizard body was examined for any 9-digit numbers that could serve as the `{MG_ID}` in WS topic format. Only 5 distinct 9-digit numbers were found — all event/fixture-adjacent IDs (e.g., `194110689`, `194110690`, `194110691`, `194110712`, `182990`), not per-market-group identifiers. None of these matched the MG_ID pattern used in live WS `L{X}-{PA_ID}_30_0` frames.
+
+The May 6 finding that `matchbettingcontentapi/coupon` responses contain `MG;ID=194xxxxxx` records was tested against four NBA HTTP endpoints (wizard I99, partials I0/I1/I43/I45) — none returned 9-digit per-instance MG_IDs. The original finding was either wrong or context-specific (possibly limited to live/in-play content served from a different response format).
+
+This MG_ID mismatch compounds the PA_ID mismatch to make WS topic construction from HTTP data **doubly impossible**: even if PA_IDs could be mapped (they can't — different namespaces), the MG_ID component of the topic also cannot be derived from any available HTTP response. Both halves of the `L{MG_ID}-{PA_ID}_30_0` topic are in namespaces inaccessible from HTTP endpoints.
+
+Three forward paths were identified: (1) a live-fixture probe to capture actual WS frames during active trading and build a reverse map of `{PA_ID: MG_ID}` from observed topics, (2) capturing `OV_POPULAR_30_0` frames during prime time to check if wizard PA_IDs appear in streamed deltas, and (3) testing the 5 event-adjacent 9-digit IDs as the `{MG_ID}` in topic format. The recommended fallback remains HTTP polling at 10-15s intervals.
+
 ### Architecture Pivot: HTTP Primary, WS Supplemental
 
 Based on the definitive 4-sport injection failure, the production architecture was confirmed as:
@@ -137,4 +155,4 @@ The `_refresh_loop` to be added to both `WSNBAOrchestrator` and `WSMLBOrchestrat
 
 ## Sources
 
-- [[daily/lcash/2026-05-07.md]] - Disjoint PA_ID spaces: HTTP wizard 1224xxx (static) vs WS 1238-1240xxx (live trading); page.goto(/G{gid}/S^1/) fires HTTP partial AND activates WS subscription — captures in live trading range; betslip validates via HTTP re-fetch at "Place Bet" not WS; BS prefix for betslip topics; 2 WS connections confirmed (premws 56 frames, pshudws 1 frame) (Session 19:51). Interceptor-on-SPA-WS confirmed working (131KB page body, both WS open, no blanking); 3-topic injection probe: stable PA → EMPTY, OVInPlay → F-frame, bogus → EMPTY; standalone auth replay returns 400 (session-bound); auth token reusable within session (same token 3 frames/60s) not cross-session; SPA subscribes only at UI action moment; consolidated to `project_bet365_ws_protocol_reversed.md`; April 15 "injection fails" was standalone-specific, not interceptor (Session 20:23). **4-sport injection death verdict**: comprehensive test across NBA, MLB, NRL, Tennis — 100% ack rate, 0% delta delivery across all sports; Tennis live match (Giron vs Cilic) 84/84 EMPTY acks in 60s; EMPTY ack = "registered" not "data will follow"; 3 PA_ID namespaces confirmed (HTTP catalog 1219-1224xxx, WS live-trading 1238-1240xxx, betslip 194xxx); architecture pivot to HTTP polling (10-15s) as primary with WS as passive supplement; April 15 render-state authorization confirmed correct — server decides delivery independently of client subscription (Session 20:56)
+- [[daily/lcash/2026-05-07.md]] - Disjoint PA_ID spaces: HTTP wizard 1224xxx (static) vs WS 1238-1240xxx (live trading); page.goto(/G{gid}/S^1/) fires HTTP partial AND activates WS subscription — captures in live trading range; betslip validates via HTTP re-fetch at "Place Bet" not WS; BS prefix for betslip topics; 2 WS connections confirmed (premws 56 frames, pshudws 1 frame) (Session 19:51). Interceptor-on-SPA-WS confirmed working (131KB page body, both WS open, no blanking); 3-topic injection probe: stable PA → EMPTY, OVInPlay → F-frame, bogus → EMPTY; standalone auth replay returns 400 (session-bound); auth token reusable within session (same token 3 frames/60s) not cross-session; SPA subscribes only at UI action moment; consolidated to `project_bet365_ws_protocol_reversed.md`; April 15 "injection fails" was standalone-specific, not interceptor (Session 20:23). **4-sport injection death verdict**: comprehensive test across NBA, MLB, NRL, Tennis — 100% ack rate, 0% delta delivery across all sports; Tennis live match (Giron vs Cilic) 84/84 EMPTY acks in 60s; EMPTY ack = "registered" not "data will follow"; 3 PA_ID namespaces confirmed (HTTP catalog 1219-1224xxx, WS live-trading 1238-1240xxx, betslip 194xxx); architecture pivot to HTTP polling (10-15s) as primary with WS as passive supplement; April 15 render-state authorization confirmed correct — server decides delivery independently of client subscription (Session 20:56). **MG_ID namespace mismatch**: HTTP wizard body contains only 3-digit local MG IDs (340-351) and 5-6 digit global prop-template IDs (181378, 181551), NOT the 9-digit per-instance MG_IDs required for WS `L{MG_ID}-{PA_ID}_30_0` topics; only 5 event-adjacent 9-digit numbers in wizard body; May 6 `matchbettingcontentapi/coupon` MG_ID finding not validated across 4 NBA HTTP endpoints; dual namespace problem (MG_ID + PA_ID both disjoint) makes WS topic construction from HTTP data doubly impossible; 3 forward paths identified: live-fixture probe, OV_POPULAR capture, event-adjacent ID testing (Session 21:27)

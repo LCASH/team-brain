@@ -389,3 +389,11 @@
 - Articles created: (none)
 - Articles updated: [[concepts/bet365-ws-subscription-injection-viability]] (added Session 20:56: definitive 4-sport injection test across NBA/MLB/NRL/Tennis — 100% ack rate, 0% delta delivery; EMPTY ack semantics clarified; 3 PA_ID namespaces confirmed; architecture pivot to HTTP primary + WS supplemental), [[concepts/bet365-ws-native-scraper-architecture]] (added Session 16:30: I99 zero-click architecture validated at 286-482 PAs/game; MG-without-NA parser reset bug was root cause of 0% yield; NST direct fetch confirmed dead; added Session 20:56: 4-sport injection verdict confirming HTTP polling as only viable primary source)
 - Index updated: Updated descriptions for [[concepts/bet365-ws-subscription-injection-viability]] and [[concepts/bet365-ws-native-scraper-architecture]] to reflect 4-sport injection verdict and I99 architecture
+
+## [2026-05-08T16:00:00+10:00] compile | daily/lcash/2026-05-07.md (incremental — Session 21:27)
+- Source: daily/lcash/2026-05-07.md
+- Developer: lcash
+- Note: Final incremental pass for this daily log. Prior compilations (4 passes) captured Sessions 09:18–20:56. This pass compiles the remaining Session 21:27 which contains deep WS protocol reversal revealing that MG_IDs are ALSO in a disjoint namespace from HTTP responses — making WS topic construction doubly impossible (both MG_ID and PA_ID components are inaccessible from HTTP data).
+- Articles created: (none)
+- Articles updated: [[concepts/bet365-ws-subscription-injection-viability]] (added Session 21:27: MG_ID namespace mismatch — HTTP wizard contains 3-digit local MG IDs and 5-6 digit global prop-template IDs, NOT the 9-digit per-instance MG_IDs required for WS topics; May 6 coupon MG_ID finding not validated across 4 NBA endpoints; dual namespace problem compounds PA_ID disjoint; 3 forward paths identified)
+- Index updated: Updated description for [[concepts/bet365-ws-subscription-injection-viability]] to include MG_ID namespace finding
