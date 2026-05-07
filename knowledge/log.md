@@ -405,3 +405,11 @@
 - Articles created: (none)
 - Articles updated: [[concepts/bet365-ws-subscription-injection-viability]] (added Session 22:27: FI as correct WS routing key correcting MG_ID nomenclature; PM subscribe = snapshot request, L-format = broadcast-only; even live fixtures return EMPTY on explicit PM subscribe; subscribe envelope format confirmed; per-sport HTTP refresh finalized 30s NBA/60s MLB)
 - Index updated: Updated description for [[concepts/bet365-ws-subscription-injection-viability]] to include FI routing key and PM vs L format distinction
+
+## [2026-05-08T18:00:00+10:00] compile | daily/lcash/2026-05-07.md (incremental — Sessions 22:29, 22:57)
+- Source: daily/lcash/2026-05-07.md
+- Developer: lcash
+- Note: Final incremental pass for this daily log. Prior compilations (6 passes) captured Sessions 09:18–22:27. This pass compiles the remaining Sessions 22:29 (V4 mini PC deployment blocked by vanilla Chrome detection) and 22:57 (untested WS hypotheses: time-gating, betslip-triggered stream allocation).
+- Articles created: (none)
+- Articles updated: [[concepts/bet365-headless-detection]] (ESCALATION: bet365 now detects vanilla Chrome with navigator.webdriver=true via --remote-debugging-port; AdsPower anti-detect required, not just headed mode; 114KB vs 131KB body diagnostic; environment parity risk), [[concepts/v3-scanner-centralized-architecture]] (V4 mini PC deploy blocked by vanilla Chrome; V3 rollback also failed; V4 HTTP+WS hybrid verified locally; Session 22:57 untested hypotheses: time-gating 30-60 min before tipoff, betslip-triggered stream allocation), [[concepts/bet365-ws-subscription-injection-viability]] (Session 22:57 untested hypotheses added: time-of-day gating, betslip-triggered subscribes; protocol decode deliverable referenced), [[connections/anti-scraping-driven-architecture]] (layer 2 updated: navigator.webdriver detection on vanilla Chrome with --remote-debugging-port; AdsPower now required for full data access)
+- Index updated: [[concepts/bet365-headless-detection]] description and dates updated to reflect vanilla Chrome detection escalation

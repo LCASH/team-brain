@@ -108,6 +108,20 @@ On 2026-05-07, three critical discovery and reliability issues were resolved:
 
 **VB_V3_Restart Windows Task**: A `VB_V3_Restart` scheduled task was created with system startup trigger + 5-minute polling if V3 is not running. This replaces the prior schtask model and was verified working: V3 restarted cleanly at 00:19 with login preserved (Chrome sessions persisted), NBA found 11 games, MLB discovery ran successfully. The EPIPE crash at 23:10:50 that motivated this task was not caught by the previous schtask configuration.
 
+### Vanilla Chrome Anti-Bot Detection Blocker (2026-05-07)
+
+On 2026-05-07 (Session 22:29), V4 deployment to the mini PC failed because the production environment runs **vanilla Chrome** with `--remote-debugging-port`, not AdsPower. bet365's anti-bot system now detects `navigator.webdriver=true` (which vanilla Chrome exposes when launched with debugging port) and serves partial/degraded content from the wizard endpoint. Body size diagnostic: 114KB on mini PC (vanilla Chrome, partial bot detection) vs 131KB locally (AdsPower, full content).
+
+V3 rollback was also attempted but failed identically, confirming this is an **environmental anti-bot escalation** by bet365, not a V4 code regression. bet365 likely shipped stricter anti-bot checks within the past 24 hours that pushed vanilla Chrome below the detection threshold. See [[concepts/bet365-headless-detection]] for the full analysis.
+
+This is the most impactful environment parity failure in the scanner's history: all V3/V4 development and testing used AdsPower (which masks CDP artifacts), while production used vanilla Chrome. The fix requires either installing AdsPower on the mini PC or adding stealth JS injection scripts (~50 lines) to mask `navigator.webdriver` and related properties.
+
+### V4 HTTP+WS Hybrid Architecture (2026-05-07)
+
+Session 22:29 also confirmed the V4 hybrid architecture locally via AdsPower: single Playwright page with `add_init_script` interceptor captures both WS connections, batch subscribe injection handles CONNECTING state with retry logic, and the HTTP refresh loop updates `_live_odds` in place every 30s (NBA) / 60s (MLB). NBA uses a single mega-endpoint (`betbuilderpregamecontentapi/wizard`) returning all 13 prop types in one 5.5s fetch; MLB requires walking 26 G-IDs per game (~24s/game) — a structural bet365 product asymmetry.
+
+Session 22:57 documented remaining untested hypotheses from the WS protocol reversal: (1) time-of-day gating where WS streams may activate 30-60 minutes before tipoff, and (2) betslip-triggered subscribes where the server only allocates stream buffers for PAs added to the betslip. These are deferred to a morning MLB first-pitch validation test.
+
 ## Sources
 
 - [[daily/lcash/2026-05-05.md]] - Complete architectural redesign defined (Session 10:56); Phases 3-7 completed: CDPPageBase, ChromeManager, login/discovery separation, OpticOdds SSE consumer, DataStore with change_event (Session 11:11); Testing strategy with 65 tests (Session 11:18); All 12 phases completed (Session 11:47); Deployment ready, 3 commits, 44 files, 8,827 lines (Session 12:02); Mini PC deployment, integration findings: OpticOdds API signature mismatch, Bet365 placeholder, market schema gap (Session 13:19); Full integration wiring (Session 13:26); Live: 1,400+ odds from 3 NBA games, 389 theories loaded (Session 13:51); MLB multi-URL cycle: 2→1,120+ markets, 7,400 raw odds across 15 games; BB wizard requires login, MLB partial does not (Session 16:54); Tracker fixture ID dedup: 20→11 clean picks (Session 22:40); V3 dashboard on VPS port 8803 (Session 23:42); captured_at staleness: 36,327s → 6s after fix (Session 23:37)
