@@ -1,6 +1,6 @@
 ---
 title: "bet365 WS Subscription Injection Viability"
-aliases: [ws-injection, ws-subscribe-probe, bs-topic-prefix, interceptor-on-spa-ws, ws-auth-replay, disjoint-pa-id-spaces]
+aliases: [ws-injection, ws-subscribe-probe, bs-topic-prefix, interceptor-on-spa-ws, ws-auth-replay, disjoint-pa-id-spaces, ws-injection-dead, 4-sport-injection-test, empty-ack-semantics]
 tags: [value-betting, bet365, websocket, reverse-engineering, architecture, scraping]
 sources:
   - "daily/lcash/2026-05-07.md"
@@ -10,7 +10,7 @@ updated: 2026-05-07
 
 # bet365 WS Subscription Injection Viability
 
-On 2026-05-07 (Sessions 19:51 and 20:23), lcash performed deep WS protocol reversal confirming that **interceptor-on-existing-SPA-WS works** — `add_init_script` storing WS instances in `window.__wsObjs` does NOT trigger bot detection (correcting earlier claims). A 3-topic injection probe demonstrated that the server processes injected subscriptions (known-stable PA → EMPTY ack, active topic like `OVInPlay_30_0` → full F-frame snapshot, bogus topic → EMPTY ack). However, standalone WS auth replay definitively fails — the auth token is session-bound and cannot be reused across connections. The investigation also revealed that HTTP wizard PA_IDs (static catalog, `1224xxx`) and WS delta PA_IDs (live trading, `1240xxx`) occupy **disjoint ID spaces**, which is the root cause of the persistent "0 PA_ID overlap" finding.
+On 2026-05-07 (Sessions 19:51, 20:23, and 20:56), lcash performed deep WS protocol reversal confirming that **interceptor-on-existing-SPA-WS works** for sending subscribes — `add_init_script` storing WS instances in `window.__wsObjs` does NOT trigger bot detection (correcting earlier claims). A 3-topic injection probe demonstrated that the server processes injected subscriptions (known-stable PA → EMPTY ack, active topic like `OVInPlay_30_0` → full F-frame snapshot, bogus topic → EMPTY ack). However, a definitive **4-sport injection test** (NBA, MLB, NRL, Tennis) in Session 20:56 proved that server acknowledgment does NOT mean data delivery — 100% of injected subscribes were acked but 0% produced U-frame deltas, including on an actively-trading live Tennis match. This conclusively kills WS injection as a viable architecture for pre-game prop streaming. The investigation also revealed three separate PA_ID namespaces (HTTP catalog, WS live-trading, betslip) and confirmed that standalone WS auth replay definitively fails.
 
 ## Key Points
 
@@ -92,11 +92,44 @@ A significant operational finding: bet365's "Place Bet" flow uses an HTTP re-fet
 
 This has implications for the scraper: there is no need to achieve sub-second WS streaming for accurate pre-game prop odds. The HTTP polling interval (10-15s) captures the same prices that bet365 uses for bet placement validation.
 
+### Definitive 4-Sport Injection Death Verdict (Session 20:56)
+
+On 2026-05-07 (Session 20:56), a comprehensive injection test across **4 sports** (NBA, MLB, NRL, Tennis) definitively proved that WS subscription injection cannot deliver real-time line movement data:
+
+- **100% subscribe ack rate** — server acknowledged every injected topic across all 4 sports
+- **0% delta delivery rate** — zero `U`-frame updates received for any injected topic, including an actively-trading live Tennis match (Giron vs Cilic, E194090499)
+- **84/84 EMPTY acks** on the Tennis match over 60 seconds — the server registered all subscribes but pushed nothing
+
+This conclusively resolves the question: **EMPTY ack does NOT mean "subscribe accepted, data will follow."** It means "subscribe registered in the session's topic list" with no guarantee of future delivery. The server independently decides which topics receive push updates based on its own featured-content algorithm (the `OV_POPULAR` firehose), not based on client subscription requests. The render-state topic authorization documented in [[concepts/bet365-ws-topic-authorization]] (April 15) was correct all along — the May 7 Session 20:23 correction only applied to the specific mechanism (interceptor-on-SPA-WS works for sending subscribes), not to the server-side delivery decision.
+
+### Three PA_ID Namespaces
+
+The 4-sport injection test also confirmed that bet365 operates **three separate PA_ID namespaces**, not two:
+
+| Namespace | ID Range | Access Method | Population |
+|-----------|----------|---------------|------------|
+| HTTP catalog (static) | `1219xxx`–`1224xxx` | I99 wizard, coupon endpoints | All props pre-computed at market creation |
+| WS live-trading | `1238xxx`–`1240xxx` | Per-G-ID `page.goto`, WS deltas | Actively traded/adjusted props |
+| Betslip | `194210784` range | `BS` topic prefix in subscribe frames | Betslip-specific price feeds |
+
+The same player prop (e.g., "Anthony Edwards 20+ Points") has a **different PA_ID in each namespace**. Injecting a subscribe for a static-catalog PA_ID on the WS will never produce deltas because the server's delta engine operates in the live-trading namespace. This is the root cause of ALL "0 PA_ID overlap" findings across every probe test since April 15.
+
+### Architecture Pivot: HTTP Primary, WS Supplemental
+
+Based on the definitive 4-sport injection failure, the production architecture was confirmed as:
+
+| Layer | Role | Coverage |
+|-------|------|----------|
+| **HTTP refresh loop (10-15s)** | Primary data source | All pre-game props, all games, all sports |
+| **WS listener** | Passive supplement | Only bet365-featured content (near-tipoff, in-play) |
+
+The `_refresh_loop` to be added to both `WSNBAOrchestrator` and `WSMLBOrchestrator` performs periodic wizard fetches at 10-15 second intervals. WS frames from `OV_POPULAR` are opportunistically matched against the PA map — any overlap provides a free sub-second update between refresh cycles, but the system does not depend on WS for correctness or completeness.
+
 ## Related Concepts
 
 - [[concepts/bet365-istrusted-synthetic-click-detection]] - The article whose WebSocket.toString() claim is corrected here: interceptor-on-SPA-WS works without triggering bot detection when using instance storage (not prototype wrapping)
-- [[concepts/bet365-ws-pre-game-prop-streaming-limitation]] - Pre-game EMPTY acks confirmed via injection probe: no data to push for static lines; the disjoint ID space explains the 0 overlap
-- [[concepts/bet365-ws-topic-authorization]] - April 15 "injection fails" was about standalone WS; injection on SPA's existing WS works via interceptor pattern
+- [[concepts/bet365-ws-pre-game-prop-streaming-limitation]] - Pre-game EMPTY acks confirmed via injection probe: no data to push for static lines; the disjoint ID space explains the 0 overlap; 4-sport injection death verdict reinforces HTTP polling as permanent architecture
+- [[concepts/bet365-ws-topic-authorization]] - April 15 "injection fails" was about standalone WS; injection on SPA's existing WS works for sending subscribes but server independently decides delivery — render-state authorization confirmed correct
 - [[concepts/bet365-xcft-token-hmac-forgery]] - xcft forgery enables WS connection but subscribe-frame auth is separately session-bound; full standalone path requires session uid construction
 - [[concepts/websocket-constructor-injection]] - The constructor wrapping technique that MAY trigger WebSocket.toString() detection; the simpler add_init_script storage pattern does not
 - [[concepts/bet365-racing-data-protocol]] - The `\x16` subscription prefix and `F|`/`U|` frame format confirmed in the injection probe responses
@@ -104,4 +137,4 @@ This has implications for the scraper: there is no need to achieve sub-second WS
 
 ## Sources
 
-- [[daily/lcash/2026-05-07.md]] - Disjoint PA_ID spaces: HTTP wizard 1224xxx (static) vs WS 1238-1240xxx (live trading); page.goto(/G{gid}/S^1/) fires HTTP partial AND activates WS subscription — captures in live trading range; betslip validates via HTTP re-fetch at "Place Bet" not WS; BS prefix for betslip topics; 2 WS connections confirmed (premws 56 frames, pshudws 1 frame) (Session 19:51). Interceptor-on-SPA-WS confirmed working (131KB page body, both WS open, no blanking); 3-topic injection probe: stable PA → EMPTY, OVInPlay → F-frame, bogus → EMPTY; standalone auth replay returns 400 (session-bound); auth token reusable within session (same token 3 frames/60s) not cross-session; SPA subscribes only at UI action moment; consolidated to `project_bet365_ws_protocol_reversed.md`; April 15 "injection fails" was standalone-specific, not interceptor (Session 20:23)
+- [[daily/lcash/2026-05-07.md]] - Disjoint PA_ID spaces: HTTP wizard 1224xxx (static) vs WS 1238-1240xxx (live trading); page.goto(/G{gid}/S^1/) fires HTTP partial AND activates WS subscription — captures in live trading range; betslip validates via HTTP re-fetch at "Place Bet" not WS; BS prefix for betslip topics; 2 WS connections confirmed (premws 56 frames, pshudws 1 frame) (Session 19:51). Interceptor-on-SPA-WS confirmed working (131KB page body, both WS open, no blanking); 3-topic injection probe: stable PA → EMPTY, OVInPlay → F-frame, bogus → EMPTY; standalone auth replay returns 400 (session-bound); auth token reusable within session (same token 3 frames/60s) not cross-session; SPA subscribes only at UI action moment; consolidated to `project_bet365_ws_protocol_reversed.md`; April 15 "injection fails" was standalone-specific, not interceptor (Session 20:23). **4-sport injection death verdict**: comprehensive test across NBA, MLB, NRL, Tennis — 100% ack rate, 0% delta delivery across all sports; Tennis live match (Giron vs Cilic) 84/84 EMPTY acks in 60s; EMPTY ack = "registered" not "data will follow"; 3 PA_ID namespaces confirmed (HTTP catalog 1219-1224xxx, WS live-trading 1238-1240xxx, betslip 194xxx); architecture pivot to HTTP polling (10-15s) as primary with WS as passive supplement; April 15 render-state authorization confirmed correct — server decides delivery independently of client subscription (Session 20:56)
