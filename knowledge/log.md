@@ -397,3 +397,11 @@
 - Articles created: (none)
 - Articles updated: [[concepts/bet365-ws-subscription-injection-viability]] (added Session 21:27: MG_ID namespace mismatch — HTTP wizard contains 3-digit local MG IDs and 5-6 digit global prop-template IDs, NOT the 9-digit per-instance MG_IDs required for WS topics; May 6 coupon MG_ID finding not validated across 4 NBA endpoints; dual namespace problem compounds PA_ID disjoint; 3 forward paths identified)
 - Index updated: Updated description for [[concepts/bet365-ws-subscription-injection-viability]] to include MG_ID namespace finding
+
+## [2026-05-08T17:00:00+10:00] compile | daily/lcash/2026-05-07.md (incremental — Session 22:27)
+- Source: daily/lcash/2026-05-07.md
+- Developer: lcash
+- Note: Final incremental pass. Prior compilations (5 passes) captured Sessions 09:18–21:27. This pass compiles the remaining Session 22:27 which contains the FI routing key correction (X in WS topics is Fixture Instance ID, not MG_ID), the subscribe vs delivery format distinction (PM{FI}-{PA_ID} client→server vs L{FI}-{PA_ID}_30_0 server→client), the finding that PM subscribes are snapshot requests with no buffered state for pre-game, and per-sport HTTP refresh timings (30s NBA, 60s MLB).
+- Articles created: (none)
+- Articles updated: [[concepts/bet365-ws-subscription-injection-viability]] (added Session 22:27: FI as correct WS routing key correcting MG_ID nomenclature; PM subscribe = snapshot request, L-format = broadcast-only; even live fixtures return EMPTY on explicit PM subscribe; subscribe envelope format confirmed; per-sport HTTP refresh finalized 30s NBA/60s MLB)
+- Index updated: Updated description for [[concepts/bet365-ws-subscription-injection-viability]] to include FI routing key and PM vs L format distinction

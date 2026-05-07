@@ -136,12 +136,12 @@
       "cost_usd": 7.878099950000001
     },
     "lcash/2026-05-07.md": {
-      "hash": "3d2bbf531058abf5",
-      "compiled_at": "2026-05-07T21:33:08+10:00",
-      "cost_usd": 4.8046303
+      "hash": "793cd489e048c044",
+      "compiled_at": "2026-05-07T22:33:09+10:00",
+      "cost_usd": 4.701860750000001
     }
   },
   "query_count": 0,
   "last_lint": null,
-  "total_cost": 214.1810322000001
+  "total_cost": 218.8828929500001
 }
