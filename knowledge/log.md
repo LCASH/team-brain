@@ -360,3 +360,17 @@
 - Articles created: [[concepts/cdpsession-playwright-pipe-contention]], [[concepts/bet365-getsplashpods-discovery-routing]], [[concepts/bet365-istrusted-click-anti-bot]], [[concepts/bet365-ws-pre-game-coverage-gap]], [[concepts/unabated-odds-api-architecture]]
 - Articles updated: [[concepts/bet365-ws-native-scraper-architecture]] (WS pre-game coverage gap: OV_POPULAR is global firehose with 0 PA_ID overlap; hybrid HTTP+WS architecture decided; CDPSession contention requires dedicated discovery pages), [[concepts/playwright-node-pipe-crash-vector]] (CDPSession pipe contention: non-fatal variant where WS listener saturates pipe causing indefinite hang instead of EPIPE crash; dedicated fresh page fix), [[connections/anti-scraping-driven-architecture]] (added 8th defense layer: isTrusted click detection silently drops synthetic JS clicks; NST direct fetch confirmed dead; WS OV_POPULAR limitation), [[concepts/spa-navigation-state-api-access]] (getsplashpods only fires from #/HO/; isTrusted click detection; NST dead; D/F segments dynamic; SPA 4s warmup; pullpodapi capture gap)
 - Note: Massive day with 10+ sessions spanning V3 deployment debugging, bet365 reverse engineering (isTrusted, WS pre-game limits, getsplashpods routing), Unabated competitive intelligence, and SuperWin diagnosis. The dominant themes were: (1) CDPSession pipe contention discovery and dedicated-page fix, (2) getsplashpods routing resolved after 4 wrong URL formats, (3) isTrusted as an 8th anti-bot defense layer, (4) definitive WS pre-game limitation ruling out WS-only architecture, and (5) Unabated auth model reverse-engineered as reference architecture. Multiple sessions in /tmp (Unabated, scraper testing) were project-specific reverse engineering that produced one concept article.
+- **Superseded by recompilation below** — the 5 articles created here were duplicates of canonical articles created by a concurrent compilation process. See cleanup entry below.
+
+## [2026-05-08T00:00:00+10:00] recompile-cleanup | daily/lcash/2026-05-07.md
+- Source: daily/lcash/2026-05-07.md
+- Developer: lcash
+- Note: Cleanup of duplicate articles from competing compilation processes on 2026-05-07. The daily log was compiled twice by different processes, creating 5 duplicate articles alongside 5 canonical ones. This pass removes the duplicates and fixes broken wikilinks.
+- Orphan articles deleted (superseded by canonical equivalents):
+  - `concepts/cdpsession-playwright-pipe-contention` → superseded by [[concepts/bet365-cdpsession-pipe-contention]]
+  - `concepts/bet365-getsplashpods-discovery-routing` → superseded by [[concepts/bet365-getsplashpods-home-page-constraint]]
+  - `concepts/bet365-istrusted-click-anti-bot` → superseded by [[concepts/bet365-istrusted-synthetic-click-detection]]
+  - `concepts/bet365-ws-pre-game-coverage-gap` → superseded by [[concepts/bet365-ws-pre-game-prop-streaming-limitation]]
+  - `concepts/unabated-odds-api-architecture` → superseded by [[concepts/unabated-auth-architecture-analysis]]
+- Wikilinks fixed in: [[concepts/playwright-node-pipe-crash-vector]], [[concepts/bet365-ws-native-scraper-architecture]], [[connections/anti-scraping-driven-architecture]], [[concepts/spa-navigation-state-api-access]]
+- Canonical articles verified complete: All 5 canonical articles contain comprehensive content from the daily log with correct YAML frontmatter, wikilinks, and source citations

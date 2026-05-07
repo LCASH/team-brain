@@ -99,7 +99,7 @@ After the raw CDP migration achieved clean startup (6 tabs, 2,060 odds), the ser
 - [[connections/browser-automation-reliability-cost]] - Raw CDP migration eliminates the sixth reliability dimension (Playwright pipe crashes) while the others (JS hangs, stale sessions, warmup, crash loops, session expiry) remain
 - [[connections/chrome-lifecycle-management-pattern]] - The unified lifecycle pattern (fresh Chrome + persistent profile + explicit pages) now includes "raw CDP for page management" as a fourth rule
 - [[concepts/cdp-browser-data-interception]] - CDP response interception (`Network.responseReceived` + `Network.getResponseBody`) is the same technique used here, now without the Playwright intermediary
-- [[concepts/cdpsession-playwright-pipe-contention]] - A non-fatal variant of the pipe problem: CDPSession traffic saturates the pipe without breaking it, causing indefinite hangs instead of EPIPE crashes
+- [[concepts/bet365-cdpsession-pipe-contention]] - A non-fatal variant of the pipe problem: CDPSession traffic saturates the pipe without breaking it, causing indefinite hangs instead of EPIPE crashes
 
 ## Sources
 

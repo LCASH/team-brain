@@ -82,5 +82,5 @@ Each discovery was empirical: the defense was only understood after the simpler 
 - [[concepts/mlb-parallel-scraper-workers]] - Concurrent navigation rate-limiting discovered during MLB scraper rewrite; bounded semaphore (sem=3) avoids detection
 - [[concepts/bet365-mlb-hash-nav-mg-fetching]] - Request context validation: `fetch()` via `Runtime.evaluate` returns 200-but-empty; hash-nav triggers SPA's own requests
 - [[concepts/bet365-istrusted-synthetic-click-detection]] - 8th defense layer: `isTrusted` check on DOM click events silently drops synthetic JS clicks; only CDP mouse events pass
-- [[concepts/bet365-ws-pre-game-coverage-gap]] - WS `OV_POPULAR_30_0` is global firehose, not per-game feeds; pre-game HTTP polling remains necessary
+- [[concepts/bet365-ws-pre-game-prop-streaming-limitation]] - WS `OV_POPULAR_30_0` is global firehose, not per-game feeds; pre-game HTTP polling remains necessary
 

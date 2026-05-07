@@ -103,8 +103,8 @@ Several issues were resolved during production deployment:
 - [[concepts/playwright-node-pipe-crash-vector]] - Playwright pipe crashes that motivated the raw CDP migration; WS-native continues using raw CDP for game pages
 - [[concepts/bet365-xcft-token-hmac-forgery]] - The token forgery that could eventually enable fully standalone WS clients without browser dependency
 - [[concepts/opticodds-sse-reconnect-state-loss]] - SSE staleness mismatch discovered during V3 deployment; REST reseed added alongside WS scraper
-- [[concepts/bet365-ws-pre-game-coverage-gap]] - WS `OV_POPULAR_30_0` is a global firehose, not per-game feeds; pre-game props require HTTP polling supplement
-- [[concepts/cdpsession-playwright-pipe-contention]] - CDPSession on orchestrator page blocks Playwright operations; discovery must use dedicated pages
+- [[concepts/bet365-ws-pre-game-prop-streaming-limitation]] - WS `OV_POPULAR_30_0` is a global firehose, not per-game feeds; pre-game props require HTTP polling supplement
+- [[concepts/bet365-cdpsession-pipe-contention]] - CDPSession on orchestrator page blocks Playwright operations; discovery must use dedicated pages
 
 ## Sources
 

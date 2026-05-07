@@ -84,8 +84,8 @@ A deployment finding on 2026-05-06 confirmed that SPA hash-based URLs (`#/AC/B16
 - [[concepts/bet365-racing-adapter-architecture]] - The adapter architecture shaped by these navigation constraints
 - [[concepts/browser-mediated-websocket-streaming]] - WS streaming adopted partly because HTTP access is navigation-dependent
 - [[concepts/bet365-in-browser-cdp-fetch-transport]] - The in-browser CDP fetch pattern discovered to bypass WS session binding validation
-- [[concepts/bet365-getsplashpods-discovery-routing]] - getsplashpods only fires from `#/HO/`; D/F segments must be derived dynamically; pullpodapi capture needed alongside contentapi
-- [[concepts/bet365-istrusted-click-anti-bot]] - isTrusted check on click events: `page.evaluate("el.click()")` silently dropped; CDP mouse events required
+- [[concepts/bet365-getsplashpods-home-page-constraint]] - getsplashpods only fires from `#/HO/`; D/F segments must be derived dynamically; pullpodapi capture needed alongside contentapi
+- [[concepts/bet365-istrusted-synthetic-click-detection]] - isTrusted check on click events: `page.evaluate("el.click()")` silently dropped; CDP mouse events required
 
 ## Sources
 
