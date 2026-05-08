@@ -11,8 +11,9 @@ sources:
   - "daily/lcash/2026-04-30.md"
   - "daily/lcash/2026-05-05.md"
   - "daily/lcash/2026-05-06.md"
+  - "daily/lcash/2026-05-08.md"
 created: 2026-04-21
-updated: 2026-05-06
+updated: 2026-05-08
 ---
 
 # MLB Parallel Scraper Workers
@@ -120,6 +121,7 @@ The user explicitly rejected the suggestion to port incremental wins back into t
 - [[concepts/bet365-shared-chrome-single-session]] - Shared Chrome on port 9223 is why multiple workers crash — both NBA and MLB scrapers compete for Chrome resources
 - [[connections/anti-scraping-driven-architecture]] - Concurrent navigation rate-limiting is a new defensive behavior: 15 simultaneous navigations → 50% empty responses; bounded semaphore (sem=3) avoids detection
 - [[concepts/bet365-ws-native-scraper-migration]] - The WS-native architecture that replaces all HTTP polling and CDP scraping; WSMLBOrchestrator deployed on 2026-05-06
+- [[concepts/bet365-mlb-wizard-first-regression-fix]] - The 26-G-ID walk was an architectural regression from v1's wizard; wizard-first yields 11x more props in 26x fewer requests
 
 ## Sources
 
@@ -131,3 +133,4 @@ The user explicitly rejected the suggestion to port incremental wins back into t
 - [[daily/lcash/2026-04-30.md]] - v3 capability ladder: 11/12 passed, 1 conditional; concurrency=3 validated at 11,018 odds / 0% drift / 704s run; diversion tab + partial-result shield (70% floor) reduced drift -50%→-3.3%; error recovery validated (3-strike dead tab, orphan cleanup, kill mid-setup); parity test 27% dupe rate from CO alt-line expansion; 3-strike scoped to zero-data scrapers only; skip games >6h away (Sessions 07:59, 08:46). MLB v3 deployed to mini PC: Playwright EPIPE from Node v24 + Windows pipe semantics; fixed by disabling diversion tab + replacing Playwright discovery with raw CDP; zombie Python on port 8803 blocked startup; `docs/BET365_SCRAPER_V3_LEARNINGS.md` created — 12-section guide (Session 10:32). Pitcher Outs O/U (G160297) and Pitcher Record Win (G160294) added — odds 2,208→6,706; Record Win unusable (no sharp); CO vs O/U pairing audit: FanDuel 1%, bet365 76%/8%(Bases), Coolbet 100% (Session 16:23)
 - [[daily/lcash/2026-05-06.md]] - **WS-native MLB scraper deployed**: `WSMLBOrchestrator` on port 9223 with 5,249 bet365 MLB markets streaming; MLB discovery fixed (direct URL navigation via `window.location.href` for SPA hash URLs, not CDP `Page.navigate`); parallel refresh reduced cycle time 24min→3-4min; `startup.py` page-passing bug fixed (must pass `orchestrator.page`, not `orchestrator`); `Target.activateTarget` wrong-port bug fixed; CO markets removed from `MLB_MG_NAME_MAP` (8 combo/accumulator markets with no OpticOdds equivalent) (Sessions 11:20, 11:40, 18:38)
 - [[daily/lcash/2026-05-05.md]] - **V3 MLB multi-URL cycle**: V3 initially only loaded I0 tab (2 markets/game); V2 cycled 26 MGs per game (I0 + 19 batter + 7 pitcher hash-nav URLs). After implementing multi-URL cycle in `MLBGameScraper` overriding `setup()`/`refresh()`, coverage jumped 2→1,120+ markets per game (~7,400 raw odds total across 15 games). `SETUP_CONCURRENCY` bumped 3→5, reducing startup from ~25 to ~15 min. **BB wizard vs partial endpoint auth**: `betbuilderpregamecontentapi` (NBA BB wizard) requires authenticated session; `matchbettingcontentapi/partial` (MLB) serves anonymous users — explains why MLB works without login but NBA doesn't. Stealth probe confirmed: `betbuilderpregamecontentapi/wizard` fires on I0 ("Bet Builder") tab click, returning 457 PA records per game (Sessions 16:54, 22:25)
+- [[daily/lcash/2026-05-08.md]] - **MLB wizard-first regression fix**: 26-G-ID walk was architectural regression from v1's single BB wizard fetch; wizard returns 838-865 PAs in 9.7s vs 76 PAs in 71.8s (11x more, 26x fewer requests); GID_PARALLELISM=4 triggered rate-limiting (10/26 returned bodies), GID_PARALLELISM=2 best G-ID config at 76 PAs; `_refresh_loop` was still using old walk after add_game refactored — extracted `_fetch_wizard_for_game()` shared helper; context-level init_script fingerprinting walk tabs — scoped to page-level; full production test: 5,313 markets, 25 +EV picks (Sessions 13:56, 14:29, 15:07, 15:38)

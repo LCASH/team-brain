@@ -4,8 +4,9 @@ aliases: [ws-pre-game-limitation, ov-popular-firehose, ws-http-hybrid, pre-game-
 tags: [value-betting, bet365, websocket, architecture, scraping, reverse-engineering]
 sources:
   - "daily/lcash/2026-05-07.md"
+  - "daily/lcash/2026-05-08.md"
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-08
 ---
 
 # bet365 WS Pre-Game Prop Streaming Limitation
@@ -93,7 +94,9 @@ This reframes the "pre-game limitation" documented in this article: it is NOT a 
 - [[concepts/v3-scanner-centralized-architecture]] - The V3 architecture where the hybrid HTTP+WS approach will be deployed
 - [[concepts/bet365-ws-subscription-injection-viability]] - Deep protocol probe confirming disjoint PA_ID spaces as root cause of 0 overlap; interceptor-on-SPA-WS works for injection; betslip HTTP validation
 - [[concepts/bet365-ws-pm-live-delta-confirmation]] - Horse race probe that confirmed PM deltas work for volatile markets, reframing the pre-game limitation as expected behavior rather than a protocol constraint
+- [[concepts/bet365-pre-game-http-only-confirmation]] - Definitive May 8 empirical proof: 4 HTTP repricings vs 0 WS deltas on the same PAs in an 11-minute test; concludes the month-long investigation
 
 ## Sources
 
 - [[daily/lcash/2026-05-07.md]] - 275 frames captured, 0 PA_ID overlap with 404 wizard PAs; OV_POPULAR_30_0 is global firehose not per-game; per-fixture injection impossible (April 15 reconfirmed); testing methodology error: new blank tab vs existing tab with subscriptions; 132 frames/60s on live tab but for rendered page's markets only; pre-game lines mostly static; PA_ID ranges date-specific (1219xxx live May 6, 1224xxx pre-game May 7, 1235xxx live May 7); agreed hybrid: 10-15s HTTP refresh + WS supplement; yesterday's 703/120s was in-play trading, not generalizable (Sessions 18:40, 19:20). **Disjoint PA_ID spaces confirmed as root cause**: HTTP wizard 1224xxx (static catalog) vs WS 1238-1240xxx (live trading) — fundamentally different populations; per-G-ID page.goto fires HTTP partial + activates WS subscription in live trading space; betslip validates via HTTP re-fetch at "Place Bet" click, not WS; BS prefix for betslip-specific WS topics (Session 19:51). **Horse race live delta confirmation** (Session 23:32): live horse race FI=194196581 captured real PM U-deltas (DO=, OD=, OH=); MLB pre-game betslip probe returned EMPTY for all 7 PAs; EMPTY reinterpreted as "buffer dormant" not "refused"; confirms pre-game limitation is expected behavior (static lines = no deltas), not a protocol constraint; v4 architecture revised for near-tipoff/live markets
+- [[daily/lcash/2026-05-08.md]] - **Definitive HTTP-only confirmation**: Stage 9 empirical test — 11-min HTTP-vs-WS comparison found 4 real prop repricings via HTTP, 0 WS pushes despite 1354 active PM subscriptions for those exact PAs. Super observer probe: 1464 PAs across 3 FIs, 12 min, 0 WS deltas, 84 PA removals. Control validation: 2/10 PAs from live fixtures returned real L_U_DELTA within 30s confirming mechanism works. 29,788 PA-minutes of TEX@NYY subscription with zero events — accepted as pre-game equilibrium. Concludes month-long investigation (Sessions 00:36, 07:48, 09:04)
