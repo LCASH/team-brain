@@ -5,8 +5,9 @@ tags: [superwin, tabtouch, kambi, scraping, reverse-engineering, value-betting, 
 sources:
   - "daily/lcash/2026-04-26.md"
   - "daily/lcash/2026-04-27.md"
+  - "daily/lcash/2026-05-12.md"
 created: 2026-04-26
-updated: 2026-04-27
+updated: 2026-05-12
 ---
 
 # TabTouch Kambi White-Label Sports Platform
@@ -90,6 +91,21 @@ On 2026-04-27, the Kambi scraper was built and deployed as book_id **909** (TabT
 - **`participantId`** confirmed stable across all markets for the same player — useful for cross-market player matching
 - **WebSocket upgrade deferred**: REST polling at 60s is sufficient for initial deployment; Socket.IO consumer for sub-second updates is Phase 2
 
+### WS Firehose Live-Only Delivery Constraint (2026-05-12)
+
+On 2026-05-12, lcash deployed the TabTouch Kambi scraper to Eve (VPS) and performed a live WS smoke test. The full Socket.IO protocol was decoded:
+
+- **Subscription topic**: `v2018.rwwawa.en.ev.json` — a global firehose channel carrying all events
+- **Message types**: `mt=6` = betOffer ADD (new market), `mt=11` = outcome odds update
+- **Odds encoding**: integer × 1000 (e.g., `1850` = `1.85` decimal) — confirmed from prior REST findings
+- **No authentication required** for Socket.IO connection
+
+The critical finding: **the TabTouch WS firehose only carries live in-play events, not pre-game.** During a 3-minute smoke test at midday AU (= early morning US with no NBA live), zero NBA events appeared on the WS. When MLB games went in-play later, 24 fresh markets out of 758 total updated via WS — confirming the stream activates only for live markets.
+
+This means pre-game NBA player props — the primary value betting target — require either (1) Kambi REST polling (the existing 60s cadence) or (2) a per-event Socket.IO subscribe pattern that hasn't been discovered yet. The REST path remains the production architecture for pre-game data; WS is supplementary for in-play only.
+
+A planned enhancement — Kambi REST `listView` seeded by Playwright cookie warmup — would provide pre-game player props, but requires ~2-4 hours of implementation effort and is best done when NBA games are actually live for testing.
+
 ### AdsPower Session Management Gotcha
 
 During the Kambi discovery session, AdsPower browser session management exhibited finicky behavior: profile WebSocket endpoints went stale when the browser restarted, and the browser opened to a cached page (Twitter from a prior login pipeline session) instead of the requested URL. This is an operational nuance of using AdsPower for network traffic capture — the profile state persists across sessions and may need manual navigation to the target page before traffic analysis.
@@ -106,3 +122,4 @@ During the Kambi discovery session, AdsPower browser session management exhibite
 
 - [[daily/lcash/2026-04-26.md]] - AdsPower browser traffic capture revealed TabTouch sports = Kambi white-label; API at `ap.offering-api.kambicdn.com` requires no auth; 426 betOffers including 242 player props from single NBA game; full player names and stable participantIds; Kambi push via Socket.IO (763 messages/120s); two independent streaming systems (MQTT racing + Socket.IO sports); betOffer types: type 2 = over/under, type 1 = moneyline; criterion.id maps to stat categories; AdsPower session management gotcha (Session 22:10)
 - [[daily/lcash/2026-04-27.md]] - Production deployment: book_id 909, REST polling at 60s in direct_scraper_worker.py; MLB confirmed 182 betOffers / 11 prop types with proper O/U lines; 1 outcome per betOffer (vs TAB's 2); integer encoding odds/1000, line/1000; 106 unique NBA criterion labels; operator code `rwwawa` = TabTouch/RWWA; participantId stable across markets confirmed; WebSocket deferred to Phase 2 (Session 07:38)
+- [[daily/lcash/2026-05-12.md]] - Eve VPS deployment: Socket.IO protocol fully decoded (`v2018.rwwawa.en.ev.json` subscribe topic, mt=6 = betOffer ADD, mt=11 = outcome odds update); **WS firehose confirmed live-only** — zero pre-game NBA events in 3-min smoke test; 24 fresh of 758 MLB markets once games went in-play; pre-game NBA player props require REST polling or per-event subscribe pattern (~2-4h implementation deferred); coverage dashboard missing book IDs 909/910/960/961 fixed (Session 23:53)

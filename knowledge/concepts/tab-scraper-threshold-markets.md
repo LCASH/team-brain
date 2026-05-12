@@ -4,8 +4,9 @@ aliases: [tab-scraper, tab-908, tab-threshold-markets, tab-competition-endpoint,
 tags: [value-betting, scraping, soft-book, tab, architecture, interpolation]
 sources:
   - "daily/lcash/2026-04-24.md"
+  - "daily/lcash/2026-05-12.md"
 created: 2026-04-24
-updated: 2026-04-24
+updated: 2026-05-12
 ---
 
 # TAB.com.au Scraper and Threshold Market Integration
@@ -75,6 +76,10 @@ The integration exposed a systematic debugging order for "0 picks from new soft 
 
 The time filter (step 3) was the non-obvious culprit — TAB data was present, theories included 908, but the 3h window silently discarded everything.
 
+### TAB WebSocket Confirmed Racing-Only (2026-05-12)
+
+On 2026-05-12, during deployment of native AU scrapers to Eve (VPS), lcash confirmed that TAB's `push.beta.tab.com.au` engine.io endpoint is exclusively for **live racing tote data**, not sports player props. The endpoint serves the racing tote streaming system — the same architecture documented in [[concepts/tabtouch-domain-migration-mqtt]] for the TabTouch racing platform. Sports player prop data on TAB is only available via the REST competition endpoint (`/sports/Basketball/competitions/NBA?jurisdiction=NSW`), confirming that the `curl_cffi`-based REST scraper remains the correct and only architecture for TAB sports integration. No WebSocket upgrade path exists for pre-game sports props on TAB.
+
 ## Related Concepts
 
 - [[concepts/alt-line-mismatch-poisoned-picks]] - Poisson interpolation for count props was developed for the alt-line mismatch bug and reused here for TAB threshold markets
@@ -87,3 +92,4 @@ The time filter (step 3) was the non-obvious culprit — TAB data was present, t
 ## Sources
 
 - [[daily/lcash/2026-04-24.md]] - TAB API hierarchy mapped: competition endpoint returns all matches with all markets; two prop formats: O/U (betOptionSpectrumId 837/838) and threshold (3515/3520); 1.6MB response, 7 prop stat types; name abbreviation ("A Edwards") resolved via threshold market full names (15/15 match); props only available close to tipoff (Session 10:56). TAB assigned book_id 908, `curl_cffi` needed for Akamai; deployed to mini PC with 206 markets flowing; 12 local +EV found (Session 11:29). Dashboard `SOFT_IDS` array separate from `models.py` `SOFT_BOOK_IDS`; TAB returns 0 when games started/finished (Session 12:12). Threshold markets extracted as fallback; logit produced 300%+ phantom EVs → Poisson fix; 32 picks at +8.3% avg EV; Steals/Blocks/Threes highest-value threshold props (Session 12:49). `max_line_gap=4` added to all 7 theories; theory cache 5-min TTL; TAB may be too sharp for frequent +EV (Session 13:22). 11 TAB picks tracked with +2.6% to +68.7% EV; `max_hours_before_start` was silently filtering threshold markets (Session 14:09)
+- [[daily/lcash/2026-05-12.md]] - TAB `push.beta.tab.com.au` engine.io endpoint confirmed as racing tote only — no sports player props via WebSocket; REST scraper via `curl_cffi` is the only architecture for TAB sports integration (Session 23:53)
