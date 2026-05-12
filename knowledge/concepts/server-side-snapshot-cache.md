@@ -4,8 +4,9 @@ aliases: [snapshot-cache, pre-serialized-response, odds-snapshot-cache]
 tags: [performance, architecture, caching, serialization, value-betting]
 sources:
   - "daily/lcash/2026-04-13.md"
+  - "daily/lcash/2026-05-09.md"
 created: 2026-04-13
-updated: 2026-04-13
+updated: 2026-05-09
 ---
 
 # Server-Side Snapshot Cache
@@ -53,6 +54,8 @@ The pattern applies to any API that serializes large, slowly-changing state on e
 - [[connections/push-latency-trail-quality-cascade]] - How the 55s push cycle cascaded into trail data quality issues
 - [[concepts/trail-data-temporal-resolution]] - The trail quality caveat that this fix resolves going forward
 - [[concepts/value-betting-operational-assessment]] - The operational assessment that identified performance as a secondary concern (before this fix elevated it)
+- [[concepts/vps-proxy-byte-cache-optimization]] - The same pattern independently rediscovered at the VPS proxy layer on 2026-05-09: caching serialized bytes reduced `/api/v1/odds` from 21s to 97ms (200× improvement)
+- [[connections/response-serialization-caching-pipeline]] - How this pattern and the VPS byte cache solve the same serialization problem at different pipeline layers
 
 ## Sources
 

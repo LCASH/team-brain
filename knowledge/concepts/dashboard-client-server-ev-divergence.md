@@ -13,8 +13,10 @@ sources:
   - "daily/lcash/2026-04-29.md"
   - "daily/lcash/2026-04-30.md"
   - "daily/lcash/2026-05-03.md"
+  - "daily/lcash/2026-05-11.md"
+  - "daily/lcash/2026-05-12.md"
 created: 2026-04-15
-updated: 2026-05-03
+updated: 2026-05-12
 ---
 
 # Dashboard Client-Server EV Divergence
@@ -159,6 +161,22 @@ The fix added `_dashboard_update_loop()` — a background task querying Supabase
 
 Additional issues in the same session: sport filtering was broken (NBA picks appeared in MLB queries), and EV values in `data.json` showed 990%+ artifacts from the wrong output key format. A Games tab feature was also deployed with market grouping by game and cross-bookmaker prop comparison, but showed empty due to an upstream mini PC aggregator failure.
 
+### Vig Sanity Gate Cross-Line Market Dropout (2026-05-11)
+
+On 2026-05-11, the V3 dashboard showed 0 MLB picks despite the server-side `/v1/picks?sport=mlb` endpoint returning 9,522 picks (7,459 above 5% EV). The root cause was a vig sanity gate (commits `0de77c5`, `632627a`, `a560ef9`) in `computeEVForTheory()` that rejected markets where the soft book's line differs from the sharp consensus line. Since `market_key` does not include `line`, Bet365 at L=0.5 (threshold format) and sharps at L=1.5 (main line) coexist in the same key — the vig gate sees incompatible lines and drops the market. All 10,491 MLB markets were dropped.
+
+A secondary finding: 5 of 7 MLB theories use `candidate-blend` mode (server-side only), meaning even without the vig gate bug, the dashboard could only evaluate 2-3 theories client-side. The `candidate-blend` theories produce picks on the server's `/v1/picks` endpoint but are never evaluated by the dashboard's `computeEVForTheory()` JavaScript.
+
+This is the eleventh documented manifestation of client-server EV divergence — and architecturally the most complete: the server has 9,522 picks while the client renders exactly 0. A 4-segment health pill and context-aware empty-state messages were deployed to surface this class of failure faster in the future. See [[concepts/dashboard-vig-gate-cross-line-dropout]] for the full analysis.
+
+### Game Start Cross-Day Collision Root Cause (2026-05-12)
+
+On 2026-05-12, the 0 MLB picks issue from 2026-05-11 was definitively resolved. The vig sanity gate (documented above as the 11th manifestation) was a contributing factor but NOT the primary cause. The dominant root cause was stale `game_start` dates: `market_key = (player, prop_type, side)` has no date component, so the same player's prop across different game days maps to the same key. Odds updated every 5s but `game_start` stayed stuck on May 8 (the first-ever observation date). `isGameLive(m)` filtered 93% of markets (9,275 of 10,000) as "live" before the vig gate could evaluate them.
+
+Two bugs in `server/state.py`: (1) lines 285-290 never refreshed `game_start` once it was a full datetime, (2) `cleanup_stale_markets()` existed but was never called from v3's `startup.py`. Fixed in commit `ae61bfd` with chronological game_start refresh + periodic cleanup. After fix: eligible picks went from 4 → 93-97 per theory.
+
+This is the 12th documented manifestation of client-server EV divergence — and the first where the root cause was upstream data staleness rather than computation or rendering logic.
+
 ## Sources
 
 - [[daily/lcash/2026-04-15.md]] - Pinnacle theory showing AU soft books instead of prediction markets; `loadTheories()` dropping 6 fields via JS destructuring; client-side EV ≠ server-side EV divergence; fix deployed; zero Pinnacle picks correct (games outside 3h window); deploy killed all workers requiring manual restart; NRL scheduled task re-enable needed (Session 22:03/16:20+)
@@ -171,3 +189,5 @@ Additional issues in the same session: sport filtering was broken (NBA picks app
 - [[daily/lcash/2026-04-29.md]] - **Critical `computeTrueProb()` bug**: Pinnacle true odds showed 1.28 (47.7% EV) vs manually computed 1.749 (8.2% EV) — 39.5pp discrepancy; Aggressive showed +7.6% vs correct -0.9%; chart vs table use divergent code paths; undermines ALL displayed EV values (Sessions 13:29, 14:18)
 - [[daily/lcash/2026-04-30.md]] - **Cross-sport team name mapping bug**: MLB teams rendered as NBA names (MIL→"Bucks" not "Brewers", PHI→"76ers" not "Phillies", HOU→"Rockets" not "Astros"); root cause: `resolveTeam` had only NBA team map + fuzzy `startsWith`/`endsWith` matching; fix: separate `MLB_TEAM_MAP`, sport-aware `resolveTeam` with explicit `sport` parameter. Remote CCR agents run in Anthropic cloud with zero local access — only VPS endpoints/Supabase (Session 22:05)
 - [[daily/lcash/2026-05-03.md]] - `data.json` 25 days stale (last updated April 8); `_dashboard_update_loop()` added but initial query failed silently on non-existent `theory_name` column; output key format mismatch caused 990%+ EV artifacts; sport filtering broken (NBA in MLB queries); Games tab deployed but empty from aggregator failure (Sessions 12:12, 16:47, 17:35)
+- [[daily/lcash/2026-05-11.md]] - **Vig sanity gate cross-line dropout**: 0 MLB picks on dashboard despite 9,522 server-side picks; vig gate commits (0de77c5, 632627a, a560ef9) reject markets where Bet365 L=0.5 vs sharps L=1.5 in same market_key (line not in key); 5/7 MLB theories are candidate-blend (server-only, invisible to computeEVForTheory); health pill + context-aware empty states deployed (Sessions 08:49, 09:42)
+- [[daily/lcash/2026-05-12.md]] - **Game start cross-day collision**: Vig gate was contributing factor but not primary cause; dominant root cause was stale game_start dates — market_key has no date component so same player's prop across game days maps to same key; game_start stuck on May 8; isGameLive() filtered 93% of markets (9,275/10,000); two bugs in server/state.py: lines 285-290 never refreshed game_start + cleanup_stale_markets() never called from startup.py; fixed in commit ae61bfd; eligible picks 4 → 93-97 per theory; 12th documented manifestation of client-server EV divergence
