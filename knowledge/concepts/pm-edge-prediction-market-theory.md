@@ -1,0 +1,80 @@
+---
+title: "PM Edge Prediction Market Theory"
+aliases: [pm-edge, prediction-market-edge-detection, pm-vs-sharp-consensus, kalshi-tail-premium, pm-strict-theory]
+tags: [value-betting, prediction-markets, theory, kalshi, polymarket, methodology]
+sources:
+  - "daily/lcash/2026-05-19.md"
+created: 2026-05-19
+updated: 2026-05-19
+---
+
+# PM Edge Prediction Market Theory
+
+On 2026-05-19, lcash designed and deployed "PM Edge" theories that compare prediction market (PM) odds as the soft side against the scanner's sharp devigged consensus as truth. This is the inverse of the existing "Crypto Edge" theories (see [[concepts/crypto-edge-non-pinnacle-strategy]]), which use PMs as the truth anchor. The thesis: prediction markets systematically misprice tail events (longshot player props) relative to the sharp sportsbook consensus, creating exploitable +EV opportunities especially on obscure HR (Home Run) markets via Kalshi.
+
+## Key Points
+
+- **Inverse of Crypto Edge**: PM Edge uses PM books (Kalshi, Polymarket) as soft targets devigged against sharp consensus (Pinnacle 1.0, Novig 0.8, FD 0.5, DK 0.5, PB 0.4) — Crypto Edge does the opposite
+- **First live cycle produced 45 picks** — 43 Kalshi, 1 Polymarket, 1 Polymarket USA; heavy concentration on MLB HR Over 0.5 with EVs 25-60%
+- **Kalshi tail pricing premium**: Kalshi pays a longshot premium on obscure HR markets (e.g., Tristan Peters HR O0.5 at Kalshi 15.57 vs sharp consensus ~9.2) — the signal is real but execution risk is high (thin orderbooks)
+- **Phased rollout**: Phase 1 = Strict theories (exact line match, min_ev 3%, min_sharps 2); Phase 2 = Loose variants (+-0.5 line gap, 2% EV) if Strict CLV is positive; Phase 3 = per-PM-book split after 7+ days
+- **Concentration risk**: 43/45 picks are Kalshi HR O0.5 — correlated within a slate (weather/park effects), so ~30 picks/night is really 10-15 effective independent samples
+- **Backtest will overstate real EV**: picks record top-of-book `opening_odds`, but actual Kalshi depth on obscure HR markets is likely ~$50 — execution at stake gets worse price
+
+## Details
+
+### Theory Design
+
+Two theories were inserted into Supabase's `nba_optimization_runs` table:
+
+- **NBA PM Edge — Strict**: Targets NBA prediction market mispricing against sharp consensus
+- **MLB PM Edge — Strict**: Targets MLB prediction market mispricing — the primary edge surface
+
+Both use multiplicative devig with `min_sharps=2` (devigging with only 1 book is too noisy for auto-tracking). Sharp weights mirror the topdown `SHARP_BOOKS` composition: Pinnacle 1.0, Novig 0.8, FanDuel 0.5, DraftKings 0.5, PropBuilder 0.4. Soft books are all prediction market platforms: Kalshi (950), Polymarket (970), Polymarket USA (971), DraftKings Predictions (971), Underdog (980), Crypto.com (981/982).
+
+The key architectural difference from standard theories: PM Edge compares PM odds against the *devigged consensus* (blended multi-book true probability), which is stricter than comparing against any single sharp book. This produces fewer but more defensible picks.
+
+### The Kalshi Tail Premium
+
+Dry-eval on 0 NBA games (thin May off-season slate) and 14 MLB games produced 31-33 picks, all concentrated on Kalshi HR Over 0.5 for low-profile players with EVs ranging 25-60%. The mechanism: Kalshi's prediction market participants systematically overprice the excitement/narrative value of home runs for obscure players. Sharp sportsbooks (Pinnacle, DraftKings) price these events closer to their actuarial probability. The gap creates a consistent longshot premium where Kalshi pays 15.57 on an event the consensus prices at ~9.2.
+
+This pattern is consistent with the finding in [[concepts/pinnacle-prediction-market-roi-breakdown]] that MLB Home Runs is the single best edge at +46.4% ROI — Kalshi's pricing inefficiency on HR markets appears structural rather than transient.
+
+### Execution and Backtesting Risks
+
+Three risks were identified that could make the edge smaller than backtesting suggests:
+
+1. **Thin orderbook liquidity**: Kalshi's obscure HR markets likely have ~$50 of available depth. The pick records `opening_odds` at top-of-book, but placing $100 would move the price significantly. Phase 2 plans an orderbook snapshot side-table (Kalshi `/markets/{ticker}/orderbook`, Polymarket CLOB API) to capture depth at pick-fire time.
+
+2. **PM trail density unknown**: If Kalshi picks get <=2 trail entries before game_start, CLV computes against entry odds (circular/useless). Trail density must be spot-checked after the first overnight cycle.
+
+3. **PM market survivorship**: Investigation in the same day's Session 12:44 found a dramatic survivorship cliff — 70% of PM markets delist within 90 minutes of detection. Only 16.7% remain listed at game time. This is a market characteristic, not a data bug, but it means many picks may not be actionable at execution time.
+
+### Price Validation Strategy
+
+Three approaches were discussed for verifying PM prices are actually fillable:
+
+1. **Orderbook snapshots at pick time** (Phase 2) — automated capture of top-of-book depth when picks fire
+2. **Trade replay from on-chain/API data** (Phase 3) — Polymarket positions are on-chain; Kalshi has API
+3. **Manual spot-check** (Phase 1) — check 5-10 picks' actual Kalshi depth in the first 24-48 hours
+
+### Surprise Moneyline Picks
+
+The first live cycle included 2 unexpected Moneyline picks alongside the 43 HR/Bases/Hits props. This is worth investigating — PM moneyline pricing may have different characteristics than prop pricing, and the presence of moneyline picks suggests the theory is finding edge beyond just the HR tail premium.
+
+### Route Persistence Issue
+
+The `/topdown-pm` dashboard route for viewing PM Edge picks was lost during a redeploy because it wasn't committed to git — only added via SCP. This follows the deployment drift pattern documented in [[concepts/configuration-drift-manual-launch]]: any file not in version control will eventually be lost.
+
+## Related Concepts
+
+- [[concepts/crypto-edge-non-pinnacle-strategy]] - The inverse strategy: uses PMs as truth anchor against non-Pinnacle sharps. PM Edge uses PMs as soft targets against sharp consensus
+- [[concepts/pinnacle-prediction-market-pipeline]] - The original Pinnacle-vs-PM pipeline; PM Edge extends this by using multi-book consensus instead of Pinnacle alone as the sharp reference
+- [[concepts/pinnacle-prediction-market-roi-breakdown]] - MLB HR +46.4% ROI from Pinnacle pipeline; PM Edge targets the same Kalshi tail premium from a different angle
+- [[concepts/polymarket-liquidity-enrichment]] - Polymarket CLOB API provides liquidity metadata; PM Edge needs similar depth data from Kalshi to validate fillability
+- [[concepts/value-betting-theory-system]] - PM Edge theories created via Supabase rows following the code-free theory pattern; `cache_bust_ts` column bump needed to force tracker cache refresh
+- [[connections/liquidity-efficiency-inverse-in-betting]] - PM Edge's concentration in thin/obscure markets is a specific instance of the liquidity-efficiency inverse
+
+## Sources
+
+- [[daily/lcash/2026-05-19.md]] - PM Edge theory design: PM odds as soft vs sharp consensus; 4 theories designed (only Strict pair shipped Phase 1); sharp weights Pin 1.0/Nov 0.8/FD 0.5/DK 0.5/PB 0.4; multiplicative devig, min_sharps=2; dry-eval 31-33 MLB picks (all Kalshi HR O0.5, EVs 25-60%); first live cycle 45 picks (43 Kalshi); Tristan Peters 15.57 vs sharp ~9.2; concentration risk in correlated HR markets; backtest will overstate EV due to thin orderbook depth; `cache_bust_ts` bump for tracker refresh; Phase 2: Loose theories + orderbook snapshots; Phase 3: per-PM-book split (Sessions 11:38, 12:13). Survivorship cliff: 70% PM markets delist within 90min, only 16.7% remain at game_start; Novig 12.4% >5pp divergence from consensus; empty soft trail rows mostly <15% (Session 12:44). `/topdown-pm` route lost on redeploy — not committed to git (Session 12:13)

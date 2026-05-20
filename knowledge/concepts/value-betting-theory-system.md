@@ -6,8 +6,9 @@ sources:
   - "daily/lcash/2026-04-13.md"
   - "daily/lcash/2026-04-14.md"
   - "daily/lcash/2026-04-15.md"
+  - "daily/lcash/2026-05-19.md"
 created: 2026-04-13
-updated: 2026-04-15
+updated: 2026-05-19
 ---
 
 # Value Betting Theory System
@@ -52,6 +53,30 @@ The audit resulted in deactivating 5 of 6 theories: 3 Goals theories (calibratio
 
 This experience highlights a gap in the theory system: no monitoring or audit mechanism exists to flag theory proliferation, detect structurally broken methods, or validate that theories are calibrated against actual outcomes.
 
+### Theory Math Knob Inventory (2026-05-19)
+
+On 2026-05-19, lcash audited the complete inventory of theory-driven math knobs during a theory-aware CLV design session. The audit revealed **7 knobs + 2 code paths** that each theory controls, making any "theory-aware" feature (like per-theory CLV) significantly more complex than initially assumed:
+
+| Knob | Stored in pick? | Notes |
+|------|----------------|-------|
+| `weights` (per sharp book) | Yes — baked into `sharp_snapshot` as `weight` per book | Already available for replay |
+| `devig_method` (multiplicative/additive/power) | **No** | Would need snapshot column |
+| `max_line_gap` | **No** | Affects which pairs are even attempted |
+| `line_gap_penalty` (weight decay factor) | **No** | Baked into `interp_prob` in sharp_snapshot |
+| `enable_partial` | **No** | Controls single-book devig fallback |
+| `exclude_sharp_books` | **No** | Negative filter on available sharps |
+| One-sided consensus (NRL/AFL only) | **No** | Completely separate code path for 1-sided markets |
+
+The practical impact: weights from `sharp_snapshot` are already truth-at-trigger (theory weights + gap_decay baked in per book), but the `devig_method` and partial/one-sided flags are NOT stored per pick. Replaying theory-specific EV from historical data requires either (a) snapshotting these 4 missing knobs at trigger time or (b) looking up the theory definition at resolve time (accepting that theory definitions can drift between trigger and resolve from renames, edits, or retirements).
+
+Theory-aware CLV was deferred on 2026-05-19: drift only matters for retired theories (rare case), and the `closing_source`-filtered CLV columns provide the important lever for trustworthiness without theory-specific math.
+
+### Theory Evaluation is Sequential (2026-05-19)
+
+The tracker evaluates markets against theories **sequentially** — each theory is evaluated in order against the full market set. At the current scale (~418 active theories, ~785 NBA markets in off-season), this completes in 1-4 seconds per cycle. Parallel theory evaluation (W5 in the archived plan) is deferred until theory count grows past ~1,000, which is when sequential evaluation would start adding noticeable cycle latency.
+
+The `/v1/picks` endpoint uses the same sequential pattern with a 60-second cache and thread-pool offload. A cold call measured at 17.661 seconds (warm: 0.009s) suggests the bottleneck may be hidden I/O (Supabase fetch inside compute?) rather than sequential evaluation — parallelizing wouldn't help if the bottleneck is I/O.
+
 ### theory_evs Column Extension
 
 A `theory_evs JSONB` column was planned for `nba_tracked_picks` to store each theory's computed EV at trigger time. This addresses a limitation of the `triggered_by` field, which records only the first alphabetical theory that fires for a given pick ID. See [[concepts/pick-dedup-multi-theory-limitation]] for the full design.
@@ -65,9 +90,12 @@ A `theory_evs JSONB` column was planned for `nba_tracked_picks` to store each th
 - [[concepts/pick-dedup-multi-theory-limitation]] - Pick dedup architecture that limits multi-theory A/B testing
 - [[concepts/afl-circular-devig-trap]] - How theories configured with non-sharp books produce circular devig
 - [[concepts/dashboard-client-server-ev-divergence]] - Client-side EV computation diverges from server-side when theory fields are missing
+- [[concepts/engine-consensus-fallback-ev-contamination]] - Consensus fallback gate produced 52.3% identical-EV clusters; theory-specific math bypassed by consensus path
+- [[concepts/pm-edge-prediction-market-theory]] - PM Edge theories use PM books as soft targets against sharp consensus; demonstrates code-free theory creation for new edge strategies
 
 ## Sources
 
 - [[daily/lcash/2026-04-13.md]] - Confirmed theories require NO backend code changes; configurable via Supabase rows with sharp weights, devig method, EV threshold, prop filters, soft book filters; cached every 5 min; only new devig algorithms or filter types need code (Sessions 08:50, 09:32). Dashboard `loadTheories()` bug dropping `soft_books` and other fields confirmed in session context.
 - [[daily/lcash/2026-04-14.md]] - Theory audit: 6 active AFL theories found (not 2); 4 used `one_sided_consensus` (Over-only); 5 deactivated; net cast theory inserted; theory_evs JSONB column planned for multi-theory EV persistence (Sessions 14:31, 16:02)
 - [[daily/lcash/2026-04-15.md]] - `loadTheories()` bug fix deployed: all 6 missing fields now mapped; Pinnacle pill verified showing Kalshi/Polymarket instead of AU soft books; client-side vs server-side EV divergence identified (Session 22:03/16:20+)
+- [[daily/lcash/2026-05-19.md]] - Theory math knob inventory: 7 knobs + 2 code paths (one-sided consensus for NRL/AFL); weights baked into sharp_snapshot but devig_method/max_line_gap/enable_partial/one_sided NOT stored per pick; theory-aware CLV deferred (drift only matters for retired theories); sequential theory eval fine at 418 theories, parallel deferred to W5; `/v1/picks` cold call 17.661s suggests hidden I/O not sequential bottleneck; PM Edge theories created via Supabase rows demonstrating code-free theory creation for new edge strategies (Sessions 09:29, 10:02, 10:34, 11:38)

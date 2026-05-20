@@ -4,8 +4,9 @@ aliases: [coverage-dashboard, coverage-first, coverage-html, per-book-footprint,
 tags: [value-betting, dashboard, architecture, coverage, observability, bet365]
 sources:
   - "daily/lcash/2026-05-12.md"
+  - "daily/lcash/2026-05-13.md"
 created: 2026-05-12
-updated: 2026-05-12
+updated: 2026-05-13
 ---
 
 # Coverage-First Dashboard Orientation
@@ -58,11 +59,19 @@ The architectural direction to address this is per-(soft book x market) asynchro
 
 A related operational finding: restarting the v3 scanner clears all AdsPower Chrome sessions. The login flow for each sport blocks for approximately 5 minutes, meaning a full restart with 3 sports configured incurs ~15 minutes of downtime. This high restart cost reinforces the importance of the hot-reload and graceful-restart patterns over full process restarts for configuration changes.
 
+### Per-Book Latency Panel (2026-05-13)
+
+On 2026-05-13, a per-book latency panel was added to `coverage.html` as Phase 3 of the temporal honesty overhaul (see [[concepts/per-soft-book-temporal-lineage]]). The panel shows per-soft-book refresh latency metrics, enabling operators to see each book's natural data cadence at a glance — Bet365 refreshing every 10-15 seconds from wizard cycles, OpticOdds SSE books updating on odds changes, and REST-polled books (TAB, Betr, TabTouch) at their polling intervals.
+
+This addresses the `_direct_scraper_push_loop` captured_at masking issue identified in the same session: the push loop for direct scrapers (not just the Bet365 push loop) stamps `time.time()` on every cycle, making stale underlying data look fresh. The per-book latency panel exposes the actual data freshness per book, making this class of masking immediately visible.
+
 ## Related Concepts
 
 - [[concepts/v3-dashboard-ev-computation-architecture]] - The V3 dashboard's EV computation pipeline that the coverage dashboard complements; edge-first views depend on coverage-first data completeness
 - [[concepts/odds-staleness-pipeline-diagnosis]] - The `captured_at` overwrite bug in `_bet365_push_loop` is a new instance of the staleness pipeline issues diagnosed earlier; the 300s gate being a no-op means stale odds pass through unchecked
+- [[concepts/per-soft-book-temporal-lineage]] - The per-book temporal lineage architecture that the latency panel visualizes; Phase 3 of the 4-phase overhaul
 
 ## Sources
 
+- [[daily/lcash/2026-05-13.md]] - Per-book latency panel added as Phase 3 of temporal honesty overhaul; `_direct_scraper_push_loop` also has captured_at masking (stamps time.time() on stale REST data); Bet365 push pipeline regression: Bet365 missing from `/v1/odds` despite scraper producing 432 PAs/cycle (Sessions 09:32, 10:02, 14:41)
 - [[daily/lcash/2026-05-12.md]] - Dashboard pivot to coverage-first with KPI strip, per-book footprint bars, presets, matrix heatmap; `coverage.html` served from Eve via generic static-file route; bet365 widest at 59.7%, Pinnacle ~2%; VPS ~195 markets vs Eve ~10k; 15/26 NBA bet365 wizard props collected, 13 missing from EV_NAME_MAP (one-liner each); `_bet365_push_loop` overwrites `captured_at` every 5s making 300s staleness gate no-op; restarting v3 clears AdsPower sessions, ~5 min login per sport (Sessions 09:42, 11:03)

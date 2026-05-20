@@ -7,8 +7,10 @@ sources:
   - "daily/lcash/2026-04-25.md"
   - "daily/lcash/2026-04-26.md"
   - "daily/lcash/2026-04-27.md"
+  - "daily/lcash/2026-05-19.md"
+  - "daily/lcash/2026-05-20.md"
 created: 2026-04-23
-updated: 2026-04-27
+updated: 2026-05-20
 ---
 
 # SuperWin Edge Pick Backtesting System
@@ -116,10 +118,13 @@ DDL operations (CREATE TABLE, ALTER TABLE) cannot be executed via PostgREST or t
 - [[concepts/betting-window-roi-methodology]] - The ROI methodology pattern (closing odds, dedup, window filtering) adapted for racing with detection-time vs BSP framing
 - [[concepts/trail-stats-precomputed-columns]] - A parallel pre-computation architecture: VB scanner computes trail stats at resolution time, SuperWin computes settlement stats at result time
 - [[concepts/superwin-racing-profitability-dimensions]] - The 16-dimension empirical analysis of backtesting data revealing harness dominance, liquidity goldmine, and mode-specific edges
+- [[concepts/betr-blueboost-racing-edge]] - BlueBoost edge deployed using `boost_field` criteria (not lookup table); expected 30-80 picks/day for comparison with SuperPicks
+- [[concepts/superwin-mult-place-market-edge]] - Fifth edge mode (THE MULT): first place-market edge; TAB place × 1.1 vs Betfair place_lay; settlement bug fix swung ROI -62.6% → +48.45%
 
 ## Sources
 
 - [[daily/lcash/2026-04-23.md]] - VPS disk crisis (100% → 77% via 40GB volume + symlinks); designed edge_picks schema with mode-based backtesting, UNIQUE dedup, RLS pattern; 12 backtesting flaws ranked by severity; insert-only over upsert for first-detection preservation; racing filters (time-to-jump, max odds $30, spread <20%); CLV against BSP as gold standard; settlement resolver 90s loop (Sessions 12:05, 12:38). Peak EV tracking: peak_bookie_odds, peak_ev_pct, peak_detected_at columns; racing cron stops ~1:00 PM UTC; sports/golf bypass racing filters (Session 13:13)
 - [[daily/lcash/2026-04-25.md]] - BSP only available for 21% of settled picks (AU greyhound/harness markets lack BSP); LTP available for 88%; resolver cascades BSP→LTP; backfilled 53 picks, coverage 21%→88%; 9 picks zero Betfair trading data. Early results: TAB +13.7% ROI, TabTouch -100%, Greyhounds -29.3%, Thoroughbreds +21.9%; 84% of picks detected <10min before jump — too late for practical betting. Cron toggle gap: toggling DB enabled flag doesn't hot-load adapters; cron should restart service not just flip flags. mode_slug always NULL — no edges have boost_mode configured yet (Session 13:07)
 - [[daily/lcash/2026-04-26.md]] - TAB Cash Multiplier added as new edge (`racing-cash-multi`): flat `odds * 1.1` boost via `boost_multiplier` field in criteria (vs lookup table for SuperPicks). SuperPicks profitability deep-dive: **+70.0u, +38.6% ROI** across 181 settled picks; harness +157% vs thoroughbred +15.6% vs greyhound ~0%; sub-12% EV loses money (-18.7% ROI), 12%+ EV = +79.2% ROI on 106 picks; 4-5 detection scans sweet spot (+101% ROI); $5K+ Betfair liquidity worst (-40.5% ROI), $200-$1K profitable zone. `liquidity` column switched from `total_matched` (market-level) to `selection_matched` (per-runner Betfair `trd` field). Warmup guard deployed: 2+ bookies with 50+ races before persisting picks to journal. 9am cron changed from DB flag toggle to full systemctl restart. Sandown venue fuzzy matched to Sandown Park clearing 44h stuck pick (Sessions 13:19, 19:32)
+- [[daily/lcash/2026-05-19.md]] - BlueBoost edge deployed as `racing-blueboost` using `boost_field` criteria on betr adapter's `odds.tote_win`; betr onboarded with 419 races (DaysToRace=0,1 look-ahead); scanner gate widened 2-20min→0.5-180min so all races within 3h flow as server EDGEs; Hitters filter empty because old gate too narrow for quiet markets; server owns truth, browser is presentation only (Sessions 14:18, 15:20, 17:24)
 - [[daily/lcash/2026-04-27.md]] - 2-minute-to-jump gate removed entirely — was cutting off most valuable near-jump data; EV tracking blindspot below 10% (6-9% band = edge formation phase); Option 2 proposed: memory-based pre-threshold trail; trail depth fields (lay_sz, bk_sz, sel_m) added; 3% EV-change threshold = 3.1 entries/pick avg, 43KB/day; sel_m null for stream-based updates; 502 picks/5 days; today -36.8u, all-time still +144u; 5 sub-2min picks detected with 100% depth coverage after gate removal (Sessions 09:58, 15:55, 20:26). Time gate validation: 1-2min MTJ was ONLY profitable window on day 6 (+129% ROI, 35% WR); cumulative 769 picks +68.8u; worst day: 341 picks -112u from 3x volume (gate removal + evening greyhounds); trail detection confirmed to 0.3min (18s) before jump with 100% depth coverage (Session 22:52)

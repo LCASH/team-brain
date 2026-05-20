@@ -7,8 +7,10 @@ sources:
   - "daily/lcash/2026-04-29.md"
   - "daily/lcash/2026-04-30.md"
   - "daily/lcash/2026-05-01.md"
+  - "daily/lcash/2026-05-19.md"
+  - "daily/lcash/2026-05-20.md"
 created: 2026-04-27
-updated: 2026-05-01
+updated: 2026-05-20
 ---
 
 # SuperWin Racing Profitability Dimensions
@@ -114,6 +116,33 @@ The 341-pick volume itself was a consequence of removing the 2-minute time gate 
 
 The best-performing filter on this difficult day was **Cash Multiplier + liquidity >= $750 + MTJ < 2 minutes**, producing 38% win rate and +93% ROI — a different optimal combo than the initial analysis suggested (which emphasized scans >= 2 and liq >= $500).
 
+### Scanner Gate Widening and BlueBoost Edge (2026-05-19)
+
+On 2026-05-19, two operational changes expanded the scanner's coverage surface:
+
+**Scanner gate widened 2-20min → 0.5-180min**: The server scanner gate — which controls how far from post time the scanner evaluates races — was expanded from a 2-20 minute window to 0.5-180 minutes. This was driven by the "Hitters" filter showing zero picks because all detected EV>5% opportunities were 3-12 hours from post time, outside the original gate. The `MODE` items in the TAKEOVER frontend's `CommandFeed` were identified as an architectural wart: they represented client-side EV recomputation for races outside the server's gate, duplicating server logic in the browser. With the wider gate, the server owns truth for all races within 3 hours, and the browser is presentation only.
+
+**BlueBoost edge deployed**: A new edge type `racing-blueboost` was deployed for betr's BlueBoost promotional pricing. BlueBoost uses a `boost_field` criteria reading `odds.tote_win` — architecturally simpler than SuperPicks' lookup-table approach since the boosted price arrives per-runner in betr's API response. The pricing shape mirrors SuperPicks: favourites get ~3% boosts, longshots get 20-25%. See [[concepts/superwin-blueboost-betr-racing-edge]] for the full analysis.
+
+The BlueBoost addition brings the total edge modes to four: SuperPicks, Cash Multiplier, Normal odds, and BlueBoost. Performance comparison pending ~500 settled BlueBoost picks (~1 week of operation).
+
+### THE MULT Place-Market Edge and NZ Harness Analysis (2026-05-20)
+
+On 2026-05-20, a fifth edge mode — `racing-mult` ("THE MULT") — was deployed for TAB **place** odds with a 10% boost. This is the first place-market edge; all prior edges targeted win markets. A critical settlement bug was discovered and fixed: the resolver checked `status == "WINNER"` instead of top-3 finish, swinging ROI from -62.6% to +48.45% (3W→15W out of 29 settled). Thoroughbred place dominates at +55% ROI. See [[concepts/superwin-mult-place-market-edge]] for the full analysis.
+
+NZ vs AU harness was analyzed in depth in the same session:
+
+| Region | ROI | Picks | Win Rate | Assessment |
+|--------|-----|-------|----------|------------|
+| AU harness | +39% | 919 | 21% | System's #1 edge — country meetings are soft |
+| NZ harness (all) | +0.5% | 81 | 33% | Barely breakeven — higher WR but shorter prices |
+| NZ harness (ex Cambridge) | +23% | 59 | ~35% | Profitable once Cambridge excluded |
+| NZ Cambridge | -60% | 22 | ~25% | Sharp-watched venue, actively harmful |
+
+Cambridge (NZ's most-watched harness venue) is a -60% ROI trap that single-handedly kills the NZ aggregate. AU harness thrives on country meetings (Bathurst, Bendigo, Wagga) where bookies are soft; NZ's major tracks are sharp-watched.
+
+A critical infrastructure finding from the same session: **Betfair Exchange has zero AU harness markets**. What appears as harness coverage on betfair.com.au is the separate Sportsbook (fixed-odds) product, not Exchange markets with lay prices. This means harness edges can only be evaluated against other bookie prices, not Exchange fair value.
+
 ### Current Sample Limitations
 
 769 picks across 6 days provides a larger dataset but the Day 6 results underscore the danger of premature theory formation. The initial 487-pick analysis identified clear signals that appeared robust (harness dominance, $8-12 odds, 5-10min MTJ) — but a single bad day contradicted three of the ten codified theories. The harness dominance and $750-$1K goldmine remain the most durable signals, but even harness showed its first losing day. An estimated 2,000+ picks (~2-3 more weeks) are needed before strategy-level decisions should be made, and theory validation should focus on signals that survive bad days rather than optimize for good days.
@@ -125,6 +154,8 @@ The best-performing filter on this difficult day was **Cash Multiplier + liquidi
 - [[concepts/scanner-warmup-false-ev-guard]] - The warmup guard prevents false picks from contaminating this analysis; confirmed working during multiple service restarts on 2026-04-27
 - [[concepts/sharp-clv-theory-ranking]] - CLV as primary metric for theory ranking; positive CLV correlates strongly with profitability (54% ROI vs 13% when CLV<=0)
 - [[concepts/trail-change-detection-architecture]] - Trail data underpins the detection scan analysis; the 3% EV-change threshold means scan persistence measures genuine sustained edge, not just repeated observation of the same cached value
+- [[concepts/superwin-blueboost-betr-racing-edge]] - Fourth edge mode (BlueBoost) from betr's promotional pricing; boost_field architecture vs lookup-table; performance pending ~500 settled picks
+- [[concepts/superwin-mult-place-market-edge]] - Fifth edge mode (THE MULT) — first place-market edge; TAB place × 1.1 vs Betfair place_lay; settlement bug fixed, +48.45% ROI
 
 ## Sources
 
@@ -132,3 +163,5 @@ The best-performing filter on this difficult day was **Cash Multiplier + liquidi
 - [[daily/lcash/2026-04-29.md]] - Expanded to 8D matrix with trail-derived dimensions (EV trajectory, volatility, lay depth, speed to peak); 60% of picks lack trail data (45% pre-deploy Apr 23-26, 15% single-scan); 3% EV threshold NOT the bottleneck (only 19 picks blocked); single-scan picks confirmed noise at -29% ROI / -43u; **Harness + $12-20 + liq$500-1.5K + mtj 2-10min + sc2+** = 485% ROI on 10 picks; CLV is portfolio filter not pick predictor (76% of profit from CLV≥15%); CLV×Liquidity interaction: liq $500-1.5K + CLV 0-10% = +128% ROI; ev_flat + vol_med consistently profitable (Session 12:02)
 - [[daily/lcash/2026-04-30.md]] - 993-pick reassessment: efficiency cliff at $1.5K now **negative** (-2.1% ROI on 388 picks above threshold) — not just low edge, actively losing money. Normal mode underperforming (-5% ROI, -11u) while Cash Multiplier (+20% ROI) and SuperPicks (+20.4% ROI) carry portfolio. Best single day: +91.9u, +45% ROI on 215 picks (45 winners). 8D combos have insufficient sample (10-39 picks each) — need 50+. Next reassessment milestone: 2,000 picks (est. next week). Broader theories (T1-T4 at 150-320 picks) are reliable signal; 8D combos are hypothesis-stage (Sessions 12:30, 15:51)
 - [[daily/lcash/2026-05-01.md]] - **min_ev threshold lowered 10%→5%** for all three racing edges (Cash Multiplier, SuperPicks, Normal). Triggered by missed pick: Better Off Alone (Wagga R1, $1.85 TAB, BSP $1.80) — Cash Multiplier would have given 8.5% EV but was filtered by 10% threshold. Short-priced favourites ($1-3) can have meaningful EV below 10% at ~50% win rates. Day performance: **+102.6u, +33.3% ROI on 308 settled picks**; all-time projected ~+246u. $5-8 dead zone broke today (+71% ROI vs -14% all-time); CLV>0 strongest signal yet (+79% vs -24%). Harness scanner running correctly even with zero picks (no edge on Tamworth races). 23 venues without Betfair are all future races with markets not yet published (Session 09:05)
+- [[daily/lcash/2026-05-19.md]] - Scanner gate widened 2-20min → 0.5-180min (Hitters filter showed 0 picks because EV>5% opportunities were 3-12h out); MODE items in CommandFeed identified as architectural wart — server now owns truth for all races within 3h; BlueBoost edge deployed as `racing-blueboost` with `boost_field` criteria on `odds.tote_win`; OddsComparison column layout standardized (dropped BF Back/LTP/PL Back, added live BSP); client-side MODE computation to be removed now that server gate covers wider window (Sessions 14:18, 15:20, 17:24)
+- [[daily/lcash/2026-05-20.md]] - THE MULT place-market edge deployed (TAB place × 1.1); settlement bug (WINNER → top-3) swung ROI -62.6% → +48.45%; thoroughbred place +55%; NZ harness: Cambridge -60% trap, AU +39% on 919 picks, Betfair Exchange has zero AU harness markets (Sessions 09:00, 14:47)

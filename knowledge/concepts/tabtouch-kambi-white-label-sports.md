@@ -6,8 +6,9 @@ sources:
   - "daily/lcash/2026-04-26.md"
   - "daily/lcash/2026-04-27.md"
   - "daily/lcash/2026-05-12.md"
+  - "daily/lcash/2026-05-13.md"
 created: 2026-04-26
-updated: 2026-05-12
+updated: 2026-05-13
 ---
 
 # TabTouch Kambi White-Label Sports Platform
@@ -106,6 +107,15 @@ This means pre-game NBA player props — the primary value betting target — re
 
 A planned enhancement — Kambi REST `listView` seeded by Playwright cookie warmup — would provide pre-game player props, but requires ~2-4 hours of implementation effort and is best done when NBA games are actually live for testing.
 
+### Eve (VPS) REST Scraper Deployment (2026-05-13)
+
+On 2026-05-13, the TabTouch Kambi REST scraper was deployed to Eve (VPS) and verified production-ready. Key deployment findings:
+
+- **AP host required, not EU**: The scraper must use `ap.offering-api.kambicdn.com` (Asia-Pacific CDN), not the EU endpoint which returns 429 rate-limit errors. The `client_id=200&channel_id=3` parameters identify the AU region.
+- **No proxy needed**: Direct connections from Eve work without proxies — Webshare proxies returned 407 (IP allowlist mode) but this is irrelevant since direct access succeeds.
+- **~500 player-prop odds per game**: Production verification showed full prop coverage per game, verified 100% fresh on VPS.
+- **Empty-state staleness bug**: Identical to the Betr scraper bug (see [[concepts/betr-bluebet-api-integration]]): `if not self._games: return` in refresh preserved stale odds as ghost markets when games ended. Fixed by clearing odds on genuine empty discovery while preserving the game list on transient failures.
+
 ### AdsPower Session Management Gotcha
 
 During the Kambi discovery session, AdsPower browser session management exhibited finicky behavior: profile WebSocket endpoints went stale when the browser restarted, and the browser opened to a cached page (Twitter from a prior login pipeline session) instead of the requested URL. This is an operational nuance of using AdsPower for network traffic capture — the profile state persists across sessions and may need manual navigation to the target page before traffic analysis.
@@ -122,4 +132,5 @@ During the Kambi discovery session, AdsPower browser session management exhibite
 
 - [[daily/lcash/2026-04-26.md]] - AdsPower browser traffic capture revealed TabTouch sports = Kambi white-label; API at `ap.offering-api.kambicdn.com` requires no auth; 426 betOffers including 242 player props from single NBA game; full player names and stable participantIds; Kambi push via Socket.IO (763 messages/120s); two independent streaming systems (MQTT racing + Socket.IO sports); betOffer types: type 2 = over/under, type 1 = moneyline; criterion.id maps to stat categories; AdsPower session management gotcha (Session 22:10)
 - [[daily/lcash/2026-04-27.md]] - Production deployment: book_id 909, REST polling at 60s in direct_scraper_worker.py; MLB confirmed 182 betOffers / 11 prop types with proper O/U lines; 1 outcome per betOffer (vs TAB's 2); integer encoding odds/1000, line/1000; 106 unique NBA criterion labels; operator code `rwwawa` = TabTouch/RWWA; participantId stable across markets confirmed; WebSocket deferred to Phase 2 (Session 07:38)
+- [[daily/lcash/2026-05-13.md]] - Eve REST scraper deployed: AP host required (EU 429s); no proxy needed; ~500 props/game; 100% fresh on VPS; empty-state staleness bug identical to Betr; `client_id=200&channel_id=3` for AU region (Session 14:41)
 - [[daily/lcash/2026-05-12.md]] - Eve VPS deployment: Socket.IO protocol fully decoded (`v2018.rwwawa.en.ev.json` subscribe topic, mt=6 = betOffer ADD, mt=11 = outcome odds update); **WS firehose confirmed live-only** — zero pre-game NBA events in 3-min smoke test; 24 fresh of 758 MLB markets once games went in-play; pre-game NBA player props require REST polling or per-event subscribe pattern (~2-4h implementation deferred); coverage dashboard missing book IDs 909/910/960/961 fixed (Session 23:53)
