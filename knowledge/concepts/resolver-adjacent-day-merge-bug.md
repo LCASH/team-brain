@@ -4,8 +4,9 @@ aliases: [adjacent-day-merge, dates-to-fetch-ordering, first-wins-merge-bug, res
 tags: [value-betting, resolver, bug, data-quality, mlb, methodology]
 sources:
   - "daily/lcash/2026-05-20.md"
+  - "daily/lcash/2026-05-21.md"
 created: 2026-05-20
-updated: 2026-05-20
+updated: 2026-05-21
 ---
 
 # Resolver Adjacent-Day Stat Merge Bug
@@ -84,7 +85,10 @@ Any Brier score, ROI sweep, or calibration run executed against MLB data before 
 - [[concepts/tracker-pipeline-7-phase-audit]] - M8 ground-truth audit was added to the audit suite after this bug; Phases 1-7 all passed despite the resolver producing wrong results — internal consistency ≠ correctness
 - [[concepts/opticodds-partial-stats-silent-misresolution]] - A third class of resolver error: correct code, incomplete upstream data. This bug is: wrong code, complete data.
 - [[concepts/journal-manual-pick-pipeline-integration]] - Jay's imported journal picks provided the ground truth that exposed this bug
+- [[concepts/resolver-merged-fallback-cross-game-contamination]] - A companion resolver contamination bug discovered on 2026-05-21: the merged-dict fallback and an unreachable fixture gate created a second path for wrong-game stats
+- [[connections/resolver-multi-layer-grading-contamination]] - How the dates_to_fetch ordering, merged-dict fallback, and UTC scan window bugs compound at different pipeline stages
 
 ## Sources
 
 - [[daily/lcash/2026-05-20.md]] - Salvador Perez H=2 (May 17) stamped on May 18 picks (should be H=0); Realmuto H=1 (May 17) stamped on May 18 (should be H=0); 133/809 (16.4%) wrong actual_stat, 99/809 (12.2%) flipped W/L; initial fix (reorder dates_to_fetch) incomplete — per-pick ET-date derivation is real fix; mass re-resolve MLB 98.9%, NBA 96.1%; M8 audit 0.00% disagreement on 500-pick sample; bypass_stale_gate kwarg added; calibration data contaminated — hard stop on calibrate_weights.py (Sessions 12:38, 13:34, 19:27, 20:03)
+- [[daily/lcash/2026-05-21.md]] - Two companion bugs: (1) fixture gate unreachable — SELECT clause omitted `fixture_name`, `pick.get("fixture_name")` always None, gate never fired (commit f7ae928). (2) OO fallback for MLB — UTC-bucketed dict contained yesterday's same-team stats, converting "no data" into "wrong data" (commit 15ae6bf killed OO fallback for MLB). Belt-and-suspenders: fixture gate + per-date only + no OO fallback. 45/91 fixture-name mismatches on May 20 identified (Sessions 09:55, 14:47)

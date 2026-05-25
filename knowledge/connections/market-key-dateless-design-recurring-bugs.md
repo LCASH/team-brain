@@ -8,13 +8,14 @@ sources:
   - "daily/lcash/2026-05-12.md"
   - "daily/lcash/2026-05-15.md"
   - "daily/lcash/2026-05-20.md"
+  - "daily/lcash/2026-05-22.md"
 created: 2026-05-12
-updated: 2026-05-20
+updated: 2026-05-22
 ---
 
 # Market Key Dateless Design Recurring Bugs
 
-The `market_key` in the value betting scanner uses `(player, prop_type, side)` with no `line` and no `game_date` component. This dateless, lineless design has caused at least SIX independent bugs:
+The `market_key` in the value betting scanner uses `(player, prop_type, side)` with no `line` and no `game_date` component. This dateless, lineless design has caused at least SEVEN independent bugs:
 
 1. **matched-market-line-null-bug** (2026-04-26): `MatchedMarket.to_dict()` had no top-level `line` field — line only existed per-book in BookOdds. Broke ALL pick creation because `_generate_pick_id()` requires line.
 
@@ -28,6 +29,8 @@ The `market_key` in the value betting scanner uses `(player, prop_type, side)` w
 
 6. **polymarket-gamma-stale-market-attribution** (2026-05-20): Polymarket leaves resolved markets flagged `active=true` for days after game completion. Settled markets (bid=$0.000/ask=$0.001) from past games merge into future games via the dateless market_key — the same player's prop from 3 days ago overwrites today's odds. First instance caused by an external data source emitting stale cross-day data (prior five were all internal). Fixed with `POLYMARKET_GAMMA_MAX_PAST_GAME_AGE_HOURS=3` + extreme-price filter.
 
+7. **nba-milestone-prop-collision-bug** (2026-05-22): NBA bet365 wizard parser emits both milestone props ("20+ Points" at line 19.5) and standard O/U as `prop_type="Points" side="Over"` — the identical bug fixed for MLB on May 15 with `_CO` suffix, but the NBA game scraper parser at `bet365_game.py` lines 229-241 was never updated. Additionally, 5 alt lines (17.5, 24.5, 30.5, 37.5, 49.5) per player all land on the same market_key with last-write-wins. SGA Points soft trail oscillated between line=23.5 and line=37.5 as the diagnostic signal.
+
 The pattern: the key was designed for cross-book comparison (grouping the same logical market regardless of line differences), but any field stored at the market level that varies across games, lines, or market structures becomes a silent staleness/collision risk.
 
 ## Connects
@@ -38,3 +41,4 @@ The pattern: the key was designed for cross-book comparison (grouping the same l
 - [[concepts/bet365-same-book-alt-line-collision]]
 - [[concepts/co-ou-parser-conflation-phantom-picks]]
 - [[concepts/polymarket-gamma-stale-market-attribution]]
+- [[concepts/nba-milestone-prop-collision-bug]]

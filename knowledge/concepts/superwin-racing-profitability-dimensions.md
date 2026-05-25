@@ -9,8 +9,9 @@ sources:
   - "daily/lcash/2026-05-01.md"
   - "daily/lcash/2026-05-19.md"
   - "daily/lcash/2026-05-20.md"
+  - "daily/lcash/2026-05-25.md"
 created: 2026-04-27
-updated: 2026-05-20
+updated: 2026-05-25
 ---
 
 # SuperWin Racing Profitability Dimensions
@@ -143,6 +144,30 @@ Cambridge (NZ's most-watched harness venue) is a -60% ROI trap that single-hande
 
 A critical infrastructure finding from the same session: **Betfair Exchange has zero AU harness markets**. What appears as harness coverage on betfair.com.au is the separate Sportsbook (fixed-odds) product, not Exchange markets with lay prices. This means harness edges can only be evaluated against other bookie prices, not Exchange fair value.
 
+### 10K-Pick Hyperparameter Sweep (2026-05-25)
+
+On 2026-05-25, lcash ran a comprehensive hyperparameter sweep across 10,000+ settled picks covering all dimensions: race_type, edge, bookie, mtj_band, ev_band, liq_band, CLV, overlay, same_race_count, detection_count, bf_drift, and trail_len. Six new candidate theories (A-F) were identified that override or extend the original 10-theory document.
+
+Key findings from the 10K sweep:
+
+| Signal | Finding | Picks | Assessment |
+|--------|---------|-------|------------|
+| **CLV ≥ 15%** | +37.9% ROI | 2,595 | Cleanest signal but post-hoc only (not available at detection) |
+| **Bookie-vs-BSP overlay < -5%** | -15.6% ROI | 2,081 | Real-time usable hard filter at place-time |
+| **same_race_count ≤ 2** | +13.8% ROI | — | Sole picks profitable; 4-6 runners in same race → ~0% (correlated-bets curse) |
+| **detection_count 4-6** | +18.2% ROI | — | One-shots are noise, long-burns are stale; wait ~10s before firing |
+| **Odds $5-8** | Strongest single dimension | — | Not in prior theory doc; drives best 2D/3D combos |
+| **Greyhound $5-8** | +30.9% ROI | 1,137 | Contradicts prior "greyhound is weak" finding — profitable at the right odds band |
+| **Liquidity U-shape** | <$500 and $5000+ both beat mid-bands | — | $1.5-5K is the trough, not the floor |
+| **bf_drift down + Harness** | +46.7% ROI | — | But bf_drift down + Greyhound = -7.8% (opposite signal per race type) |
+| **Shorter trails** | Quick-fire (1 entry) outperforms | — | Slow-burn revisits lose edge |
+
+The "CANNON" configuration — `racing-superpicks + tabtouch + odds $5-8` — produced +24.9% ROI on 1,599 picks with a lower confidence interval of +11.6%.
+
+The overlay signal is particularly actionable because it is **available at bet-placement time**: if the boosted bookie price is more than 5% below the current BSP, the boost hasn't created enough edge to overcome market efficiency. This could be wired as a hard filter in the scanner.
+
+Two deliverable docs were created: validated baseline (`edge-pick-theories.md`) and playbook with candidates + backtest methodology (`edge-pick-playbook-2026-05-25.md`).
+
 ### Current Sample Limitations
 
 769 picks across 6 days provides a larger dataset but the Day 6 results underscore the danger of premature theory formation. The initial 487-pick analysis identified clear signals that appeared robust (harness dominance, $8-12 odds, 5-10min MTJ) — but a single bad day contradicted three of the ten codified theories. The harness dominance and $750-$1K goldmine remain the most durable signals, but even harness showed its first losing day. An estimated 2,000+ picks (~2-3 more weeks) are needed before strategy-level decisions should be made, and theory validation should focus on signals that survive bad days rather than optimize for good days.
@@ -156,6 +181,7 @@ A critical infrastructure finding from the same session: **Betfair Exchange has 
 - [[concepts/trail-change-detection-architecture]] - Trail data underpins the detection scan analysis; the 3% EV-change threshold means scan persistence measures genuine sustained edge, not just repeated observation of the same cached value
 - [[concepts/superwin-blueboost-betr-racing-edge]] - Fourth edge mode (BlueBoost) from betr's promotional pricing; boost_field architecture vs lookup-table; performance pending ~500 settled picks
 - [[concepts/superwin-mult-place-market-edge]] - Fifth edge mode (THE MULT) — first place-market edge; TAB place × 1.1 vs Betfair place_lay; settlement bug fixed, +48.45% ROI
+- [[concepts/superwin-execution-gap-price-band-discipline]] - Scanner +15% ROI but actual bets -14% ROI from price-band non-compliance; the 10K sweep identifies WHERE edge exists, the execution gap shows it's not being FOLLOWED
 
 ## Sources
 
@@ -165,3 +191,4 @@ A critical infrastructure finding from the same session: **Betfair Exchange has 
 - [[daily/lcash/2026-05-01.md]] - **min_ev threshold lowered 10%→5%** for all three racing edges (Cash Multiplier, SuperPicks, Normal). Triggered by missed pick: Better Off Alone (Wagga R1, $1.85 TAB, BSP $1.80) — Cash Multiplier would have given 8.5% EV but was filtered by 10% threshold. Short-priced favourites ($1-3) can have meaningful EV below 10% at ~50% win rates. Day performance: **+102.6u, +33.3% ROI on 308 settled picks**; all-time projected ~+246u. $5-8 dead zone broke today (+71% ROI vs -14% all-time); CLV>0 strongest signal yet (+79% vs -24%). Harness scanner running correctly even with zero picks (no edge on Tamworth races). 23 venues without Betfair are all future races with markets not yet published (Session 09:05)
 - [[daily/lcash/2026-05-19.md]] - Scanner gate widened 2-20min → 0.5-180min (Hitters filter showed 0 picks because EV>5% opportunities were 3-12h out); MODE items in CommandFeed identified as architectural wart — server now owns truth for all races within 3h; BlueBoost edge deployed as `racing-blueboost` with `boost_field` criteria on `odds.tote_win`; OddsComparison column layout standardized (dropped BF Back/LTP/PL Back, added live BSP); client-side MODE computation to be removed now that server gate covers wider window (Sessions 14:18, 15:20, 17:24)
 - [[daily/lcash/2026-05-20.md]] - THE MULT place-market edge deployed (TAB place × 1.1); settlement bug (WINNER → top-3) swung ROI -62.6% → +48.45%; thoroughbred place +55%; NZ harness: Cambridge -60% trap, AU +39% on 919 picks, Betfair Exchange has zero AU harness markets (Sessions 09:00, 14:47)
+- [[daily/lcash/2026-05-25.md]] - Full 10K-pick hyperparameter sweep: CLV≥15% = +37.9% (2595 picks), overlay <-5% = -15.6% (2081, real-time filter), same_race≤2 = +13.8%, detection_count 4-6 = +18.2%, odds $5-8 strongest single dimension, greyhound $5-8 +30.9% (contradicts prior), bf_drift_down+harness +46.7%, CANNON config +24.9%/1599 picks; 6 candidate theories A-F; edge-pick-playbook-2026-05-25.md created (Session 10:16)

@@ -4,8 +4,9 @@ aliases: [the-mult, racing-mult, place-market-edge, tab-place-boost, place-settl
 tags: [superwin, racing, edge-detection, place-market, tab, settlement]
 sources:
   - "daily/lcash/2026-05-20.md"
+  - "daily/lcash/2026-05-22.md"
 created: 2026-05-20
-updated: 2026-05-20
+updated: 2026-05-22
 ---
 
 # SuperWin THE MULT Place-Market Edge
@@ -17,8 +18,8 @@ On 2026-05-20, lcash added `racing-mult` ("THE MULT") as a new SuperWin racing e
 - **THE MULT**: 10% boost on TAB place odds; EV = `(tab.place × 1.1) / bf.place_lay - 1`; TAB-only, min_ev 5%, min_liq $200
 - Implemented via a single `place_market` boolean flag in `scanner.py` — swaps bookie price to `.place`, Betfair price to `.place_lay`, liquidity to `.place_total_matched`; all existing logic (MTJ gate, confidence scorer, persistence, EV trail) applies unchanged
 - **Critical settlement bug**: Resolver checked `status == "WINNER"` (win) instead of top-3 finish (place) — ROI swung from **-62.6% to +48.45%** after fix (3W→15W out of 29 settled)
-- CLV disabled for place picks since BSP/LTP are win-market-only and would give misleading values
-- Top-3 place heuristic is correct for 8+ runner fields but smaller fields pay only 2 places (5–7 runners) or none (<5) — future improvement: store Betfair `place_num_winners` at detection time
+- CLV now uses **`place_bsp`** (fallback `place_ltp`) — Betfair paired PLACE markets provide place-specific BSP; greyhound/harness usually lack paired PLACE markets (LTP fallback)
+- **Field-size-aware thresholds deployed (2026-05-22)**: 8+ active runners → 3 places, 5-7 → 2 places, ≤4 → VOID; historical audit: only 1/53 mis-resolved (Warwick Farm R3, -3.19u correction)
 - No new DB column needed — market is implicit via `edge_slug='racing-mult'` for filtering
 - Committed as `875f4ff` (edge config) and `57a3600` (settlement fix)
 
@@ -52,7 +53,13 @@ The top-3 heuristic is correct for standard fields (8+ runners) but Australian r
 | 5-7 runners | 1st, 2nd | 2 |
 | <5 runners | Win only | 0 (no place market) |
 
-The current resolver uses a blanket top-3 check, which overpays for 5-7 runner fields (grading 3rd place as a win when the actual place market only pays 2 places). A future improvement would store Betfair's `place_num_winners` field at detection time for accurate settlement.
+On 2026-05-22, the resolver was updated to implement field-size-aware thresholds: 8+ active runners → 3 places, 5-7 runners → 2 places, ≤4 runners → VOID (no place market), scratched → SCRATCHED. This matches TAB/Betfair place-market rules. A historical audit confirmed only 1 of 53 settled racing-mult picks was actually mis-resolved (Warwick Farm R3: 7 runners, position=3 incorrectly marked WIN), with a -3.19u net portfolio adjustment.
+
+### place_bsp Capture and CLV (2026-05-22)
+
+`place_bsp` was added to the resolver for racing-mult CLV computation. Betfair's paired PLACE markets provide place-specific BSP/LTP data. The resolver now uses `place_bsp` (fallback `place_ltp`) instead of leaving CLV null. End-to-end validation was confirmed via Hastings R3 (NZ thoroughbred) — first live race to show `place_bsp` populating correctly (e.g., Ashoka: bsp=$1.66, place_bsp=$1.33). Key coverage limitation: greyhound and harness races usually lack paired Betfair PLACE markets. `place_bsp` is always < `bsp` (placing easier than winning) — a useful data quality sanity check.
+
+A stuck-pick alert was deployed (≥3 races stuck >60min past jump, rate-limited 30min) to catch missing settlements going forward.
 
 ### Performance Breakdown
 
@@ -77,3 +84,4 @@ A concurrent analysis of NZ vs AU harness revealed Cambridge (NZ's most-watched 
 ## Sources
 
 - [[daily/lcash/2026-05-20.md]] - THE MULT edge added: 10% TAB place boost, `place_market` boolean flag, min_ev 5%, min_liq $200; settlement bug: `status == "WINNER"` → top-3 finish check swung ROI -62.6% → +48.45% (3W→15W/29); CLV disabled for place (BSP/LTP win-only); thoroughbred place +55% ROI; committed 875f4ff + 57a3600 (Sessions 09:00, 14:47). NZ harness: Cambridge -60% ROI trap; AU harness +39% ROI on 919 picks vs NZ +0.5% on 81 (Session 14:47)
+- [[daily/lcash/2026-05-22.md]] - Field-size-aware place thresholds: 8+→3 places, 5-7→2, ≤4→VOID; historical audit 1/53 mis-resolved (Warwick Farm R3 -3.19u); place_bsp capture via Betfair PLACE markets; CLV now uses place_bsp (fallback place_ltp); Hastings R3 NZ end-to-end validation; greyhound/harness lack paired PLACE markets; stuck-pick alert deployed (Sessions 09:27, 12:42)
