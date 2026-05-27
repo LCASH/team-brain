@@ -4,8 +4,9 @@ aliases: [nba-milestone-collision, nba-co-suffix-needed, nba-milestone-vs-ou, po
 tags: [value-betting, bet365, nba, data-quality, bug, parser]
 sources:
   - "daily/lcash/2026-05-22.md"
+  - "daily/lcash/2026-05-27.md"
 created: 2026-05-22
-updated: 2026-05-22
+updated: 2026-05-27
 ---
 
 # NBA Milestone Prop Collision Bug
@@ -49,6 +50,11 @@ Bug 1 is the higher priority because milestones have structurally different odds
 - [[connections/market-key-dateless-design-recurring-bugs]] - The NBA milestone collision is a seventh manifestation of the lineless, dateless market_key design causing collisions
 - [[concepts/push-loop-diff-cache-phantom-freshness]] - The diff cache where alt-line flapping (Bug 1 in the diff cache article) is the same collision at the cache layer
 
+### Expanded Diagnosis: Main-Tag Accumulation (2026-05-27)
+
+On 2026-05-27, lcash deepened the diagnosis, discovering that Bug 2 (alt-line overwrite within O/U) is more severe than initially understood due to two interacting sub-bugs: (A) `_tag_main_lines()` tags the median-index line per refresh, but the line set shifts between refreshes (bet365 emits 5-9 alt lines, not consistently 5), causing different lines to become median each cycle; (B) `state.py:393` prevents `is_main` demotion from True to False, so once any line was EVER the median, it retains `is_main=True` permanently. After 5-10 refresh cycles, every alt line has accumulated `is_main=True`, making main-line selection via `_pick_main` effectively random (tiebreaks by `captured_at`). Points is the worst-affected prop because bet365 publishes the widest alt-line spread (e.g., Hartenstein 2.5-12.5). See [[concepts/bet365-points-alt-line-main-tag-accumulation]] for the full two-bug interaction analysis.
+
 ## Sources
 
 - [[daily/lcash/2026-05-22.md]] - SGA Points soft trail oscillating between line=23.5 and line=37.5; traced to bet365_game.py lines 229-241 (milestone) and 186-198 (O/U) both emitting prop_type="Points" side="Over"; MLB fix (_CO suffix) never applied to NBA game scraper parser; 5 alt lines (17.5, 24.5, 30.5, 37.5, 49.5) all landing on same market_key; option #2 (CO suffix split) recommended to mirror MLB fix (Session 09:57)
+- [[daily/lcash/2026-05-27.md]] - Expanded diagnosis: bet365 emits 5-9 alt lines (not 5); _tag_main_lines() median oscillation + state.py:393 demotion guard = every alt accumulates is_main=True after 5-10 cycles; _pick_main tiebreak by captured_at = random; both bugs must be fixed together (Session 10:55)

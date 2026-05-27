@@ -4,8 +4,9 @@ aliases: [neds-api, entain-platform, neds-scraper-recon, ladbrokes-au-shared-pla
 tags: [value-betting, sportsbook, scraper, reverse-engineering, entain, recon]
 sources:
   - "daily/lcash/2026-05-18.md"
+  - "daily/lcash/2026-05-26.md"
 created: 2026-05-18
-updated: 2026-05-18
+updated: 2026-05-26
 ---
 
 # Neds Entain API Reconnaissance
@@ -57,6 +58,27 @@ Five open questions from the reconnaissance need resolution before building the 
 - [[concepts/tabtouch-kambi-white-label-sports]] - Another white-label platform (Kambi) with a public API; Entain's API is session-gated unlike Kambi's open access
 - [[concepts/adspower-wayland-gui-session-recovery]] - AdsPower on Eve needed Wayland env var harvesting before Chrome could launch for Neds recon
 
+### Full Racing Adapter Built (2026-05-26)
+
+On 2026-05-26, the Neds racing adapter was fully built and deployed to the SuperWin scanner. The initial WS investigation incorrectly concluded WS was in-play only (subscribing to the wrong channel: `racing/livemarketupdated`). The user challenged this based on domain observation, and re-investigation found the correct pre-race channel: `pricing/prices` with per-market subscriptions — 137 frames in 90 seconds (~1.5/sec).
+
+Key protocol details decoded:
+- **Price type UUIDs**: Win = `940b8704-...`, Place = `7cf3eea6-...` — verified via DOM probe (5.00 win → 2.00 place, confirming 1+(W-1)/4 formula)
+- **Socket.IO v4 subscribe protocol**: Per-market subscriptions: `{handler:"pricing", method:"prices", market_ids:[...]}`, `{handler:"racing", method:"marketupdated", ids:[...]}`, `{handler:"racing", method:"entrantupdated", ids:[...]}`, `{handler:"racing", method:"racecard-status", id:...}`
+- **Discovery**: Paginated POST `/v2/racing/search` with page_size cap of 20; full AU+NZ catalogue = 243 races in ~28s
+- **Entity-normalized model**: races/markets/entrants/prices all keyed by UUID
+
+REST-first adapter shipped (committed as `dbd7332`), with WS streaming deferred to follow-up phase. Achieved 100% venue match on first production cycle. See [[concepts/neds-pointsbet-ws-racing-adapters]] for the full adapter architecture and the WS-first recon rule established during this build.
+
+## Related Concepts
+
+- [[concepts/neds-pointsbet-ws-racing-adapters]] - The full Neds + Pointsbet racing adapter article with protocol details and the "always optimise for websocket" recon rule
+- [[concepts/betr-bluebet-api-integration]] - Betr's open API is the opposite extreme: no auth, no browser needed. Neds requires SPA browser context for the original sports API
+- [[concepts/bet365-in-browser-cdp-fetch-transport]] - The in-browser fetch pattern originally planned for Neds sports scraping; the racing adapter uses direct REST instead
+- [[concepts/tabtouch-kambi-white-label-sports]] - Another white-label platform (Kambi) with a public API; Entain's API is session-gated unlike Kambi's open access
+- [[concepts/adspower-wayland-gui-session-recovery]] - AdsPower on Eve needed Wayland env var harvesting before Chrome could launch for Neds recon
+
 ## Sources
 
 - [[daily/lcash/2026-05-18.md]] - Neds API returns 500 to direct curl; Entain platform = same as Ladbrokes AU (902); Socket.IO at push.neds.com.au (EIO=4); in-browser fetch via AdsPower planned; AdsPower needed Wayland env vars; 5 open questions in brain findings doc; NRL/AFL deprioritized, focus on NBA + MLB (Session 10:06)
+- [[daily/lcash/2026-05-26.md]] - Full Neds racing adapter built and deployed; Socket.IO v4 per-market subscriptions decoded; pricing/prices channel (not livemarketupdated) carries pre-race odds at 137 frames/90s; Price type UUIDs: Win=940b8704, Place=7cf3eea6; paginated POST search 243 races/28s; REST-first shipped, WS deferred; 100% venue match; committed dbd7332 (Sessions 12:35, 12:52, 13:46)

@@ -9,8 +9,9 @@ sources:
   - "daily/lcash/2026-04-26.md"
   - "daily/lcash/2026-05-02.md"
   - "daily/lcash/2026-05-05.md"
+  - "daily/lcash/2026-05-27.md"
 created: 2026-04-12
-updated: 2026-05-05
+updated: 2026-05-27
 ---
 
 # Configuration Drift from Manual Launch
@@ -77,6 +78,10 @@ On 2026-05-02, two new configuration drift instances were discovered simultaneou
 **Missing OpenBLAS settings in NBA batch file:** The NBA server's `start_nba.bat` was missing OpenBLAS thread limit settings, causing a 2-day outage that went completely undetected. The NBA server silently failed to start correctly, and with the watchdog disabled, no auto-restart occurred. The outage was only discovered through manual investigation.
 
 The root cause for both was the same as the original pattern: batch files existed only on the mini PC and were not version-controlled. After this incident, all batch files were checked into the repository as the single source of truth — finally closing the configuration drift loop that had persisted since April 12.
+
+### Ninth Recurrence: ENABLE_POLYMARKET_GAMMA (2026-05-27)
+
+On 2026-05-27, lcash discovered that the Polymarket Gamma scraper (book 972) had been dead since 2026-05-21 because `ENABLE_POLYMARKET_GAMMA=1` was never added to the v3 batch launchers (`start-v3.bat` and `run_v3.bat`). The feature was deployed with its `ENABLE_X` gate, the env var was set during the initial session, but the batch launcher files were never updated. On the next V3 restart, the scraper silently disappeared. This is the same pattern documented in every prior recurrence: feature lands → env var set manually → batch file not updated → next restart silently disables the feature. The deploy script (`deploy-minipc-v3.sh`) doesn't ship `.bat` files, requiring manual SCP — extending the deploy script to include `.bat` files was flagged as a follow-up. Fixed in commit `1600994`.
 
 ## Related Concepts
 

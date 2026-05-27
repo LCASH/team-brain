@@ -214,9 +214,19 @@
       "hash": "ea32a21c1ca6378e",
       "compiled_at": "2026-05-25T20:27:09+10:00",
       "cost_usd": 4.853406
+    },
+    "lcash/2026-05-26.md": {
+      "hash": "e778face8c1f93cc",
+      "compiled_at": "2026-05-27T18:53:17+10:00",
+      "cost_usd": 12.360316500000001
+    },
+    "lcash/2026-05-27.md": {
+      "hash": "522b37784d5a09f3",
+      "compiled_at": "2026-05-27T19:01:31+10:00",
+      "cost_usd": 6.850625000000002
     }
   },
   "query_count": 0,
   "last_lint": null,
-  "total_cost": 356.2899826
+  "total_cost": 375.50092409999996
 }

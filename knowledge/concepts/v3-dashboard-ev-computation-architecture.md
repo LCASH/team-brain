@@ -7,8 +7,9 @@ sources:
   - "daily/lcash/2026-05-09.md"
   - "daily/lcash/2026-05-11.md"
   - "daily/lcash/2026-05-12.md"
+  - "daily/lcash/2026-05-26.md"
 created: 2026-05-06
-updated: 2026-05-12
+updated: 2026-05-26
 ---
 
 # V3 Dashboard Live EV Computation Architecture
@@ -115,9 +116,18 @@ On 2026-05-12, several discoveries and fixes were made:
 
 **`_bet365_push_loop` captured_at overwrite bug**: The Bet365 push loop stamps `time.time()` every 5 seconds regardless of actual data refresh, making all Bet365 data appear 5 seconds old even when the underlying odds haven't changed. This masks actual data staleness.
 
+### Pulse=0 JavaScript Falsy Cache Freeze (2026-05-26)
+
+On 2026-05-26, a friend reported sharp book odds moving on the `/topdown` view but the EV column staying completely static on `/nba`. Root cause was a 3-layer chain: VPS proxy hardcoded `"pulse": 0` in its response envelope → browser-side `if (data.pulse)` evaluates as falsy for 0 (JavaScript treats 0 as falsy) → `computeEVPicks()` memo cache key `(0,0)` always matched the initial result → EV never recomputed for the lifetime of the tab.
+
+This is a distinct recurrence of the May 6 memoization poisoning (which also used `pulse` as cache key, but the root cause there was the server always returning 0). The May 26 variant is a **JavaScript-specific falsy footgun**: even if the server emitted a real pulse, `if (data.pulse)` would skip when pulse happened to equal 0. Fix: browser-side cache bust (`_evPicksCache.pulse = -1` after every poll/SSE frame) plus VPS server emitting `int(time.time() * 1000)` instead of hardcoded 0. The topdown view was unaffected because it renders straight from `markets[]` with no pulse-keyed cache — simpler rendering path was accidentally more resilient.
+
+Additionally, `MAX_SOFT_ODDS_AGE_S = 3600` was noted as still loosened from a prior scraper outage workaround, meaning stale Bet365 odds could feed picks for up to 60 minutes — logged but not fixed in this session.
+
 ## Sources
 
 - [[daily/lcash/2026-05-06.md]] - Case sensitivity: `"Pinnacle"` vs `"pinnacle"` returned 0 sharp books → 0 picks; fixed with `.lower()` normalization. Memoization: `pulse=0` constant as cache key → cache never invalidated; fixed with market count key. SSE staleness: `MAX_ODDS_AGE_S=600` rejected stable lines; fixed to 7200s for SSE semantics (Session 14:26). Event loop blocking: 3000×6 theory matrix = 162K log lines per request; raised logger level, ping dropped to 42ms (Session 01:56). Architecture: mini PC computes picks, VPS proxies, zero Supabase reads; 5s auto-refresh with stale-data preservation (Session 00:20). Dashboard visual alignment: multiple iteration passes matching V2 design tokens (Sessions 01:07, 01:08)
 - [[daily/lcash/2026-05-09.md]] - Sport routing bug: `currentSport = 'nba'` hardcoded for non-localhost; fix: read `window.location.pathname` against `SPORT_INSTANCES`. Thin trail data: ~5% of picks with single snapshot; show explainer when span < 30s. VPS proxy byte cache: 21s→97ms (200×). Browser fetch queue contention delayed trail fetch 20+ seconds (Sessions 11:15, 13:30)
 - [[daily/lcash/2026-05-11.md]] - Vig sanity gate dropping all 10,491 MLB markets client-side while server returns 9,522 picks; Bet365 L=0.5 vs sharps L=1.5 in same market_key; 5/7 MLB theories are candidate-blend (server-only); 4-segment health pill (35d8bfe) + context-aware empty states (7e53b6b) deployed; URL/SSE switchSport verified with popstate support (Sessions 08:49, 08:50, 09:42)
 - [[daily/lcash/2026-05-12.md]] - Coverage dashboard built on Eve at /dashboard/coverage.html; game_start staleness fix in server/state.py:285-290 with chronological refresh + cleanup_stale_markets() wired in startup.py; Bet365 coverage 59.7% vs Pinnacle ~2%; _bet365_push_loop captured_at overwrite bug (stamps time.time() every 5s); 13 missing bet365 NBA markets in wizard but not in EV_NAME_MAP
+- [[daily/lcash/2026-05-26.md]] - Pulse=0 JS falsy cache freeze: VPS hardcoded `"pulse": 0` → `if (data.pulse)` falsy for 0 → memo cache key `(0,0)` never changes → EV never recomputed; fix: browser-side cache bust + VPS emits `int(time.time() * 1000)`; topdown unaffected (no pulse-keyed cache); MAX_SOFT_ODDS_AGE_S=3600 still loosened from prior workaround (Session 15:56)

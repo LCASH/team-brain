@@ -4,8 +4,9 @@ aliases: [pm-edge, prediction-market-edge-detection, pm-vs-sharp-consensus, kals
 tags: [value-betting, prediction-markets, theory, kalshi, polymarket, methodology]
 sources:
   - "daily/lcash/2026-05-19.md"
+  - "daily/lcash/2026-05-27.md"
 created: 2026-05-19
-updated: 2026-05-19
+updated: 2026-05-27
 ---
 
 # PM Edge Prediction Market Theory
@@ -75,6 +76,17 @@ The `/topdown-pm` dashboard route for viewing PM Edge picks was lost during a re
 - [[concepts/value-betting-theory-system]] - PM Edge theories created via Supabase rows following the code-free theory pattern; `cache_bust_ts` column bump needed to force tracker cache refresh
 - [[connections/liquidity-efficiency-inverse-in-betting]] - PM Edge's concentration in thin/obscure markets is a specific instance of the liquidity-efficiency inverse
 
+### First Statistical Audit (2026-05-27)
+
+A comprehensive 9-day audit of 2,924 resolved MLB PM picks revealed a breakthrough finding: **Pinnacle in the sharp set is a side-direction signal**, not a confidence signal. Under picks with Pinnacle produce +37.3% ROI (t=2.80) while Over picks with Pinnacle produce -28.8% (t=-2.39). The signal replicated independently across Kalshi, Polymarket, and Polymarket USA. The initial "drop Kalshi" theory was wrong — Kalshi works under winning filters (+58.4% ROI with Under + Pinnacle).
+
+Structural fixes confirmed: drop HR/Bases/Hits props (t=-2.73 losses), drop `one_sided_fallback` devig (-20.9%), drop solo-DraftKings-sharp picks (-39.5%). Three v2 theories proposed: broad v2 (~550-600 picks), Game Lines Premium (~150-180 picks), Pinnacle-Anchored Under (~50-70 picks, projected +40-55% ROI). See [[concepts/pm-edge-statistical-audit-pinnacle-side-signal]] for the full analysis.
+
+### Polymarket Gamma Env Var Gate Failure (2026-05-27)
+
+The Polymarket Gamma scraper (book 972) stopped firing after 2026-05-21 because `ENABLE_POLYMARKET_GAMMA=1` was never added to the v3 batch launchers (`start-v3.bat`, `run_v3.bat`). This is a recurring env-var gate failure pattern (see [[concepts/configuration-drift-manual-launch]]): feature lands with `ENABLE_X` gate, env var never wired into launcher, next restart silently disables. Without Gamma, Kalshi was the only PM book quoting player counting stats — the "Kalshi is bleeding" diagnosis may partly be a data-gap artifact. Fixed in commit `1600994`.
+
 ## Sources
 
 - [[daily/lcash/2026-05-19.md]] - PM Edge theory design: PM odds as soft vs sharp consensus; 4 theories designed (only Strict pair shipped Phase 1); sharp weights Pin 1.0/Nov 0.8/FD 0.5/DK 0.5/PB 0.4; multiplicative devig, min_sharps=2; dry-eval 31-33 MLB picks (all Kalshi HR O0.5, EVs 25-60%); first live cycle 45 picks (43 Kalshi); Tristan Peters 15.57 vs sharp ~9.2; concentration risk in correlated HR markets; backtest will overstate EV due to thin orderbook depth; `cache_bust_ts` bump for tracker refresh; Phase 2: Loose theories + orderbook snapshots; Phase 3: per-PM-book split (Sessions 11:38, 12:13). Survivorship cliff: 70% PM markets delist within 90min, only 16.7% remain at game_start; Novig 12.4% >5pp divergence from consensus; empty soft trail rows mostly <15% (Session 12:44). `/topdown-pm` route lost on redeploy — not committed to git (Session 12:13)
+- [[daily/lcash/2026-05-27.md]] - 9-day audit of 2924 resolved MLB PM picks: Pinnacle as side-direction signal (Under +37.3% t=2.80, Over -28.8% t=-2.39); cross-book replication across Kalshi/Polymarket/Polymarket USA; "drop Kalshi" retracted; HR/Bases/Hits structurally unprofitable; 3 v2 theories proposed (Session 15:26). Polymarket Gamma env var gate failure: ENABLE_POLYMARKET_GAMMA missing from v3 batch launchers; scraper dead since May 21; fixed commit 1600994 (Session 17:08)
