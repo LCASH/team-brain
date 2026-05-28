@@ -4,13 +4,14 @@ aliases: [neds-adapter, pointsbet-adapter, neds-socket-io, pointsbet-signalr, ws
 tags: [superwin, racing, scraping, websocket, socket-io, signalr, bookie-onboarding]
 sources:
   - "daily/lcash/2026-05-26.md"
+  - "daily/lcash/2026-05-28.md"
 created: 2026-05-26
-updated: 2026-05-26
+updated: 2026-05-28
 ---
 
 # Neds and Pointsbet WebSocket Racing Adapters
 
-On 2026-05-26, lcash built and deployed racing adapters for both Neds (Socket.IO v4) and Pointsbet (Azure SignalR) in a single day. Both adapters shipped REST-first with WS streaming deferred to a follow-up phase. The session established a critical operational rule from the user: **"we always optimise for websocket"** — meaning bookie onboarding recon must always start with a WS presence test before falling back to REST/HTML scraping. A key debugging lesson: the wrong WS subscribe channel (`racing/livemarketupdated` = in-play only) led to a false conclusion that WS was in-play-only, corrected only after the user challenged the conclusion based on domain observation.
+On 2026-05-26, lcash built and deployed racing adapters for both Neds (Socket.IO v4) and Pointsbet (Azure SignalR) in a single day. Both adapters shipped REST-first with WS streaming deferred to a follow-up phase. On 2026-05-28, Neds WS streaming went live after a two-fix breakthrough: the event name is `"subscribe"` (not `"subscription"`) and price frames are double-nested in `args[0].data.data`. Prior protocol documentation from the May 26 recon was inaccurate — the POC connected and subscribed but received zero frames because the event name was wrong. The session established a critical operational rule from the user: **"we always optimise for websocket"** — meaning bookie onboarding recon must always start with a WS presence test before falling back to REST/HTML scraping. A key debugging lesson: the wrong WS subscribe channel (`racing/livemarketupdated` = in-play only) led to a false conclusion that WS was in-play-only, corrected only after the user challenged the conclusion based on domain observation.
 
 ## Key Points
 
@@ -79,3 +80,4 @@ Edge configurations follow the standard pattern: `*-normal` (value mode) and `ra
 ## Sources
 
 - [[daily/lcash/2026-05-26.md]] - Neds: Socket.IO v4, per-market subscriptions, pricing/prices channel (137 frames/90s), paginated search (243 races), entity-normalized model, Win/Place price_type_id mapping, committed dbd7332 (Sessions 12:35, 12:52, 13:46). Pointsbet: Azure SignalR, JWT-gated, full day-card 151KB, PERF YELLOW warmup transient, committed 9a48535 (Sessions 12:35, 13:46). User rule: "we always optimise for websocket"; wrong subscribe channel = wrong conclusion; trust domain experts over technical conclusions (Session 12:35). Both hit 100% venue match first cycle; REST-first shipped, WS deferred (Session 13:46)
+- [[daily/lcash/2026-05-28.md]] - Neds WS streaming went live: event name is `"subscribe"` not `"subscription"`, price frames double-nested `args[0].data.data`; prior protocol docs from May 26 were inaccurate (connected + subscribed but 0 frames); TabTouch FOB Phase 2 wired FobPriceChanged MQTT events achieving sub-2s FRESH; Betr/BoostBet confirmed zero WS via live browser CDP recon (Session 14:50)

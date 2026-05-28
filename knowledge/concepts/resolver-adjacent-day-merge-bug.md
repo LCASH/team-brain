@@ -5,8 +5,9 @@ tags: [value-betting, resolver, bug, data-quality, mlb, methodology]
 sources:
   - "daily/lcash/2026-05-20.md"
   - "daily/lcash/2026-05-21.md"
+  - "daily/lcash/2026-05-28.md"
 created: 2026-05-20
-updated: 2026-05-21
+updated: 2026-05-28
 ---
 
 # Resolver Adjacent-Day Stat Merge Bug
@@ -92,3 +93,4 @@ Any Brier score, ROI sweep, or calibration run executed against MLB data before 
 
 - [[daily/lcash/2026-05-20.md]] - Salvador Perez H=2 (May 17) stamped on May 18 picks (should be H=0); Realmuto H=1 (May 17) stamped on May 18 (should be H=0); 133/809 (16.4%) wrong actual_stat, 99/809 (12.2%) flipped W/L; initial fix (reorder dates_to_fetch) incomplete — per-pick ET-date derivation is real fix; mass re-resolve MLB 98.9%, NBA 96.1%; M8 audit 0.00% disagreement on 500-pick sample; bypass_stale_gate kwarg added; calibration data contaminated — hard stop on calibrate_weights.py (Sessions 12:38, 13:34, 19:27, 20:03)
 - [[daily/lcash/2026-05-21.md]] - Two companion bugs: (1) fixture gate unreachable — SELECT clause omitted `fixture_name`, `pick.get("fixture_name")` always None, gate never fired (commit f7ae928). (2) OO fallback for MLB — UTC-bucketed dict contained yesterday's same-team stats, converting "no data" into "wrong data" (commit 15ae6bf killed OO fallback for MLB). Belt-and-suspenders: fixture gate + per-date only + no OO fallback. 45/91 fixture-name mismatches on May 20 identified (Sessions 09:55, 14:47)
+- [[daily/lcash/2026-05-28.md]] - Mass re-resolution of ~47K MLB picks resolved before 5/25 16:01 deploy: initial M8 audit flagged 120 disagreements traced to Eve deploy gap; blast radius expanded from 5,914 → 47,269 picks; v1 of fix script had a critical bug — SELECT didn't include `game_start` so `et_from()` fell back to `game_date` (UTC), causing night-game picks to look up wrong day's stats (~385 picks made WORSE by v1); v2 correction with `game_start` included found 2,925 changes; lesson: always include `game_start` in pick queries when ET date matters (Sessions 10:47, 12:59)
