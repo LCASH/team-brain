@@ -4,8 +4,9 @@ aliases: [tab-ws-rotation, tab-dual-ws-dead-end, tab-global-sweep, tab-reconnect
 tags: [superwin, tab, websocket, architecture, reverse-engineering, reliability]
 sources:
   - "daily/lcash/2026-05-26.md"
+  - "daily/lcash/2026-05-30.md"
 created: 2026-05-26
-updated: 2026-05-26
+updated: 2026-05-30
 ---
 
 # TAB Global WebSocket Rotation Pattern
@@ -59,13 +60,19 @@ Post-optimization monitoring showed TAB workers reaching stable state between dr
 
 The monitoring alert count climbed to 100 during testing, but all alerts were "Regression" warnings from betr/boostbet/tab tier rotation causing per-cycle counts to dip below the 70% baseline threshold. This is threshold noise from natural tier cycling, not real regressions.
 
+### 3-Second Reconnect Validated and Catalogue-Based Alerting (2026-05-30)
+
+On 2026-05-30, live monitoring validated the optimized reconnect pipeline: a single disconnect/resubscribe cycle completed in **3 seconds** (down from 6-15s pre-optimization). The system was confirmed stable for 68 minutes straight post-deploy with all 9 bookies online. TAB rotation cadence is variable — 7+ minute uptime stretches observed, not a fixed 3-minute cycle. Per-cycle regression detection was replaced with catalogue-coverage-based checks after the old approach generated 100+ false positive alerts from tiered-fetch bookies (betr/boostbet/tab) rotating hot/warm/cold subsets each cycle. Catalogue persistence is "once added, never removed until day rollover" — but a service restart wipes the catalogue, requiring cold-start rediscovery. The refactored baseline uses a rolling MAX so transient ingest-ordering blips can't lower the threshold and trigger false positives. Alerts dropped from 100 to 1 (the legitimate edge-resolver backlog), making the dashboard actionable.
+
 ## Related Concepts
 
 - [[concepts/tabtouch-domain-migration-mqtt]] - TabTouch racing uses AWS IoT MQTT (different protocol, different infra) — TAB uses Engine.IO/Socket.IO; both face server-side connection management
 - [[concepts/opticodds-sse-reconnect-state-loss]] - OpticOdds SSE has a similar reconnect-state-loss pattern (delta-only on reconnect); TAB's warm cache solves the same class of problem
 - [[concepts/betr-no-websocket-xhr-only-architecture]] - Betr has zero WS (pure XHR); TAB has WS that periodically dies — different transport architectures with different reliability profiles
 - [[concepts/neds-pointsbet-ws-racing-adapters]] - Neds Socket.IO and Pointsbet SignalR may face similar rotation patterns — worth monitoring after deployment
+- [[concepts/tab-akamai-cold-start-discovery-loop]] - TAB's Akamai behavioral gating on discovery compounds with WS rotation: if discovery is blocked, no proposition_ids are available for WS resubscription
 
 ## Sources
 
 - [[daily/lcash/2026-05-26.md]] - Three dual-WS experiments: staggered ages, proxy IP, NSW/VIC jurisdiction — all dropped same second; TAB runs global server-side sweep; jurisdictions are cosmetic (same 1100 propositions); 3-4s reconnect after removing 5s sleep; warm-cache 300s reduces user impact; WebShare proxies compatible with TAB WS; VPS restart-looping from unknown external stop calls; alert threshold noise from tier rotation (Sessions 16:27, 17:45). TAB stream stability: heartbeat/cache-reuse fix held 4+ min zero disconnects; odds confirmed mutating; dual WS hot/standby proposed then disproved (Session 14:54)
+- [[daily/lcash/2026-05-30.md]] - 3s reconnect validated (single-sample), 68 min stable with all 9 bookies; TAB rotation is variable not fixed 3 min; per-cycle regression replaced with catalogue-coverage-based checks (100→1 alerts); catalogue not persisted across service restarts (Sessions 11:58)

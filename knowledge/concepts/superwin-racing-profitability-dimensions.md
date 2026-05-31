@@ -10,8 +10,9 @@ sources:
   - "daily/lcash/2026-05-19.md"
   - "daily/lcash/2026-05-20.md"
   - "daily/lcash/2026-05-25.md"
+  - "daily/lcash/2026-05-30.md"
 created: 2026-04-27
-updated: 2026-05-25
+updated: 2026-05-30
 ---
 
 # SuperWin Racing Profitability Dimensions
@@ -168,6 +169,17 @@ The overlay signal is particularly actionable because it is **available at bet-p
 
 Two deliverable docs were created: validated baseline (`edge-pick-theories.md`) and playbook with candidates + backtest methodology (`edge-pick-playbook-2026-05-25.md`).
 
+### Measurement Correction Reveals True PnL (2026-05-30)
+
+On 2026-05-30, the first full day of data after the resolver PnL formula fixes (see [[concepts/resolver-pnl-formula-mug-run2nd3rd-bugs]]) produced an honest aggregate: **-339u / -34.1% ROI on 994 settled picks**. The previous day's reported +198u / +20% ROI was NOT a clean signal — it was partial-day data overlaying picks placed under broken math (mug mode back-only PnL, run-2nd-3rd hardcoded slug).
+
+This revealed that the "winning formula" analysis (e.g., BoostBet run-2nd-3rd +44.9% ROI on 127 picks) was **over-fitted pattern matching** from ~100 single-signal slices with no out-of-sample validation. Testing ~100 signal slices then ~30 compound rules surfaces false positives by chance — the multiple comparison problem. The 9 "learnings" in the edge-research skill catalog were pre-seeded from one day's data and should be treated as hypotheses pending validation, not findings.
+
+**Key lessons:**
+- Correcting measurement can reveal that previously "profitable" edges were actually losing — don't celebrate math fixes as wins until recalibrated data accumulates
+- An anti-pattern was identified: "every time you asked a question, I produced an answer" — honest uncertainty is better than confident wrong answers
+- **Pause new staking decisions** until 7-14 days of honest-math data accumulates
+
 ### Current Sample Limitations
 
 769 picks across 6 days provides a larger dataset but the Day 6 results underscore the danger of premature theory formation. The initial 487-pick analysis identified clear signals that appeared robust (harness dominance, $8-12 odds, 5-10min MTJ) — but a single bad day contradicted three of the ten codified theories. The harness dominance and $750-$1K goldmine remain the most durable signals, but even harness showed its first losing day. An estimated 2,000+ picks (~2-3 more weeks) are needed before strategy-level decisions should be made, and theory validation should focus on signals that survive bad days rather than optimize for good days.
@@ -182,6 +194,7 @@ Two deliverable docs were created: validated baseline (`edge-pick-theories.md`) 
 - [[concepts/superwin-blueboost-betr-racing-edge]] - Fourth edge mode (BlueBoost) from betr's promotional pricing; boost_field architecture vs lookup-table; performance pending ~500 settled picks
 - [[concepts/superwin-mult-place-market-edge]] - Fifth edge mode (THE MULT) — first place-market edge; TAB place × 1.1 vs Betfair place_lay; settlement bug fixed, +48.45% ROI
 - [[concepts/superwin-execution-gap-price-band-discipline]] - Scanner +15% ROI but actual bets -14% ROI from price-band non-compliance; the 10K sweep identifies WHERE edge exists, the execution gap shows it's not being FOLLOWED
+- [[concepts/resolver-pnl-formula-mug-run2nd3rd-bugs]] - The PnL formula fixes that revealed the true (negative) aggregate ROI; all pre-fix profitability numbers are unreliable
 
 ## Sources
 
@@ -192,3 +205,4 @@ Two deliverable docs were created: validated baseline (`edge-pick-theories.md`) 
 - [[daily/lcash/2026-05-19.md]] - Scanner gate widened 2-20min → 0.5-180min (Hitters filter showed 0 picks because EV>5% opportunities were 3-12h out); MODE items in CommandFeed identified as architectural wart — server now owns truth for all races within 3h; BlueBoost edge deployed as `racing-blueboost` with `boost_field` criteria on `odds.tote_win`; OddsComparison column layout standardized (dropped BF Back/LTP/PL Back, added live BSP); client-side MODE computation to be removed now that server gate covers wider window (Sessions 14:18, 15:20, 17:24)
 - [[daily/lcash/2026-05-20.md]] - THE MULT place-market edge deployed (TAB place × 1.1); settlement bug (WINNER → top-3) swung ROI -62.6% → +48.45%; thoroughbred place +55%; NZ harness: Cambridge -60% trap, AU +39% on 919 picks, Betfair Exchange has zero AU harness markets (Sessions 09:00, 14:47)
 - [[daily/lcash/2026-05-25.md]] - Full 10K-pick hyperparameter sweep: CLV≥15% = +37.9% (2595 picks), overlay <-5% = -15.6% (2081, real-time filter), same_race≤2 = +13.8%, detection_count 4-6 = +18.2%, odds $5-8 strongest single dimension, greyhound $5-8 +30.9% (contradicts prior), bf_drift_down+harness +46.7%, CANNON config +24.9%/1599 picks; 6 candidate theories A-F; edge-pick-playbook-2026-05-25.md created (Session 10:16)
+- [[daily/lcash/2026-05-30.md]] - Honest PnL after resolver fix: -339u / -34.1% ROI on 994 settled picks; prior day's +198u/+20% was partial-day data over broken math; "winning formula" for BoostBet run-2nd-3rd was over-fitted pattern matching (~100 single-signal slices, no out-of-sample validation); edge-research skill catalog's 9 learnings reclassified as hypotheses; pause staking decisions until 7-14 days of honest data accumulates; multiple comparison problem identified as anti-pattern (Session 09:53)

@@ -10,8 +10,9 @@ sources:
   - "daily/lcash/2026-05-02.md"
   - "daily/lcash/2026-05-05.md"
   - "daily/lcash/2026-05-27.md"
+  - "daily/lcash/2026-05-29.md"
 created: 2026-04-12
-updated: 2026-05-27
+updated: 2026-05-29
 ---
 
 # Configuration Drift from Manual Launch
@@ -83,6 +84,10 @@ The root cause for both was the same as the original pattern: batch files existe
 
 On 2026-05-27, lcash discovered that the Polymarket Gamma scraper (book 972) had been dead since 2026-05-21 because `ENABLE_POLYMARKET_GAMMA=1` was never added to the v3 batch launchers (`start-v3.bat` and `run_v3.bat`). The feature was deployed with its `ENABLE_X` gate, the env var was set during the initial session, but the batch launcher files were never updated. On the next V3 restart, the scraper silently disappeared. This is the same pattern documented in every prior recurrence: feature lands → env var set manually → batch file not updated → next restart silently disables the feature. The deploy script (`deploy-minipc-v3.sh`) doesn't ship `.bat` files, requiring manual SCP — extending the deploy script to include `.bat` files was flagged as a follow-up. Fixed in commit `1600994`.
 
+### Tenth Recurrence: Cron Script SLUGS List (2026-05-29)
+
+On 2026-05-29, lcash discovered that three new bookies (boostbet, neds, pointsbet) were added to the SuperWin racing platform on 2026-05-26 but never added to `racing_schedule.sh`'s hardcoded `SLUGS` list. This cron script controls the `db.enabled` flag that stops/starts bookie workers during off-hours. Result: those three bookies polled 24/7 (~28k extra requests/hour) during off-hours when they should have been disabled. Fixed by adding all three to the SLUGS list (now 9 bookies). The pattern is the same: a new bookie is onboarded with its adapter working correctly, but a secondary configuration touchpoint (the cron script) is never updated — the adapter works fine without it, so the gap is invisible until someone investigates resource usage.
+
 ## Related Concepts
 
 - [[concepts/opticodds-critical-dependency]] - The key rotation event that triggered the restart and exposed the drift
@@ -100,3 +105,4 @@ On 2026-05-27, lcash discovered that the Polymarket Gamma scraper (book 972) had
 - [[daily/lcash/2026-04-26.md]] - Fifth recurrence: TAB scraper not running because `ENABLE_DIRECT_SCRAPERS=1` env var was missing from `start_nba.bat`; direct scrapers require both sport config AND the env var (line 1445 in main.py); also `curl_cffi` missing on scanner-ms; same pattern: feature enabled in code but batch file doesn't pass the flag (Session 11:03)
 - [[daily/lcash/2026-05-02.md]] - Sixth recurrence: MLB batch file had `DISABLE_TRACKER=1` and `DISABLE_RESOLVER=1` preventing MLB tracker initialization; seventh: NBA batch missing OpenBLAS settings causing 2-day undetected outage; all batch files finally checked into repo as version-controlled source of truth (Sessions 11:51, 13:29, 14:23)
 - [[daily/lcash/2026-05-05.md]] - Eighth recurrence (V3 migration): V3 `.env.v3` missing bet365 credentials (`BET365_USERNAME`, `BET365_PASSWORD`) that existed in V2's `.env` — V2→V3 credential migration was not automatic; V3 bat file called wrong startup path and omitted `ENABLED_SPORTS` env var; venv missing `playwright` dependency required falling back to system Python; three sequential startup failures from configuration gaps before V3 came online (Sessions 17:52, 17:55)
+- [[daily/lcash/2026-05-29.md]] - Tenth recurrence: `racing_schedule.sh` SLUGS list missing boostbet/neds/pointsbet (added to platform 2026-05-26, never added to cron); 24/7 polling during off-hours (~28k extra req/hour); fixed by adding all 3 to SLUGS list (now 9 bookies) (Session 08:41)

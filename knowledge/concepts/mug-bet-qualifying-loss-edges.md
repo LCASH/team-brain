@@ -4,8 +4,9 @@ aliases: [mug-bet, qualifying-loss, mug-edge, account-sustainability-mugging, ql
 tags: [superwin, racing, edge-detection, matched-betting, account-sustainability]
 sources:
   - "daily/lcash/2026-05-27.md"
+  - "daily/lcash/2026-05-29.md"
 created: 2026-05-27
-updated: 2026-05-27
+updated: 2026-05-29
 ---
 
 # Mug-Bet Qualifying Loss Edges
@@ -57,8 +58,13 @@ The 4.2% floor is mathematical: with 5% Betfair commission, even when the bookie
 - [[concepts/superwin-racing-profitability-dimensions]] - Mug-bet is a 6th edge mode alongside Normal, SuperPicks, Cash Multiplier, BlueBoost, and THE MULT
 - [[concepts/racing-refund-bonus-edge]] - Another non-standard edge type with custom settlement logic (PLACE_REFUND); mug bets have simpler settlement (standard WIN/LOSE)
 
+### PnL Formula Correction (2026-05-29)
+
+On 2026-05-29, lcash discovered that the resolver was computing back-only PnL for mug mode instead of the correct equalised lay-leg matched-betting formula. Back-only PnL counts back-bet wins without subtracting lay-bet losses, making mug mode appear profitable at +60.2u — an impossibility for a qualifying-loss edge. The corrected equalised formula showed the true PnL of −10.7u, a −70.9u swing. This bug would have misled edge-config decisions (e.g., mug appearing as the most profitable mode). See [[concepts/resolver-pnl-formula-mug-run2nd3rd-bugs]] for the full analysis.
+
 ## Sources
 
 - [[daily/lcash/2026-05-27.md]] - 8 mug-{bookie} edges deployed; QL formula with BF commission; natural 4.2% floor from 5% commission; 5,180 pairs checked, 3 sub-6%; new Opportunity fields (mug_ql_pct, mug_lay_stake, etc.); guard constraints min_field_size 6, min_back_odds 2.0; per-bookie threshold suggestion; pending user decision on QL% threshold (Session 10:24)
+- [[daily/lcash/2026-05-29.md]] - Resolver PnL bug: back-only formula swung mug +60.2u→−10.7u (−70.9u); corrected to equalised lay-leg matched-betting formula (Session 09:45)
 
 ```

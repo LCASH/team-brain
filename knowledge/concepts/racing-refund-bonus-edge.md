@@ -4,8 +4,9 @@ aliases: [refund-bonus-edge, run-2nd-3rd, place-refund-edge, sportsbet-refund-bo
 tags: [superwin, racing, edge-detection, settlement, architecture]
 sources:
   - "daily/lcash/2026-05-26.md"
+  - "daily/lcash/2026-05-29.md"
 created: 2026-05-26
-updated: 2026-05-26
+updated: 2026-05-29
 ---
 
 # Racing Run-2nd-3rd Refund-Bonus Edge
@@ -48,9 +49,11 @@ The resolver handles three outcomes for refund-bonus edges:
 
 The `PLACE_REFUND` outcome means the bettor loses the cash stake but receives a bonus bet of equal value. At 80% conversion, the net loss is only 20% of stake — dramatically better than a full loss but still negative.
 
-### Multi-Bookie Expansion
+### Multi-Bookie Expansion and Settlement Bug Fix (2026-05-29)
 
 The refund-bonus pattern is configured per-bookie in Supabase — `racing-run-2nd-3rd-sportsbet`, `racing-run-2nd-3rd-neds`, `racing-run-2nd-3rd-boostbet` etc. Each uses the same EV formula and settlement logic but targets a specific bookie's run-2nd-3rd promotion. Not all bookies offer this promotion, and the terms (which races, field size requirements, bonus bet restrictions) vary by bookie.
+
+On 2026-05-29, lcash discovered that the position settlement branch was hardcoded to match `racing-run-2nd-3rd-sportsbet` slug only. All non-sportsbet bookies' picks that finished 2nd or 3rd were settled as full losses (`-1.00`) instead of `PLACE_REFUND` (`-0.20`). The fix changed from exact slug matching to `mode_slug == "run-2nd-3rd"` matching, so all bookies now settle correctly. This swung PnL from −258.7u → −138.7u (+120u), revealing that boostbet (+24.6u) and pointsbet (+34.7u) edges are actually profitable. See [[concepts/resolver-pnl-formula-mug-run2nd3rd-bugs]] for the full analysis.
 
 ## Related Concepts
 
@@ -62,3 +65,4 @@ The refund-bonus pattern is configured per-bookie in Supabase — `racing-run-2n
 ## Sources
 
 - [[daily/lcash/2026-05-26.md]] - Full implementation: scanner criteria (min_field_size, EV formula with bonus_conversion), resolver (PLACE_REFUND outcome, position_settlement branch), persistence (ev_trail with pl_lay + bn_cv); first real pick +6.5% EV with bf_place_lay=1.15, bonus_conversion=0.80; expected volume 5-15 picks/day Saturday metro + Wednesday night; INSERT gated on bonus_conversion_assumed is not None; 500 stuck picks discovered from settlement scanner blind spot (Session 11:13)
+- [[daily/lcash/2026-05-29.md]] - Hardcoded slug bug: position settlement only matched `racing-run-2nd-3rd-sportsbet`, silently treating all other bookies' 2nd/3rd as full losses; fix: mode_slug match; PnL swung −258.7u→−138.7u; boostbet +24.6u, pointsbet +34.7u now visible (Session 09:45)

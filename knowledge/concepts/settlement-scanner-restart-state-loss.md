@@ -4,8 +4,9 @@ aliases: [settlement-restart-loss, market-start-times-volatile, persistent-sel-m
 tags: [superwin, racing, settlement, reliability, architecture, operations]
 sources:
   - "daily/lcash/2026-05-28.md"
+  - "daily/lcash/2026-05-29.md"
 created: 2026-05-28
-updated: 2026-05-28
+updated: 2026-05-29
 ---
 
 # Settlement Scanner In-Memory State Loss on Restart
@@ -62,7 +63,12 @@ The asymmetric persistence (catalogue snapshot on disk, scanner dicts in memory)
 - [[connections/permanent-blacklist-no-expiry-anti-pattern]] - In-memory state that grows monotonically without persistence; the settlement scanner is the inverse: in-memory state that is lost (rather than accumulated) without persistence
 - [[concepts/superwin-edge-pick-backtesting]] - The backtesting journal where stuck picks appear as NULL-result rows; the 72h orphan voider converts them to VOID
 
+### Backfill Production Results (2026-05-29)
+
+On 2026-05-29, the startup backfill was confirmed working in production. Unsettled picks dropped from 952 → 612 (340 resolved via the voider + fresh settlements from the backfill seeding). Fresh settlements were confirmed working with full data (e.g., `Warrnambool R3 G (bsp=True ltp=True positions=3)`). The historical gap (2+ day old picks) was accepted as-is — the orphan voider bounds damage at 72h, and the system recovers cleanly going forward. User decided NOT to pursue the historical fix, preferring forward health.
+
 ## Sources
 
 - [[daily/lcash/2026-05-28.md]] - 72 stuck picks traced to in-memory state loss; startup backfill seeds from unsettled picks; Betfair `listMarketBook` SP_TRADED returns no position data for old closed markets; `listMarketCatalogue` returns empty >1 day; sel_map rebuild 1/3 success; name matching with strip "N. " prefix + sortPriority fallback; 2+ day old picks not covered (orphan voider at 72h); catalogue snapshot persists but scanner dicts don't (Session 20:42)
+- [[daily/lcash/2026-05-29.md]] - Backfill production results: unsettled 952→612 (340 resolved); fresh settlements confirmed with full BSP/LTP/position data; historical gap accepted as-is; user declined historical fix — orphan voider at 72h bounds damage (Session 00:57)
 
