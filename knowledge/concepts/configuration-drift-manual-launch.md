@@ -11,8 +11,9 @@ sources:
   - "daily/lcash/2026-05-05.md"
   - "daily/lcash/2026-05-27.md"
   - "daily/lcash/2026-05-29.md"
+  - "daily/lcash/2026-06-01.md"
 created: 2026-04-12
-updated: 2026-05-29
+updated: 2026-06-01
 ---
 
 # Configuration Drift from Manual Launch
@@ -88,6 +89,12 @@ On 2026-05-27, lcash discovered that the Polymarket Gamma scraper (book 972) had
 
 On 2026-05-29, lcash discovered that three new bookies (boostbet, neds, pointsbet) were added to the SuperWin racing platform on 2026-05-26 but never added to `racing_schedule.sh`'s hardcoded `SLUGS` list. This cron script controls the `db.enabled` flag that stops/starts bookie workers during off-hours. Result: those three bookies polled 24/7 (~28k extra requests/hour) during off-hours when they should have been disabled. Fixed by adding all three to the SLUGS list (now 9 bookies). The pattern is the same: a new bookie is onboarded with its adapter working correctly, but a secondary configuration touchpoint (the cron script) is never updated — the adapter works fine without it, so the gap is invisible until someone investigates resource usage.
 
+### Eleventh Recurrence: Racing Schedule Script Parser Bug (2026-06-01)
+
+On 2026-06-01, lcash discovered that `racing_schedule.sh`'s Python output parser had been broken since its creation. The script uses a Python heredoc inside bash to parse HTTP response JSON, but escaped quotes (`\"slug\"`) inside the f-string break on Python 3.11 — you cannot nest the same quote type in f-string expressions, and backslash-escaping isn't allowed there either. Every cron run's audit summary silently failed with SyntaxError, making the actual bookie toggle outcomes unverifiable from logs. The cron DID fire (proven by log timestamps) and the actual POST requests succeeded, but the response parser — the only observability layer — was a no-op.
+
+The fix hoists values into variables before the f-string: instead of `f'...\"slug\"...'`, use `slug = row["slug"]; f'...{slug}...'`. A related probe in the `/diagnose` skill had the same fragile pattern at two locations (probe 2b line 126, probe 2 header line 78) and was hardened simultaneously. This is the same class of silent-observability-failure as the SSH exit code 255 artifact discovered in the same day — the underlying operation succeeds but the monitoring/logging layer fails silently.
+
 ## Related Concepts
 
 - [[concepts/opticodds-critical-dependency]] - The key rotation event that triggered the restart and exposed the drift
@@ -106,3 +113,4 @@ On 2026-05-29, lcash discovered that three new bookies (boostbet, neds, pointsbe
 - [[daily/lcash/2026-05-02.md]] - Sixth recurrence: MLB batch file had `DISABLE_TRACKER=1` and `DISABLE_RESOLVER=1` preventing MLB tracker initialization; seventh: NBA batch missing OpenBLAS settings causing 2-day undetected outage; all batch files finally checked into repo as version-controlled source of truth (Sessions 11:51, 13:29, 14:23)
 - [[daily/lcash/2026-05-05.md]] - Eighth recurrence (V3 migration): V3 `.env.v3` missing bet365 credentials (`BET365_USERNAME`, `BET365_PASSWORD`) that existed in V2's `.env` — V2→V3 credential migration was not automatic; V3 bat file called wrong startup path and omitted `ENABLED_SPORTS` env var; venv missing `playwright` dependency required falling back to system Python; three sequential startup failures from configuration gaps before V3 came online (Sessions 17:52, 17:55)
 - [[daily/lcash/2026-05-29.md]] - Tenth recurrence: `racing_schedule.sh` SLUGS list missing boostbet/neds/pointsbet (added to platform 2026-05-26, never added to cron); 24/7 polling during off-hours (~28k extra req/hour); fixed by adding all 3 to SLUGS list (now 9 bookies) (Session 08:41)
+- [[daily/lcash/2026-06-01.md]] - Eleventh recurrence: `racing_schedule.sh` Python output parser broken since creation — escaped quotes in shell heredoc cause SyntaxError, hiding all POST responses; cron DID fire but post-flip state unverifiable; Python 3.11 f-string quoting trap (can't nest same quote type in expressions); fix: hoist values into variables before f-string (Sessions 07:46, 08:22, 16:52)

@@ -4,8 +4,9 @@ aliases: [tab-cookie-minter, akamai-cookie-harvest, tab-tier-2-5, aka-a2-cookie,
 tags: [superwin, tab, scraping, akamai, anti-bot, architecture, performance]
 sources:
   - "daily/lcash/2026-05-31.md"
+  - "daily/lcash/2026-06-01.md"
 created: 2026-05-31
-updated: 2026-05-31
+updated: 2026-06-01
 ---
 
 # TAB Akamai Cookie-Mint Bypass (Tier 2.5)
@@ -64,6 +65,14 @@ A full Sportsbet-style CookieMinter (dedicated Playwright instance solely for co
 
 If future Akamai hardening invalidates the in-page harvest approach (e.g., cookies become IP-bound or short-lived), the full CookieMinter can be built as an escalation (~4-6 hour session).
 
+### Tier 2.5 v1→v2 Timing Bug (2026-06-01)
+
+On 2026-06-01, lcash discovered that Tier 2.5 had been a **production no-op** since deployment. The `page.goto(url, wait_until="domcontentloaded")` call returns as soon as the HTML DOM is parsed — before Akamai's JavaScript runs and sets the `AKA_A2` cookie. The `cookie_jar` was always empty, and the `if cookie_jar:` guard silently skipped the curl_cffi path every time. The adapter fell through to Tier 3/4 on every call, meaning the 30-second interceptor wait was never actually bypassed.
+
+The v2 fix polls for the `AKA_A2` cookie up to 8 seconds after navigation, checking every 500ms. This gives Akamai's JavaScript time to execute and set the cookie. Once found, the cookie is harvested and the curl_cffi API call proceeds as designed.
+
+This is a general lesson for browser-cookie-based API bypass patterns: **`domcontentloaded` fires before JS-set cookies exist.** Any approach that harvests cookies immediately after navigation will get an empty jar for cookies set by JavaScript execution. Either poll for the specific cookie, or use `networkidle` (which waits for JS to settle, but can be slow and unreliable on heavy SPAs).
+
 ### Relationship to TAB Thrashing Fix
 
 The cookie-mint deployment complements the backoff fix deployed in the same session (see [[concepts/tab-cold-start-akamai-discovery-thrashing]]). The backoff reduces Akamai pressure during failure windows (1→5→15→30 min ratchet). The cookie-mint eliminates the need for the 30-second interceptor wait during success windows. Together they address both sides: less pressure when failing, faster execution when succeeding.
@@ -79,3 +88,4 @@ The cookie-mint deployment complements the backoff fix deployed in the same sess
 ## Sources
 
 - [[daily/lcash/2026-05-31.md]] - curl_cffi probe: www.tab.com.au 200 but api.beta.tab.com.au 403 without cookies; only AKA_A2=A needed; CookieMinter prototype: Playwright harvest → curl_cffi chrome131 → 200, 30 races; deployed as Tier 2.5 skipping 30s interceptor wait; full CookieMinter deferred (Sessions 18:36, 20:01, 21:05)
+- [[daily/lcash/2026-06-01.md]] - Tier 2.5 v1 was a production no-op: `page.goto` with `wait_until="domcontentloaded"` fires before Akamai JS sets `AKA_A2` cookie, making `cookie_jar` always empty; v2 fix polls for cookie up to 8s; SSH exit code 255 is session timeout artifact not real failure; deployed overnight but real validation requires 9am AEST racing data (Sessions 01:09, 01:57, 02:56)

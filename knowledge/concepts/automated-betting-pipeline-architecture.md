@@ -5,8 +5,9 @@ tags: [superwin, takeover, architecture, automation, betting, deployment]
 sources:
   - "daily/lcash/2026-05-30.md"
   - "daily/lcash/2026-05-31.md"
+  - "daily/lcash/2026-06-01.md"
 created: 2026-05-30
-updated: 2026-05-31
+updated: 2026-06-01
 ---
 
 # Automated Betting Pipeline Architecture
@@ -63,6 +64,14 @@ On 2026-05-31, Phase 1 pre-flight planning revealed several refinements and oper
 
 **Phase plan files created**: `~/.claude/plans/automated-betting/00-master-overview.md` through `06-phase-6-bookie-expansion.md` — one file per phase with dependencies and deliverables.
 
+### Phase 1 Completion and V2 Schema Consolidation (2026-06-01)
+
+On 2026-06-01, Phase 1 was completed and immediately superseded by a v2 schema consolidation. Phase 1 shipped: a settings library (`app/src/lib/settings/`) with types, merge logic, migration helpers, and 42 test cases; three UI components (SettingsEditor, TagSettingsEditor, EffectiveSettingsPanel); and three new JSONB columns applied to live Supabase (`betting_accounts.settings`, `betting_accounts.edge_config`, `tags.settings` + GIN indexes). Programmatic round-trip verification confirmed all writes/reads including GIN containment queries.
+
+However, investigation of the live DB revealed that the assumed eligibility model was wrong: `account_edge_tags` are operational markers ("low balance", "low blance" [sic], "Priming"), NOT positive eligibility signals. The `superwin_bookie_modes` table only had 6 rows vs 25 actual edges. The `edge_schedule` labels revealed it was VA shift planning ("Tab Dupe Lambo"), not bet-firing gating.
+
+This triggered a v2 consolidation (commit `f120d0e`) that collapsed all gating into a single `settings` JSONB column: `venom_enabled` master toggle + `defaults` block + dynamic `edges` map keyed by SuperWin slug. The `tags.settings` overlay merging from v1 was dropped entirely — tags reverted to free-form notes. The v2 schema made Phase 2 (WarRoom preparer) mostly obsolete, as settings IS the source of truth Venom reads directly. Phases 3-6 were handed to Jay. See [[concepts/venom-dispatch-engine-architecture]] for the Venom dispatch layer details.
+
 ## Related Concepts
 
 - [[concepts/superwin-edge-pick-backtesting]] - The edge detection output that feeds into this pipeline; backtesting validates which edges are worth automating
@@ -75,3 +84,4 @@ On 2026-05-31, Phase 1 pre-flight planning revealed several refinements and oper
 
 - [[daily/lcash/2026-05-30.md]] - SuperWin → WarRoom → Venom pipeline architecture; two-Supabase architecture decision; three JSONB columns (settings, bookie_config, edge_config) over normalized tables; tags.settings for bulk policy merge; app-layer libsodium encryption; TAB as first target; Jay owns 2FA; 6-phase build plan; initial over-engineering was wrong
 - [[daily/lcash/2026-05-31.md]] - Phase 1 pre-flight: bookie_config renamed to phone_automation; live DB has columns not in migrations (phone_automation, browser_automation, run_2nd_3rd_bonus_balance); dev/main is 53 commits ahead of local main; account_personas already exists as 1:1 table; phase plan files created (Session 06:34)
+- [[daily/lcash/2026-06-01.md]] - Phase 1 shipped: settings library (42 tests), 3 UI components, 3 DB columns applied live; v2 schema consolidation: single `settings` JSONB with `venom_enabled` + `defaults` + `edges` map replacing v1's 3-column approach; dropped `tags.settings` overlay merging; in-memory counter architecture for hit tracking; Phases 3-6 handed to Jay; Venom throughput: 400ms median for 1000 accounts (Sessions 08:53, 10:45, 11:50, 12:55, 14:00)
