@@ -702,3 +702,10 @@
 - Articles created: (none)
 - Articles updated: [[concepts/knowted-nano-banana-ai-photo-generation]] (Two-pipeline production strategy formalized: Nano Banana Pro for hero/scroll-stoppers, HTML template for workhorse ads; "Knowted ≈ noted" as core brand-ownable wordplay; copy bank built across 4 ICPs; shorter headlines reduce AI text duplication; image rule: no AI-faked product UI; Pro > Flash for ad quality; "be present" concept killed as too abstract)
 - Note: Incremental pass capturing Session 22:20 (ad creative iteration) which was not included in the prior three compilation passes. The session formalized a two-pipeline strategy separating Nano Banana (hero/organic, unreliable text) from HTML/Puppeteer (workhorse ads, pixel-perfect text). A structured copy bank was built covering ads + organic content across all 4 ICP avatars. The key creative discovery was "Knowted ≈ noted" as a brand-ownable wordplay asset anchoring two hero lines.
+
+## [2026-06-17T09:45:00+10:00] compile | daily/lcash/2026-06-16.md (incremental — Session 22:55)
+- Source: daily/lcash/2026-06-16.md
+- Developer: lcash
+- Articles created: (none)
+- Articles updated: [[concepts/knowted-nano-banana-ai-photo-generation]] (ICP testing of 8 hero lines: 3 universal winners, 1 retired; content-mode pivot over ad-mode; logo reference wiring into nano banana; "Listen, or take notes. Not both" rejected as riddle → "Just listen. Knowted takes the notes." adopted; variant-pick workflow; copy bank line retired), [[concepts/knowted-waitlist-website-iteration]] (Session 22:55 hero line testing results added to sources)
+- Note: Final incremental pass capturing Session 22:55 (ICP-tested copy, content-mode pipeline, logo reference wiring) which was not included in the prior four compilation passes. The session ran ICP testing across all four avatar segments on 8 candidate hero lines, establishing a testing rule (call/meeting language invisible to students, lecture language invisible to pros) and pivoting from ad-mode (CTA-heavy cards) to content-mode (hook + wordmark, caption carries CTA) for the current batch.
