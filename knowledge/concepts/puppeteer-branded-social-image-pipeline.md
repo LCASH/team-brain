@@ -72,13 +72,21 @@ The logo system is designed for progressive enhancement. On initial generation, 
 
 All competitor claims in the social image concepts are validated against the factual audit performed in the same day (see [[concepts/knowted-competitive-advertising-risk-audit]]). No concept references unverified pricing, unsubstantiated features, or unconfirmed competitor weaknesses. The vs-01 through vs-04 competitor comparison cards were rewritten against the audit findings.
 
+### AI Photo Generation via Nano Banana (2026-06-16)
+
+On 2026-06-16, AI-generated lifestyle photography was integrated via Nano Banana Pro (Gemini 3 Pro Image) — bypassing the free-tier quota=0 block from Jun 12. A new `photoStatement` template composites full-bleed AI photos with a CSS gradient scrim (bottom 50%, black-to-transparent) + HTML headline/CTA overlay. The photo is AI-generated for emotional/lifestyle impact; all text is HTML-rendered for pixel-perfect fidelity. This is the concrete implementation of the hybrid architecture (diffusion for backgrounds, HTML for text) established on Jun 12.
+
+The user chose "Both" — template-based text cards for ads AND AI photo cards for organic posts — establishing a mixed content cadence. Brand green (#00ff88) threads naturally through AI generations when specified in prompts. AI-generated text within photos remains garbled (known diffusion limitation) but the gradient scrim hides it completely. See [[concepts/knowted-nano-banana-ai-photo-generation]] for the full analysis.
+
 ## Related Concepts
 
 - [[concepts/knowted-competitive-advertising-risk-audit]] - The factual audit that all competitive social image concepts are validated against; no unverified stats in ad cards
 - [[concepts/knowted-content-first-gtm-strategy]] - Social images are content assets that support the content-first GTM; ship visual content alongside video content
 - [[concepts/knowted-local-first-pricing-pivot]] - The pricing pivot that changed all comparison metrics in social images; "$0/seat" is the hero number
+- [[concepts/knowted-nano-banana-ai-photo-generation]] - The Nano Banana Pro (Gemini 3 Pro Image) integration for lifestyle photos; photoStatement template
 
 ## Sources
 
 - [[daily/lcash/2026-06-11.md]] - Puppeteer HTML→PNG pipeline built; 10 templates, 31 concepts, 90+ PNGs; logo placeholder system with brand-colored chips; 20 brands registered; preview UI at port 5180 (Vite + React + Tailwind); Facebook Ads Library too JS-heavy without auth; Puppeteer right for text-heavy cards, Flux/Ideogram for photographic later; all competitor claims validated against factual audit (Sessions 13:12, 14:22)
 - [[daily/lcash/2026-06-12.md]] - Gemini/Imagen integration attempted: all image models blocked on free tier (quota=0); Imagen uses `predict` endpoint, Gemini-N uses `generateContent`; wrapper handles both with fallback; hybrid architecture confirmed: diffusion for backgrounds only, HTML owns text/brand; metric template stacking fix; new output sizes trivial (one-liner in SIZES array) (Session 10:02)
+- [[daily/lcash/2026-06-16.md]] - Nano Banana Pro (Gemini 3 Pro Image) confirmed working via existing gemini.js; photoStatement template (full-bleed AI photo + gradient scrim + HTML text overlay); brand green threads through prompts; user chose "Both" (text cards + AI photos); 4-week posting rollout 70/20/10; macOS sandbox blocks ~/Downloads/ (Session 20:32)

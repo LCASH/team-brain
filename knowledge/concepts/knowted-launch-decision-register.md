@@ -3,9 +3,10 @@ title: "Knowted Launch Decision Register and Marketing Blockers"
 aliases: [launch-decisions, marketing-blockers, decision-register, knowted-launch-gates, decision-gating]
 tags: [knowted, strategy, marketing, legal, decision-making, launch]
 sources:
+  - "daily/lcash/2026-06-12.md"
   - "daily/lcash/2026-06-13.md"
   - "daily/lcash/2026-06-16.md"
-created: 2026-06-13
+created: 2026-06-12
 updated: 2026-06-16
 ---
 
@@ -92,5 +93,6 @@ The remaining highest-leverage moves are unchanged: D1 (lawyer hour on recording
 
 ## Sources
 
-- [[daily/lcash/2026-06-13.md]] - Produced ranked decision register (launch-decisions.md) with 3 gates (legal/truth → pricing → sequencing); marketing blocked by decisions not content; 4 moves clear ~70% (Jeffrey call, solo pricing, lawyer hour, cofounder call); D1 recording-consent is longest dependency (external lawyer); product-truth matrix with 7 claims needing confirmation; wired into STATUS.md; pending offer to draft product-truth checklist and consent-law brief (Session 11:09, second session)
+- [[daily/lcash/2026-06-12.md]] - D5 (Team at launch) resolved YES with privacy boundary: no-login = local-only, login = cloud sync; D6 (Website) resolved as two-phase (waitlist now, product-site end of June); D1 (Legal posture) assessed as materially stronger than assumed — local screen recording, no bot, user-is-participant is safest architecture in category; Jeffrey's counsel brief on recording consent filed; 8-decision register structure first designed with 3 gates (Session 13:45)
+- [[daily/lcash/2026-06-13.md]] - Full ranked decision register (launch-decisions.md) formalized with 3 gates (legal/truth → pricing → sequencing); marketing blocked by decisions not content; 4 moves clear ~70% (Jeffrey call, solo pricing, lawyer hour, cofounder call); D1 recording-consent is longest dependency (external lawyer); product-truth matrix with 7 claims needing confirmation; wired into STATUS.md (Session 11:09)
 - [[daily/lcash/2026-06-16.md]] - Jeffrey call resolved D2: all 7 product claims confirmed TRUE; language support corrected to 12 (not 100+); unblocks website copy and ad library (Session 15:23)

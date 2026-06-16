@@ -62,7 +62,7 @@ A 4-week content posting plan was built around the combined pipeline: 70% educat
 - [[concepts/knowted-content-first-gtm-strategy]] - The GTM strategy that these ad creatives support as part of the content-first approach
 - [[concepts/knowted-competitive-pricing-audit]] - The pricing data that feeds into competitor comparison creative
 - [[concepts/shopify-ai-agent-optimization]] - Another instance of AI-assisted marketing tooling in a different domain
-- [[concepts/knowted-gemini-nano-banana-photo-pipeline]] - The AI photo generation pipeline that produces backgrounds for the photoStatement template
+- [[concepts/knowted-nano-banana-ai-photo-generation]] - The AI photo generation pipeline that produces backgrounds for the photoStatement template
 
 ## Sources
 
