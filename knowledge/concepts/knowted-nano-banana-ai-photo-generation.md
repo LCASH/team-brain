@@ -49,6 +49,23 @@ AI-generated photos were assessed as on-brand for lifestyle/ad backgrounds:
 
 A content calendar was drafted alongside the photo generation work: 70/20/10 organic posting schedule with one content lane per avatar. The photo cards serve the "organic post" category where no text overlay is needed — clean lifestyle images with brand association. The text card templates (statement, metric, comparison) serve the "ad" category where specific claims and CTAs are required.
 
+### Two-Pipeline Production Strategy and Copy Bank (Session 22:20)
+
+Later on 2026-06-16, lcash iterated on the ad creative pipeline and formalized a **two-pipeline production strategy** for distinct content roles:
+
+| Pipeline | Tool | Content Role | Text Quality | Use Case |
+|----------|------|-------------|-------------|----------|
+| **Pipeline A** | Nano Banana Pro | Hero/scroll-stopper images | Text baked into AI image — unreliable, needs QA | Organic feed posts, hero cards |
+| **Pipeline B** | HTML/CSS + Puppeteer | Workhorse ad cards | Pixel-perfect, fully editable | Ads with sub-headline, reasons strip, URL |
+
+Nano Banana **must use Pro model** — Flash works but Pro gives crisper text. Always generate 2-3 variants and pick the best; text reliability is never guaranteed. Shorter headlines dramatically reduce AI text duplication errors (a student ad had "taking taking notes" until the headline was shortened).
+
+A key creative discovery: **"Knowted ≈ noted" is the core brand-ownable wordplay asset.** Two lines emerged as brand anchors: "Let Knowted note it" and "Consider it noted." The hero line was refined to: "Stop stressing about notes. Let Knowted note it, undetected." — weaving "undetected" into the sentence rather than dangling it as a standalone adjective.
+
+An **image generation rule** was formalized: nano banana = human/lifestyle scenes (no screens, no fake UI); HTML mockUI templates = actual product interface. Never use AI to fake the product interface — it produces garbled text that actively undermines trust.
+
+A structured **copy bank** (`copy-bank.md`) was built covering ads and organic content across all four ICPs (Solopreneur Sam, Student Sophie, Corporate Heavy-Caller, IT Ian). The bank separates ad copy (requires image pairing) from organic lines (must work standalone without an image) — a different constraint set for each format. The initial "be present" concept was killed as too abstract; direct outcome lines performed better.
+
 ## Related Concepts
 
 - [[concepts/html-css-ad-creative-renderer]] - The Puppeteer HTML→PNG pipeline that the photoStatement template extends; established the principle that HTML/CSS owns all text while diffusion handles backgrounds
@@ -58,4 +75,4 @@ A content calendar was drafted alongside the photo generation work: 70/20/10 org
 
 ## Sources
 
-- [[daily/lcash/2026-06-16.md]] - Nano Banana Pro (Gemini 3 Pro Image) confirmed working via existing gemini.js; photoStatement template built (full-bleed AI photo + gradient scrim + HTML overlay); AI text garbled but hidden by scrim; brand green threads through prompts; macOS sandbox blocks ~/Downloads/; user chose "Both" (template text cards + AI photo cards); 4-week posting rollout 70/20/10; generated assets gitignored; MCP server setup bypassed for simpler direct API path (Session 20:32)
+- [[daily/lcash/2026-06-16.md]] - Nano Banana Pro (Gemini 3 Pro Image) confirmed working via existing gemini.js; photoStatement template built (full-bleed AI photo + gradient scrim + HTML overlay); AI text garbled but hidden by scrim; brand green threads through prompts; macOS sandbox blocks ~/Downloads/; user chose "Both" (template text cards + AI photo cards); 4-week posting rollout 70/20/10; generated assets gitignored; MCP server setup bypassed for simpler direct API path (Session 20:32). Two-pipeline strategy formalized: Nano Banana Pro for hero/scroll-stoppers, HTML template for workhorse ads; "Knowted ≈ noted" wordplay as brand-ownable asset; shorter headlines reduce AI text duplication; copy bank built across 4 ICPs; "be present" concept killed as too abstract; image rule: nano banana = human/lifestyle (no screens), HTML = product UI; Pro > Flash for ad quality (Session 22:20)

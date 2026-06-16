@@ -695,3 +695,10 @@
 - Articles created: (none)
 - Articles updated: [[concepts/knowted-waitlist-website-iteration]] (Jeffrey feedback drove technical-to-outcome copy rework: "botless"→"undetectable", drop "private", "local"→"unlimited recordings & transcripts"; three pillars locked: Undetectable, Unlimited, Free; "would a uni student say this word?" test; Google Drive MCP connected; brand logos in Drive)
 - Note: Incremental pass capturing Session 21:06 (copy rework from Jeffrey feedback) which was not included in the prior two compilation passes. Jeffrey's core feedback: messaging describes the product not the customer. The rework drops founder/developer vocabulary ("botless", "private", "local") in favor of customer outcomes ("undetectable", "unlimited recordings & transcripts", "free"). The three-pillar descriptor is now: Undetectable. Unlimited recordings and transcripts. Free. Google Drive MCP was also connected during this session (plus Calendar and Gmail), with Knowted brand logos located in Drive's brand folder.
+
+## [2026-06-17T08:20:00+10:00] compile | daily/lcash/2026-06-16.md (incremental — Session 22:20)
+- Source: daily/lcash/2026-06-16.md
+- Developer: lcash
+- Articles created: (none)
+- Articles updated: [[concepts/knowted-nano-banana-ai-photo-generation]] (Two-pipeline production strategy formalized: Nano Banana Pro for hero/scroll-stoppers, HTML template for workhorse ads; "Knowted ≈ noted" as core brand-ownable wordplay; copy bank built across 4 ICPs; shorter headlines reduce AI text duplication; image rule: no AI-faked product UI; Pro > Flash for ad quality; "be present" concept killed as too abstract)
+- Note: Incremental pass capturing Session 22:20 (ad creative iteration) which was not included in the prior three compilation passes. The session formalized a two-pipeline strategy separating Nano Banana (hero/organic, unreliable text) from HTML/Puppeteer (workhorse ads, pixel-perfect text). A structured copy bank was built covering ads + organic content across all 4 ICP avatars. The key creative discovery was "Knowted ≈ noted" as a brand-ownable wordplay asset anchoring two hero lines.
