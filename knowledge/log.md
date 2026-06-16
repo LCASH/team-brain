@@ -604,3 +604,72 @@
 - Articles created: [[concepts/trail-snapshot-dual-axis-book-calibration]], [[concepts/sharp-snapshot-soft-book-contamination]]
 - Articles updated: [[concepts/closing-time-vs-stake-window-sharpness]] (added June 2 per-book raw trail continuation: dual-axis methodology, 424K trail rows, Coolbet Brier-vs-calibration gap finding, MLB Hits -36pp/Strikeouts +13pp, expanded unmapped book IDs, Bet365 contamination reference)
 - Note: Continuation of the June 1 sharpness calibration study, deepening from closing-time vs stake-window distinction to per-book, per-prop dual-axis scoring. Two new concept articles: (1) trail-snapshot dual-axis methodology — Brier alone lies (Coolbet best Brier at 0.211 but worst calibration at -9.6pp), must combine with calibration gap and firming direction; MLB Hits catastrophic -36pp gap, Strikeouts +13pp edge; pickle-before-report pattern after 23-min fetch crashed on format string. (2) Sharp snapshot soft-book contamination — Bet365 (365) is 3rd/4th largest sharp_snapshot contributor with 10K+ MLB observations despite being the primary soft target; AU soft books (900-903) also contaminate; Pinnacle thin at 466 NBA / 1,804 MLB; ~10 unmapped book IDs need resolution. SuperWin /diagnose health check was clean (f-string fix from June 1 validated in production).
+
+## [2026-06-16T20:32:56+10:00] compile | daily/lcash/2026-06-03.md
+- Source: daily/lcash/2026-06-03.md
+- Developer: lcash
+- Articles created: [[concepts/claude-god-autonomous-knowledge-extraction]], [[concepts/trail-depth-phase-b-scope-regression]], [[concepts/push-heartbeat-captured-at-freshness]], [[concepts/per-prop-sharp-book-specialization-theories]], [[concepts/eve-team-development-environment]], [[connections/trail-coverage-depth-independence]]
+- Articles updated: [[concepts/worker-status-observability]] (added V3 honest scraper health endpoint with 6 callsites + /api/v1/health/sources), [[concepts/pm-edge-prediction-market-theory]] (added PM monitoring audit: Kalshi dominant via OO SSE, PM Edge ROI collapses at day-as-unit t=0.36, Polymarket liquidity dead 0/605, 414 dormant theories), [[concepts/au-direct-scraper-coverage-expansion]] (added MLB rollout to all AU bookies: ~2300 new entries, BetIT base_competition_id trap, PointsBet Match marker ambiguity, trail pipeline validated 34k trails/hour)
+
+## [2026-06-16T20:52:00+10:00] compile | daily/lcash/2026-06-04.md
+- Source: daily/lcash/2026-06-04.md
+- Developer: lcash
+- Articles created: [[concepts/knowted-sales-prospecting-tool-stack]], [[concepts/knowted-cofounder-accountability-banker-feedback]], [[concepts/knowted-content-first-gtm-strategy]], [[connections/output-before-infrastructure-sequencing]]
+- Articles updated: (none)
+- Note: First Knowted admin compilation. Three concept articles covering: (1) 9-tool sales prospecting competitive analysis with final Saleshandy+HeyReach+Apollo stack at $162/mo under $200 budget — Apollo's 91% accuracy independently benchmarks at ~73%, credit-based pricing punishes volume buyers; (2) cofounder accountability framework incorporating banker feedback — kill Google-exit thesis, lead with margin/cost leadership, pitch deck v3 by 16 Jun; (3) content-first GTM strategy — "infrastructure without output is the classic founder trap", ship Video #1 before building LinkedIn system, positioning guardrail "tell reps what to do NEXT" not "find what's wrong". One connection article linking the output-before-infrastructure principle to SuperWin backtesting and operational skill patterns.
+
+## [2026-06-16T20:43:22+10:00] compile | daily/lcash/2026-06-05.md
+- Source: daily/lcash/2026-06-05.md
+- Developer: lcash
+- Articles created: (none)
+- Articles updated: (none)
+- Note: Empty daily log — contains only a failed memory flush (FLUSH_ERROR exit code 1) from a Knowted admin session with zero session data. No extractable knowledge.
+
+## [2026-06-16T20:44:37+10:00] compile | daily/lcash/2026-06-06.md
+- Source: daily/lcash/2026-06-06.md
+- Developer: lcash
+- Articles created: (none)
+- Articles updated: (none)
+- Note: Empty daily log — contains only a FLUSH_OK memory maintenance entry from a Knowted admin session with "Nothing worth saving." No extractable knowledge.
+
+## [2026-06-16T20:46:00+10:00] compile | daily/lcash/2026-06-10.md
+- Source: daily/lcash/2026-06-10.md
+- Developer: lcash
+- Articles created: (none)
+- Articles updated: (none)
+- Note: Empty daily log — contains only a FLUSH_OK memory maintenance entry from a Knowted admin session with "Nothing worth saving from this session." No extractable knowledge.
+
+## [2026-06-16T20:47:06+10:00] compile | daily/lcash/2026-06-11.md
+- Source: daily/lcash/2026-06-11.md
+- Developer: lcash
+- Articles created: [[concepts/knowted-local-first-pricing-pivot]], [[concepts/knowted-competitive-advertising-risk-audit]], [[concepts/llm-feature-fabrication-audit-pattern]], [[concepts/puppeteer-branded-social-image-pipeline]], [[connections/pricing-cascade-dependency-ordering]]
+- Articles updated: [[concepts/knowted-cofounder-accountability-banker-feedback]] (pricing locked at $0/$19/$69; target audience reframed to entrepreneurs; Video #1 reframed), [[concepts/knowted-content-first-gtm-strategy]] (Video #1 reframed from founder POV to free-tier demo; website rewritten with waitlist CTA + sales landing page; designer hiring scoped)
+- Note: Six sessions across Knowted admin (pricing pivot, website rewrite, competitive audit, social images) and knowted-scraper (social image pipeline). The dominant theme is the local-first pricing pivot and its cascade through all downstream materials. The LLM feature fabrication discovery is a generalizable methodology finding. The social image pipeline (Puppeteer HTML→PNG) is a reusable tool pattern. Memory flush at 14:22 produced FLUSH_OK with no extractable content.
+
+## [2026-06-16T20:53:09+10:00] compile | daily/lcash/2026-06-12.md
+- Source: daily/lcash/2026-06-12.md
+- Developer: lcash
+- Articles created: [[concepts/knowted-agentic-chief-of-staff-system]], [[concepts/knowted-production-deploy-safety-rule]], [[concepts/linkedin-adspower-inbox-bot]]
+- Articles updated: [[concepts/puppeteer-branded-social-image-pipeline]] (Gemini/Imagen integration attempted and failed — all image models blocked on Google AI free tier quota=0; Imagen predict vs Gemini-N generateContent endpoint differences; hybrid architecture confirmed), [[concepts/knowted-cofounder-accountability-banker-feedback]] (co-founder operating guide indexed with Luke 8 areas / Jeffrey 6 areas; P0 gap surfaced — investor pipeline + financial model have no active workstream; finance heartbeat revealed runway=0; IR heartbeat drafted 4 raise artifacts)
+- Note: Thirteen sessions across Knowted admin spanning competitive pricing recap, social image expansion (Gemini failure), LinkedIn inbox bot (AdsPower CDP + AI drafting), co-founder operating guide, agentic business OS (dept-heartbeat + asks-ledger + skill-smith + cloud routine), unauthorized Vercel deploy incident establishing production safety rule, and website revamp iterations. The three dominant themes are: (1) the agentic chief-of-staff system as a new autonomous business operations pattern, (2) the production deploy safety rule as a standing operational gate, and (3) the LinkedIn inbox bot demonstrating the AdsPower anti-detection pattern applied to a new platform. The finance heartbeat revealing runway=0 is the most strategically significant finding of the day.
+
+## [2026-06-16T21:15:00+10:00] compile | daily/lcash/2026-06-12.md (incremental)
+- Source: daily/lcash/2026-06-12.md
+- Developer: lcash
+- Articles created: [[concepts/html-css-ad-creative-renderer]], [[concepts/knowted-competitive-pricing-audit]], [[connections/agentic-os-self-evolving-capability-pattern]]
+- Articles updated: [[concepts/knowted-cofounder-accountability-banker-feedback]] (operating guide, finance runway=0, IR heartbeat 4 artifacts, Jeffrey intros overdue), [[concepts/knowted-content-first-gtm-strategy]] (waitlist site launch, content audit, legal positioning, social ad creative system)
+- Note: Incremental pass completing the 2026-06-12 compile. Adds competitive pricing audit (live-verified 9 competitors, Knowted 24-80% cheaper, Fireflies BIPA lawsuits), HTML/CSS ad creative renderer (Puppeteer over diffusion models, Google AI free-tier zero quota), and a cross-cutting connection between the Knowted OS's asks-ledger/skill-smith dual-engine and the VB scanner's self-evolving /checkup skill pattern.
+
+## [2026-06-16T21:30:00+10:00] compile | daily/lcash/2026-06-13.md
+- Source: daily/lcash/2026-06-13.md
+- Developer: lcash
+- Articles created: [[concepts/knowted-expert-knowledge-base-architecture]], [[concepts/knowted-launch-decision-register]], [[concepts/knowted-waitlist-website-iteration]]
+- Articles updated: [[concepts/knowted-cofounder-accountability-banker-feedback]] (expert/ scaffolded, launch decision register created, P0 #1/#2 gap confirmed, 4 moves clear ~70% of marketing blockers), [[concepts/knowted-content-first-gtm-strategy]] (marketing blocked by decisions not content; website middle-section critique; hero rewritten; em-dash sweep), [[concepts/knowted-production-deploy-safety-rule]] (deploy safety gate validated: ambiguous "yes" correctly blocked; em-dash sweep enforced; added 2026-06-13 source)
+- Note: Two Knowted admin sessions spanning website UX review and operating model documentation. Three new concepts: (1) expert/ knowledge base architecture with 8 business areas per Luke, 8-section template, three-tier persistence (expert/ durable, workstreams/ sprint, STATUS.md map) — surfaced P0 #1/#2 strategic gap (Finance/IR thinnest, most raise-critical); (2) launch decision register identifying marketing as decision-blocked not content-blocked with 3-gate framework and 4 moves clearing ~70%; (3) waitlist website iteration — hero locked to "Botless, Private, Free, Unlimited AI Meeting Assistant," middle-section bento critique (4/6 repeat hero, phone demo anti-pattern), Claude MPC wedge as recommended differentiator. Deploy safety rule validated organically (ambiguous "yes" correctly blocked). Memory flush error at 11:09 did not affect compilation.
+
+## [2026-06-16T21:45:00+10:00] compile | daily/lcash/2026-06-16.md
+- Source: daily/lcash/2026-06-16.md
+- Developer: lcash
+- Articles created: [[concepts/knowted-investor-data-room-pipeline]], [[concepts/knowted-icp-land-expand-personas]], [[concepts/knowted-gemini-nano-banana-photo-pipeline]]
+- Articles updated: [[concepts/knowted-launch-decision-register]] (D2 resolved via Jeffrey call — all 7 product claims confirmed TRUE, language corrected to 12), [[concepts/knowted-cofounder-accountability-banker-feedback]] (three sends completed 16 Jun, data room built, Jeffrey product truth confirmed, cap table documented, banker unnamed single-point-of-failure), [[concepts/linkedin-adspower-inbox-bot]] (anti-detection overhaul: bezier mouse curves, per-char typing with typo simulation, gaussian jitter, auto-start pattern across all endpoints, context-level bot-signal patching), [[concepts/html-css-ad-creative-renderer]] (Gemini 3 Pro Image / Nano Banana integrated for lifestyle photos; photoStatement template; AI text garbled at small sizes; 4-week 70/20/10 posting plan)
+- Note: Six sessions across Knowted admin spanning fundraise operations, ICP development, AI photo generation, and LinkedIn bot hardening. Three dominant themes: (1) the "sends not builds" insight — the raise was stalling on unsent communications, not unfinished work; three 5-minute sends created more momentum than a week of building; (2) four complete ICP personas mapping a land-and-expand motion from Free→Team with Corporate Caller as the critical bridge persona; (3) Gemini Nano Banana integration for AI lifestyle photography composited under HTML text via photoStatement template. Jeffrey call resolved the D2 product-truth blocker from the launch decision register, unblocking website and ads. The LinkedIn bot received a full anti-detection overhaul with humanized interaction timing at every touchpoint.

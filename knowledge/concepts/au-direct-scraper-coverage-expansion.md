@@ -4,8 +4,9 @@ aliases: [au-scraper-expansion, sportsbet-pointsbet-greenfield, bet365-monopoly-
 tags: [value-betting, scraping, architecture, coverage, au-soft-books, infrastructure]
 sources:
   - "daily/lcash/2026-05-28.md"
+  - "daily/lcash/2026-06-03.md"
 created: 2026-05-28
-updated: 2026-05-28
+updated: 2026-06-03
 ---
 
 # AU Direct Scraper Coverage Expansion
@@ -66,6 +67,20 @@ This separation enables easy platform migration: when BetIT switches APIs, only 
 
 BetIT uses abbreviated format ("D. Vassell") while all other bookies use full names ("Devin Vassell"). This requires a reconciliation layer — either a fuzzy matcher in the adapter or a lookup table from abbreviated → canonical names. The TAB scraper solved the same problem using its own threshold market full names (see [[concepts/tab-scraper-threshold-markets]]); BetIT may need a similar self-contained resolution approach if the bmapollo API includes both formats.
 
+### MLB Rollout to All AU Bookies (2026-06-03)
+
+On 2026-06-03 (Session 09:46), lcash deployed MLB player-prop scraping across all AU direct-scrape bookies to Eve, producing ~2,300 new MLB entries from books that previously had zero coverage.
+
+**Per-sport prop maps, not per-sport adapters**: The same `parse_event` entrypoint dispatches on a `sport` kwarg — no separate MLB adapter modules were needed, keeping adapter count low.
+
+**BetIT `base_competition_id` trap**: bmapollo's `nextUpMarkets` endpoint strictly differentiates `base_competition_id` from `competition_id`. Passing `competition_id` where `base_competition_id` was expected returned **silently zero events** (no error, just empty array). The correct MLB base_competition_id is `2505f17b-84c1-5f87-b97f-3b3ff234dafe`. This follows the scanner's established "plausible wrong output" pattern — the API returns 200 OK with an empty result, indistinguishable from "no games available."
+
+**PointsBet "(Match)" marker ambiguity**: The "(Match)" suffix means opposite things by sport — skip on NBA, keep on MLB. Documented as a per-sport parsing gotcha.
+
+**Trail pipeline validated**: All 7 books (bet365 + 6 AU direct) landing trail_entries at comparable rates (~34k trails/hour, ~565/min). 73% sharp trails, 27% soft trails — sharps dominate because Pinnacle/DraftKings lines move every few seconds pre-game. Trail volume (~5M/month) is intentional for bet-timing backtester.
+
+BetIT MLB loads player props only ~2-3 hours before first pitch — 0 rows during early discovery is expected upstream timing, not a parser bug.
+
 ## Related Concepts
 
 - [[concepts/betit-123bet-direct-scraper]] - The original BetIT integration that is now broken from the bmapollo migration
@@ -77,5 +92,6 @@ BetIT uses abbreviated format ("D. Vassell") while all other bookies use full na
 
 ## Sources
 
+- [[daily/lcash/2026-06-03.md]] — Session 09:46: MLB rollout to all AU bookies; ~2,300 new MLB entries; per-sport prop maps via `sport` kwarg; BetIT `base_competition_id` trap (silently zero events); PointsBet "(Match)" ambiguity per sport; 7 books landing trails (~34k/hr, 73% sharp); BetIT MLB loads props ~2-3h before first pitch
 - [[daily/lcash/2026-05-28.md]] - Session 15:38: 7/8 direct scrapers green, BlackStream dead since 2026-04-13; bet365 14 prop types / 2,062 MLB markets no other direct scraper captures; 9 monopoly CO variants; Sportsbet + PointsBet biggest blind spots. Session 17:45: 5 adapter modules built; PointsBet `/api/mes/v3/events/{event_id}` = 2.9 MB / 978 outcomes; BetIT migrated 123bet→bmapollo silently (42 vs 523 markets); 381 unique keys, 135 at ≥3 bookies; TAB 19 new combo threshold specs; DD/TD different outcome shapes; 7 passing tests. Session 16:09: per-scraper extension map with priority order; AdsPower browser recon started for API capture
 

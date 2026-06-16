@@ -6,8 +6,9 @@ sources:
   - "daily/lcash/2026-04-13.md"
   - "daily/lcash/2026-04-19.md"
   - "daily/lcash/2026-05-03.md"
+  - "daily/lcash/2026-06-03.md"
 created: 2026-04-13
-updated: 2026-05-03
+updated: 2026-06-03
 ---
 
 # Worker Status Observability
@@ -21,6 +22,7 @@ A fix to the value betting scanner's worker status reporting where the `bet365_m
 - The `main.py` orchestrator was also overwriting worker status with "streaming" — fixed to preserve the worker's self-reported status
 - bet365 publishes MLB pre-game fixtures 6-12 hours before game time, so `idle_no_fixtures` is expected during off-hours
 - Deployed to mini PC as commit `88e85c8`, 2 files changed: `scraper/bet365_mlb_game.py` and `main.py`
+- V3 `_bookie_status` dict existed but was never populated — dashboard falsely reported "healthy"; fixed with 6 callsites in push loops + `/api/v1/health/sources` endpoint with 3-band staleness (green/yellow/red)
 
 ## Details
 
@@ -67,6 +69,10 @@ The aggregate metrics masked component-level failures. This is a more insidious 
 
 Pattern 3 requires domain knowledge to detect: "4,082 markets" sounds healthy unless you know the expected count should be 8,000+. Health endpoints need per-component breakdowns (per-scraper market counts, per-scraper last successful fetch time, per-scraper error counts) rather than just aggregate totals.
 
+### V3 Dashboard Honest Scraper Health Endpoint (2026-06-03)
+
+On 2026-06-03 (Session 12:20), lcash discovered that the v3 DataStore's `_bookie_status` dict existed but was never populated — no setter was ever called from any push loop. The dashboard was reporting "healthy" when the bet365 scraper wasn't running. Six callsites were added (3 success + 3 error paths) in `v3/startup.py` to populate bookie status. A new `/api/v1/health/sources` endpoint was deployed on Eve and wired through the VPS proxy to the dashboard, with 3-band staleness coloring: <30s green, 30-89s yellow, ≥90s red (FAIL). The `collectIssues` function was updated so stale scrapers trigger FAIL not WARN. Per-book OpticOdds sub-health was deferred since OO pushes ~40 books through one SSE channel. An organic deploy validation caught the system working in real-time: bet365_nba went from `age=100s, healthy=False` to `age=10s, healthy=True` after a real push.
+
 ## Related Concepts
 
 - [[concepts/silent-worker-authentication-failure]] - The more severe variant: workers with zero output instead of misleading output
@@ -80,3 +86,4 @@ Pattern 3 requires domain knowledge to detect: "4,082 markets" sounds healthy un
 - [[daily/lcash/2026-05-03.md]] - Health endpoint showed 4,082 Bet365 markets, 8,272 line matches, push worker active — aggregate metrics masked component-level scraper failures; user corrected investigation direction: "Bet365 scrapers are actually struggling" (Sessions 08:29, 08:40)
 - [[daily/lcash/2026-04-13.md]] - bet365_mlb_game reporting hardcoded "streaming" when idle; replaced with actual states (idle_no_fixtures/streaming/stale/error); main.py was overwriting worker status; deployed as commit 88e85c8; bet365 publishes MLB fixtures 6-12h before game time (Session 16:31)
 - [[daily/lcash/2026-04-19.md]] - Game scraper (Bet365 2.0) reported `status=streaming` and `age=1s` while data was 3.7 hours old; the four-state system correctly reports the process state but doesn't validate data freshness; `0.0ms` scrape time is a diagnostic smoking gun for stale cached data (real Chrome refresh takes 500ms+); status must verify data freshness not just process liveness. See [[concepts/game-scraper-chrome-crash-recovery]] for the auto-recovery fix (Sessions 14:57, 20:07)
+- [[daily/lcash/2026-06-03.md]] — Session 12:20: `_bookie_status` dict never populated; 6 callsites added; `/api/v1/health/sources` endpoint deployed; 3-band staleness coloring; per-book OO deferred

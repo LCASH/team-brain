@@ -5,8 +5,9 @@ tags: [value-betting, prediction-markets, theory, kalshi, polymarket, methodolog
 sources:
   - "daily/lcash/2026-05-19.md"
   - "daily/lcash/2026-05-27.md"
+  - "daily/lcash/2026-06-03.md"
 created: 2026-05-19
-updated: 2026-05-27
+updated: 2026-06-03
 ---
 
 # PM Edge Prediction Market Theory
@@ -86,7 +87,22 @@ Structural fixes confirmed: drop HR/Bases/Hits props (t=-2.73 losses), drop `one
 
 The Polymarket Gamma scraper (book 972) stopped firing after 2026-05-21 because `ENABLE_POLYMARKET_GAMMA=1` was never added to the v3 batch launchers (`start-v3.bat`, `run_v3.bat`). This is a recurring env-var gate failure pattern (see [[concepts/configuration-drift-manual-launch]]): feature lands with `ENABLE_X` gate, env var never wired into launcher, next restart silently disables. Without Gamma, Kalshi was the only PM book quoting player counting stats — the "Kalshi is bleeding" diagnosis may partly be a data-gap artifact. Fixed in commit `1600994`.
 
+### PM Monitoring Infrastructure Audit (2026-06-03)
+
+On 2026-06-03 (Session 08:47), a deep quantitative audit of PM monitoring infrastructure revealed several critical findings:
+
+**Kalshi is the dominant PM volume source** — 6,150 picks in 30 days (75% of PM-soft volume), arriving entirely via OpticOdds SSE relay with no direct scraper needed. The prior code inventory incorrectly labeled Kalshi as having "no active scraper" because it checked for scraper files rather than recognizing OO SSE as the data path.
+
+**PM Edge ROI collapses at day-as-unit**: The flagship MLB PM Edge — Strict theory showed 5,060 picks at +2.66% ROI headline, but this **collapses to t=0.36** when computed at the day-as-unit level (bootstrap 95% CI [−11.0%, +17.8%]). The pick-count-CI artifact (√(5060/15) ≈ 18× naive CI tightening) disappears when correcting for intra-day correlation.
+
+**Polymarket liquidity enrichment is completely dead** — 0/605 fill rate for `poly_liquidity` despite the module being wired into the tracker. Diagnosed as the largest infrastructure gap.
+
+**414 Pinnacle niche-league theories auto-spawned**, ~399 with zero picks in 30 days — dead weight on pipeline evaluation cycles.
+
+The only statistically significant PM cell was Underdog Predictions (65 picks, 6 days, +14.4% ROI, t=+2.18) — borderline n requiring pre-registered forward holdout before shipping. The Bases prop on PM books was near-significant negative (t=−1.70, ROI −9.6%), mechanistically plausible because casual HR narratives juice Over lines.
+
 ## Sources
 
 - [[daily/lcash/2026-05-19.md]] - PM Edge theory design: PM odds as soft vs sharp consensus; 4 theories designed (only Strict pair shipped Phase 1); sharp weights Pin 1.0/Nov 0.8/FD 0.5/DK 0.5/PB 0.4; multiplicative devig, min_sharps=2; dry-eval 31-33 MLB picks (all Kalshi HR O0.5, EVs 25-60%); first live cycle 45 picks (43 Kalshi); Tristan Peters 15.57 vs sharp ~9.2; concentration risk in correlated HR markets; backtest will overstate EV due to thin orderbook depth; `cache_bust_ts` bump for tracker refresh; Phase 2: Loose theories + orderbook snapshots; Phase 3: per-PM-book split (Sessions 11:38, 12:13). Survivorship cliff: 70% PM markets delist within 90min, only 16.7% remain at game_start; Novig 12.4% >5pp divergence from consensus; empty soft trail rows mostly <15% (Session 12:44). `/topdown-pm` route lost on redeploy — not committed to git (Session 12:13)
 - [[daily/lcash/2026-05-27.md]] - 9-day audit of 2924 resolved MLB PM picks: Pinnacle as side-direction signal (Under +37.3% t=2.80, Over -28.8% t=-2.39); cross-book replication across Kalshi/Polymarket/Polymarket USA; "drop Kalshi" retracted; HR/Bases/Hits structurally unprofitable; 3 v2 theories proposed (Session 15:26). Polymarket Gamma env var gate failure: ENABLE_POLYMARKET_GAMMA missing from v3 batch launchers; scraper dead since May 21; fixed commit 1600994 (Session 17:08)
+- [[daily/lcash/2026-06-03.md]] — Session 08:47: PM monitoring audit; Kalshi 6,150 picks/30d (75% PM-soft volume) via OO SSE; MLB PM Edge — Strict ROI collapses to t=0.36 at day-as-unit; Polymarket liquidity enrichment 0/605 fill rate; 414 auto-spawned Pinnacle theories (~399 dead); Underdog Predictions borderline significant (t=+2.18); Bases prop near-significant negative (t=−1.70)
