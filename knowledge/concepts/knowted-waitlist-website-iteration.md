@@ -6,8 +6,11 @@ sources:
   - "daily/lcash/2026-06-12.md"
   - "daily/lcash/2026-06-13.md"
   - "daily/lcash/2026-06-16.md"
+  - "daily/lcash/2026-06-18.md"
+  - "daily/lcash/2026-06-23.md"
+  - "daily/lcash/2026-06-27.md"
 created: 2026-06-12
-updated: 2026-06-16
+updated: 2026-06-27
 ---
 
 # Knowted Waitlist Website Copy Iteration and Middle-Section Critique
@@ -87,8 +90,40 @@ Google Drive MCP was also connected during this session (plus Calendar and Gmail
 - [[concepts/knowted-launch-decision-register]] - The decision register that gates when this waitlist version can go live; D2 (product truth) resolved Jun 16 unblocking copy
 - [[concepts/knowted-icp-voc-avatar-derivation]] - The four ICP avatars that the "would a uni student say this word?" test references; the pillars speak to Student Sophie and Solopreneur Sam as Free-tier funnel
 
+### Full Homepage Copy Pass (2026-06-18)
+
+On 2026-06-18, lcash performed a complete section-by-section homepage copy pass with user approval, made possible by Jeffrey's D2 product-truth confirmation (all claims TRUE, 12 languages). The process started as section-by-section review with user picking from options, then midway through the user said "just action the changes yourself that align with the vision" — handing off autonomous execution once trust was established.
+
+**Final copy decisions locked:**
+
+| Section | Decision |
+|---------|----------|
+| **Hero H1** | "Listen, or take notes. You shouldn't have to choose." (pain-hook lead) |
+| **Hero descriptor** | Feature line underneath the H1 |
+| **Middle header** | "Your meetings, finally working for you." |
+| **Card 1** | "Free that actually means free" (benefit-led) |
+| **Card 2** | "Ask your meetings anything" (Claude MCP wedge reframed) |
+| **Card 3** | "Never lose what was said" |
+| **Card 4** | "Your data never leaves your laptop" (privacy proof) |
+| **Card 5** | "Bring your team when you're ready" (Team upsell) |
+| **Card 6** | "No bot crashing your call" (undetectable differentiator) |
+| **Transcription header** | "Transcripts you can actually trust" — speaker stat made concrete ("7 speakers in a room") |
+| **Languages** | Locked to 12 (Jeffrey confirmed) |
+| **FAQ header** | "Questions you're probably asking" — answers kept as-is (all confirmed accurate) |
+| **Final CTA** | "Never take meeting notes again." — removed "For sales teams" button, dropped "why it's free" framing |
+
+All 6 bento cards were rewritten as benefit-led headlines rather than feature descriptions, addressing the Jun 13 diagnosis that 4/6 cards repeated the hero. The Pricing and Sales pages were reviewed and left untouched — already on-vision from prior audit work.
+
+**Outstanding issues identified:**
+- FAQ and pricing still list HIPAA/SOC 2 as Enterprise features — these are roadmap certifications (see [[concepts/llm-feature-fabrication-audit-pattern]]), need softening once D3 (Enterprise plan) decision is made
+- `/sales` page proof strip shows "2-3 hrs" and "240+ meetings" alongside "+11%" — only "+11%" is confirmed by Jeffrey; other stats need verification before the page goes wide
+- Nothing committed or deployed — holding for explicit user approval per [[concepts/knowted-production-deploy-safety-rule]]
+
 ## Sources
 
 - [[daily/lcash/2026-06-12.md]] - Hero copy first locked in session 22:27: "Botless, Private, Free, Unlimited AI Meeting Assistant"; user-supplied copy lightly edited for mechanics; eyebrow pill, "For sales teams" button, "free because it runs locally" line removed per user; middle-section critique delivered: 4/6 cards repeat hero, phone demo shows "no evidence found" (trust-killer), Claude MCP card assumes audience knowledge; recommended collapse to 2-3 cards around Claude wedge; em-dash sweep rule established; Vercel Instant Rollback recommended over git revert for production incidents (Session 22:27)
 - [[daily/lcash/2026-06-13.md]] - Continued iteration: deploy safety gate validated organically (ambiguous "yes" correctly NOT treated as push authorization); em-dash sweep collateral damage (pricing glyph broken, comma splices from bulk replacement); languages claim 12+ vs 100+ pending confirmation; middle-section revamp directions proposed (Session 11:09)
 - [[daily/lcash/2026-06-16.md]] - Jeffrey feedback drove technical-to-outcome copy rework: "botless"→"undetectable", drop "private" (table stakes), "local calls"→"unlimited recordings & transcripts", broaden beyond "meetings"; three pillars locked: Undetectable, Unlimited, Free; test: "would a uni student say this word?"; Google Drive MCP connected (brand logos located); legal flag on "undetectable" tied to one-party consent (Session 21:06). ICP testing of 8 hero lines: 3 universal winners, 1 retired; "Listen, or take notes. Not both." rejected as confusing riddle → "Just listen. Knowted takes the notes." adopted as headline; call/meeting language invisible to students (Student Sophie persona test); content-mode pivot for social posts (hook + wordmark, caption carries CTA); "Never miss what was said on a call" retired as too generic (Session 22:55)
+- [[daily/lcash/2026-06-18.md]] - Full section-by-section homepage copy pass: hero locked to pain-hook lead ("Listen, or take notes. You shouldn't have to choose."); 6 bento cards rewritten as benefit-led headlines; transcription stat made concrete ("7 speakers in a room"); FAQ header changed to "Questions you're probably asking"; final CTA "Never take meeting notes again"; "For sales teams" button removed; Pricing and Sales pages left untouched (already on-vision); HIPAA/SOC 2 still listed as Enterprise features (needs D3 resolution); `/sales` proof strip has unverified stats ("2-3 hrs", "240+ meetings"); nothing committed or deployed (Session 15:29)
+- [[daily/lcash/2026-06-23.md]] - Website confirmed as immediate next objective ahead of content posting; launch sequence locked: website + endpoint live → content drives traffic → data room closes investors; `VITE_WAITLIST_ENDPOINT` identified as single blocker — signups vanish without it; "Don't jump to wiring before planning" lesson — user pulled back premature execution; section-by-section querying with options earns trust then user delegates remainder; "Don't change for the sake of it" — Pricing and Sales confirmed already on-vision; typography system change planned: Fraunces (serif display) for headings, Public Sans for body — replacing Plus Jakarta Sans to fix "hero feels thin" problem; homepage changes still NOT committed or deployed (Sessions 10:09, 11:33)
+- [[daily/lcash/2026-06-27.md]] - Website confirmed as correct next objective with hero copy recommendation: "Stop stressing about notes. Let Knowted note it." with strip "Undetectable · Unlimited recordings & transcripts · Free"; `VITE_WAITLIST_ENDPOINT` remains critical gate — every signup lost without it; Jeff plan drafted for website go-live covering endpoint wiring, product claims, and data room; dev server running on localhost:8080 with uncommitted edits across multiple components (Sessions 14:13, 19:37)

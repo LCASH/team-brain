@@ -5,8 +5,11 @@ tags: [knowted, tooling, content-strategy, puppeteer, image-generation, marketin
 sources:
   - "daily/lcash/2026-06-11.md"
   - "daily/lcash/2026-06-12.md"
+  - "daily/lcash/2026-06-17.md"
+  - "daily/lcash/2026-06-23.md"
+  - "daily/lcash/2026-06-27.md"
 created: 2026-06-11
-updated: 2026-06-16
+updated: 2026-06-27
 ---
 
 # Puppeteer Branded Social Image Generation Pipeline
@@ -78,6 +81,12 @@ On 2026-06-16, AI-generated lifestyle photography was integrated via Nano Banana
 
 The user chose "Both" — template-based text cards for ads AND AI photo cards for organic posts — establishing a mixed content cadence. Brand green (#00ff88) threads naturally through AI generations when specified in prompts. AI-generated text within photos remains garbled (known diffusion limitation) but the gradient scrim hides it completely. See [[concepts/knowted-nano-banana-ai-photo-generation]] for the full analysis.
 
+### Brand Logo Overlay Pipeline (2026-06-17)
+
+On 2026-06-17, a `brand-overlay.js` script was added to the pipeline to composite the real Knowted logo onto AI-generated images via Puppeteer post-processing. This was necessary because AI image models (Nano Banana / Gemini 3 Pro Image) cannot reliably render brand logos — they redraw the logo from memory rather than reproducing the reference image pixel-perfectly, producing skewed and garbled results. The overlay script takes a generated image, composites the real logo PNG at fixed coordinates (top-left), and outputs a final image with a pixel-perfect brand mark. This extends Puppeteer's role from "text card renderer" to also include "brand mark compositor" for AI-generated images, making it a post-processing layer in the AI photo pipeline rather than just an alternative pipeline.
+
+Six post-ready images were produced using this workflow: stress, relax, sell, promised, student, and free — each with the real logo composited via `brand-overlay.js`. The pipeline also added Google Meet video grids to laptop screens in call-context scenes (stress, relax, sell) to make the meeting-capture use case visually unmistakable.
+
 ## Related Concepts
 
 - [[concepts/knowted-competitive-advertising-risk-audit]] - The factual audit that all competitive social image concepts are validated against; no unverified stats in ad cards
@@ -90,3 +99,6 @@ The user chose "Both" — template-based text cards for ads AND AI photo cards f
 - [[daily/lcash/2026-06-11.md]] - Puppeteer HTML→PNG pipeline built; 10 templates, 31 concepts, 90+ PNGs; logo placeholder system with brand-colored chips; 20 brands registered; preview UI at port 5180 (Vite + React + Tailwind); Facebook Ads Library too JS-heavy without auth; Puppeteer right for text-heavy cards, Flux/Ideogram for photographic later; all competitor claims validated against factual audit (Sessions 13:12, 14:22)
 - [[daily/lcash/2026-06-12.md]] - Gemini/Imagen integration attempted: all image models blocked on free tier (quota=0); Imagen uses `predict` endpoint, Gemini-N uses `generateContent`; wrapper handles both with fallback; hybrid architecture confirmed: diffusion for backgrounds only, HTML owns text/brand; metric template stacking fix; new output sizes trivial (one-liner in SIZES array) (Session 10:02)
 - [[daily/lcash/2026-06-16.md]] - Nano Banana Pro (Gemini 3 Pro Image) confirmed working via existing gemini.js; photoStatement template (full-bleed AI photo + gradient scrim + HTML text overlay); brand green threads through prompts; user chose "Both" (text cards + AI photos); 4-week posting rollout 70/20/10; macOS sandbox blocks ~/Downloads/ (Session 20:32)
+- [[daily/lcash/2026-06-17.md]] - `brand-overlay.js` logo compositing pipeline: AI can't render logos pixel-perfectly (skews/garbles even with reference); Puppeteer composites real logo PNG post-render; 6 post-ready images produced (stress, relax, sell, promised, student, free); Google Meet grids added to call-context scenes; free-v1 text glitch required v2 (Sessions 00:11, 00:47)
+- [[daily/lcash/2026-06-23.md]] - 6 post-ready images finalized with real logo overlay and saved to Downloads; Brand Copy Guide PDF rendered from copy-bank.md; copy-bank §1 identified as drifted from the 6 actually-built image lines — §5 avatar hooks were used instead, needs §9 "move winners up" pass to reconcile; brand book committed with canonical color tokens (Brunswick Green #1D503A, Classic Linen #F9F4ED) and typography (Fraunces/Public Sans) (Sessions 10:09, 11:33)
+- [[daily/lcash/2026-06-27.md]] - 6 content images with real logo overlay confirmed complete in Downloads; Brand Copy Guide PDF generated as snapshot from copy-bank.md; copy bank §1/§5 drift reconfirmed — 2 of 6 built images came from §5 avatar hooks not §1 ad headlines, needs §9 "promote winners up" reconciliation pass; organic captions needed for the 6 images (Session 14:13)

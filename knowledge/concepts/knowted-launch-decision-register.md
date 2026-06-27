@@ -6,8 +6,9 @@ sources:
   - "daily/lcash/2026-06-12.md"
   - "daily/lcash/2026-06-13.md"
   - "daily/lcash/2026-06-16.md"
+  - "daily/lcash/2026-06-18.md"
 created: 2026-06-12
-updated: 2026-06-16
+updated: 2026-06-18
 ---
 
 # Knowted Launch Decision Register and Marketing Blockers
@@ -91,8 +92,17 @@ The language correction (100+ → 12) is the only factual change — all other c
 
 The remaining highest-leverage moves are unchanged: D1 (lawyer hour on recording consent) and D4 (10-min solo pricing defaults).
 
+### D2 Actioned into Live Copy (2026-06-18)
+
+On 2026-06-18, lcash performed a full section-by-section homepage copy pass — the first time D2's resolution was fully actioned into website copy. All 7 confirmed product claims were woven into benefit-led card headlines and section copy. The hero was locked to the pain-hook H1 ("Listen, or take notes. You shouldn't have to choose."), 6 bento cards were rewritten as benefit-led headlines (see [[concepts/knowted-waitlist-website-iteration]]), and language support was locked to 12 throughout.
+
+A residual D3 dependency was identified: FAQ and pricing pages still list HIPAA/SOC 2 as Enterprise features — these are roadmap certifications from the [[concepts/llm-feature-fabrication-audit-pattern]] incident, not confirmed capabilities. They need softening once D3 (Enterprise tier honesty) is resolved. Additionally, the `/sales` page proof strip contains unverified statistics ("2-3 hrs saved" and "240+ meetings captured") alongside the confirmed "+11%" — only the confirmed stat should go wide until the others are verified with Jeffrey.
+
+The copy changes were NOT committed or deployed — holding for explicit user approval per [[concepts/knowted-production-deploy-safety-rule]]. The decision register status after this session: D2 = resolved AND actioned; D5 = resolved (Jun 12); remaining blockers D1 (lawyer), D3 (Enterprise honesty), D4 (pricing defaults), D6 (waitlist-vs-live), D7 (comparison aggressiveness).
+
 ## Sources
 
 - [[daily/lcash/2026-06-12.md]] - D5 (Team at launch) resolved YES with privacy boundary: no-login = local-only, login = cloud sync; D6 (Website) resolved as two-phase (waitlist now, product-site end of June); D1 (Legal posture) assessed as materially stronger than assumed — local screen recording, no bot, user-is-participant is safest architecture in category; Jeffrey's counsel brief on recording consent filed; 8-decision register structure first designed with 3 gates (Session 13:45)
 - [[daily/lcash/2026-06-13.md]] - Full ranked decision register (launch-decisions.md) formalized with 3 gates (legal/truth → pricing → sequencing); marketing blocked by decisions not content; 4 moves clear ~70% (Jeffrey call, solo pricing, lawyer hour, cofounder call); D1 recording-consent is longest dependency (external lawyer); product-truth matrix with 7 claims needing confirmation; wired into STATUS.md (Session 11:09)
 - [[daily/lcash/2026-06-16.md]] - Jeffrey call resolved D2: all 7 product claims confirmed TRUE; language support corrected to 12 (not 100+); unblocks website copy and ad library (Session 15:23)
+- [[daily/lcash/2026-06-18.md]] - D2 fully actioned into live copy: full homepage copy pass with section-by-section approval; 6 bento cards rewritten as benefit-led headlines; hero locked to pain-hook H1; residual D3 dependency: HIPAA/SOC 2 still listed as Enterprise features (roadmap, not confirmed); `/sales` page has unverified proof-strip stats ("2-3 hrs", "240+ meetings") — only "+11%" confirmed; nothing committed/deployed (Session 15:29)

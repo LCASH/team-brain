@@ -716,3 +716,38 @@
 - Articles created: (none)
 - Articles updated: [[concepts/knowted-nano-banana-ai-photo-generation]] (Hero line evolved "Just listen" → "Just relax. Knowted quietly takes the notes." — stress-relief angle; "quietly" does dual duty: discreet + bot-differentiation; organic quotes ≠ punchy headlines lesson)
 - Note: Final compilation pass for daily/lcash/2026-06-16.md, capturing Session 23:08 (continued content generation). This completes 6 total passes across the full daily log. Session 23:08 was a minor copy iteration: the adopted headline "Just listen. Knowted takes the notes." evolved to "Just relax. Knowted quietly takes the notes." for its emotional resonance with the stress-relief angle. All prior sessions (12:40, 13:17, 15:23, 20:32, 20:45, 21:06, 22:20, 22:55) were captured in passes 1-5.
+
+## [2026-06-27T19:37:25+10:00] compile | daily/lcash/2026-06-17.md
+- Source: daily/lcash/2026-06-17.md
+- Developer: lcash
+- Articles created: (none)
+- Articles updated: [[concepts/knowted-nano-banana-ai-photo-generation]] (AI renders UIs like Google Meet grids well but logos poorly — model redraws rather than reproduces; brand-overlay.js deterministic compositing pipeline permanently fixes logo rendering; 6 post-ready images validated; Google Meet grids added to call scenes only), [[concepts/puppeteer-branded-social-image-pipeline]] (brand-overlay.js logo overlay pipeline extends Puppeteer from text-card-renderer to post-processing compositor for AI-generated images; 6 images produced with real logo composited)
+- Note: Light daily log (2 sessions, both Knowted ad creative). Primary contribution is the logo compositing discovery: AI image models cannot reliably render brand logos even with reference images (they redraw rather than reproduce). The permanent fix is deterministic post-processing via brand-overlay.js (Puppeteer composites real logo PNG onto AI-generated scenes). No new concept articles warranted — findings are refinements to existing image pipeline articles.
+
+## [2026-06-27T19:40:57+10:00] compile | daily/lcash/2026-06-18.md
+- Source: daily/lcash/2026-06-18.md
+- Developer: lcash
+- Articles created: [[concepts/knowted-sales-page-unverified-proof-strip]] (`/sales` proof strip has 3 stats but only "+11%" confirmed; "2-3 hrs" and "240+ meetings" unverified — same propagation pattern as enterprise feature fabrication)
+- Articles updated: [[concepts/knowted-waitlist-website-iteration]] (full homepage copy pass: hero locked to pain-hook H1, 6 bento cards rewritten as benefit-led headlines, FAQ/CTA finalized, Pricing/Sales pages left untouched; residual D3 dependency on HIPAA/SOC 2), [[concepts/knowted-launch-decision-register]] (D2 fully actioned into live copy; residual D3 dependency identified; `/sales` unverified stats flagged), [[concepts/knowted-icp-voc-avatar-derivation]] (4 ICP docs completed — Player-Coach, Corporate Caller, Solopreneur, Student — completing the data room ICP layer; Enterprise ICP still unwritten)
+- Note: Single session (15:29), primarily execution of prior decisions (D2 product truth, ICP avatars, website copy iterations) rather than discovery of new concepts. The genuinely new finding is the `/sales` proof strip containing unverified statistics alongside confirmed ones — the same silent-propagation pattern as the enterprise feature fabrication. Section-by-section approval workflow transitioned to autonomous handoff midway through the session once user trust was established.
+
+## [2026-06-27T19:55:00+10:00] compile | daily/lcash/2026-06-23.md
+- Source: daily/lcash/2026-06-23.md
+- Developer: lcash
+- Articles created: [[concepts/knowted-brand-identity-campaign-system]] (Brand book committed with Fraunces/Public Sans typography, Brunswick Green/Classic Linen color tokens; "Consider it noted" campaign with before/after creative device; 4 ICP-matched executions; organic-first rollout cadence; PhantomBuster MCP session-binding limitation)
+- Articles updated: [[concepts/knowted-waitlist-website-iteration]] (launch sequence locked: website + endpoint → content → data room; VITE_WAITLIST_ENDPOINT as single blocker; typography change planned to Fraunces/Public Sans; "Don't change for the sake of it" lesson), [[concepts/knowted-content-first-gtm-strategy]] (launch sequence confirmed: website is immediate next objective as demand lever over data-room polish; "Consider it noted" campaign designed), [[concepts/puppeteer-branded-social-image-pipeline]] (6 post-ready images finalized with logo overlay; Brand Copy Guide PDF rendered; copy-bank §1 drifted from §5 avatar hooks — needs reconciliation pass)
+- Note: Four sessions across Knowted admin spanning website launch planning, content pipeline completion, brand identity finalization, and competitive recon. Two dominant themes: (1) the brand identity system was formalized — brand book committed, typography locked (Fraunces/Public Sans replacing Plus Jakarta Sans), color tokens defined (Brunswick Green/Classic Linen), and the "Consider it noted" campaign designed with before/after creative device mapped to all 4 ICPs; (2) website was confirmed as the immediate next objective with VITE_WAITLIST_ENDPOINT as the single blocking gate before content posting makes sense. A beard.com competitive recon session established an ethical boundary: passive CDP-based analysis is acceptable but active form submission to third-party sites is not (no authorization, pollutes real data, legal risk). PhantomBuster MCP connector could not bind mid-session — Claude.ai custom connectors only attach at session start.
+
+## [2026-06-27T20:05:00+10:00] compile | daily/lcash/2026-06-26.md
+- Source: daily/lcash/2026-06-26.md
+- Developer: lcash
+- Articles created: (none)
+- Articles updated: (none)
+- Note: Empty daily log — single memory flush entry at 10:20 [Knowted admin] with "FLUSH_OK - Nothing worth saving from this session." No sessions, no key exchanges, no concepts to extract. No compilation output.
+
+## [2026-06-27T20:30:00+10:00] compile | daily/lcash/2026-06-27.md
+- Source: daily/lcash/2026-06-27.md
+- Developer: lcash
+- Articles created: [[concepts/knowted-phantombuster-investor-outreach-automation]]
+- Articles updated: [[concepts/knowted-content-first-gtm-strategy]] (P0s 1-4 confirmed done; website confirmed as next objective; hero copy recommendation locked), [[concepts/knowted-investor-data-room-build]] (P0s confirmed done; "data room" jargon lesson; infra cost still outstanding), [[concepts/knowted-waitlist-website-iteration]] (VITE_WAITLIST_ENDPOINT remains critical gate; hero copy recommendation; dev server running with uncommitted edits), [[concepts/puppeteer-branded-social-image-pipeline]] (6 images with logo overlay confirmed complete; Brand Copy Guide PDF generated; copy bank §1/§5 drift reconfirmed)
+- Note: Two Knowted admin sessions spanning content pipeline completion (Session 14:13) and LinkedIn investor outreach automation (Session 19:37). One new concept: PhantomBuster 3-touch investor DM sequence with reply-triggered hand-sent path, targeting 35 connected investors at 10/day. Four existing articles updated with Jun 27 source data. The most operationally significant finding was user confirming P0 items 1-4 done (Jeffrey re-chase sent, investor update sent, Danny touch sent, D2 cleared) — validating the "sends not builds" thesis from Jun 16. The "data room" jargon landing badly is a communication lesson: keep investor terminology plain when talking to founders. Copy bank §1/§5 drift (2 of 6 built images came from §5 avatar hooks, not §1 ad headlines) needs §9 reconciliation pass.

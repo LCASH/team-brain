@@ -1,11 +1,12 @@
 ---
 title: "Knowted Nano Banana AI Photo Generation Pipeline"
-aliases: [nano-banana, gemini-3-pro-image, ai-photo-ads, photo-statement-template, ai-lifestyle-photos]
+aliases: [nano-banana, gemini-3-pro-image, ai-photo-ads, photo-statement-template, ai-lifestyle-photos, brand-overlay, logo-compositing]
 tags: [knowted, marketing, image-generation, gemini, ai-agent, content-strategy]
 sources:
   - "daily/lcash/2026-06-16.md"
+  - "daily/lcash/2026-06-17.md"
 created: 2026-06-16
-updated: 2026-06-16
+updated: 2026-06-17
 ---
 
 # Knowted Nano Banana AI Photo Generation Pipeline
@@ -19,6 +20,8 @@ On 2026-06-16, lcash integrated AI-generated lifestyle photography into the Know
 - **AI text rendering is garbled**: On-screen UI elements and small text in generated photos are gibberish (known Gemini limitation) — gradient scrim hides garbled text and HTML overlay provides real text
 - **Ran through existing `gemini.js`** without MCP server setup — simpler path than Nano Banana's 10-file skill which assumes MCP
 - **Brand green threads through AI generations**: Specifying brand hex (#00ff88) in prompts causes the color to appear naturally in generated scenes (walls, clothing, UI accents)
+- **AI renders UIs well but logos poorly**: Google Meet grids render recognizably in generated scenes, but brand logos are skewed/garbled even with reference images — the model redraws rather than reproduces
+- **`brand-overlay.js` deterministic logo compositing (Jun 17)**: Permanent fix for AI logo rendering — generate scenes with top-left clean, then composite the real logo PNG via Puppeteer post-processing. Guarantees pixel-perfect logos on every image
 - **macOS sandbox blocks `~/Downloads/`**: CLI tools can't read from Downloads; user copied nano-banana folder into project directory as workaround
 - **Generated assets are gitignored** (treated as regenerable from committed prompts/code); user can force-add approved images
 
@@ -82,6 +85,18 @@ A significant strategic pivot occurred: **content-mode over ad-mode** for this b
 
 A final copy iteration in Session 23:08 evolved the adopted headline from "Just listen" to **"Just relax. Knowted quietly takes the notes."** — leaning into a calm/stress-relief angle that pairs better with the lead line "Stop stressing." The word "quietly" serves dual purpose: clarifies the product is discreet AND differentiates from awkward AI bots that visibly join meetings. The "Just listen" variant was retained as a secondary option but "Just relax" was chosen as the primary for its emotional resonance across both professional and student segments.
 
+### Deterministic Logo Compositing via brand-overlay.js (2026-06-17)
+
+On 2026-06-17, lcash discovered that AI image models (Nano Banana / Gemini 3 Pro Image) cannot reliably render brand logos — even when the real logo is provided as a reference image. The model redraws the logo from its understanding of the shape rather than reproducing the reference pixel-perfectly, producing skewed icons, simplified geometry, and garbled details. This is architecturally distinct from the garbled-text limitation: text rendering fails because diffusion models can't produce coherent letterforms, while logo rendering fails because the model interprets and redraws rather than copies.
+
+The fix is a deterministic post-processing pipeline (`brand-overlay.js`): AI generates the scene with the top-left corner kept clean (no logo in prompt), then Puppeteer composites the real logo PNG at exact coordinates on top of the finished image. This guarantees pixel-perfect logo placement on every generated image regardless of AI model behavior.
+
+The pipeline was validated on 6 post-ready images (stress, relax, sell, promised, student, free) with the real Knowted logo composited via `brand-overlay.js`. One variant (`free-v1`) had a text duplication glitch ("Record" rendered twice) requiring a `free-v2` regeneration — consistent with the established variant-pick workflow where 2+ variants are generated and the cleanest kept.
+
+A related finding: AI models CAN render well-known third-party UIs with surprising accuracy. Google Meet video grids were added to laptop screens in three "call" scene images (stress, relax, sell) and rendered recognizably — making the "meeting being captured" use case visually obvious. The decision was that Meet grids belong only on call-context scenes; the "promised" image (reflective, not mid-call) and student/free images (in-person lecture context) stay without Meet UI.
+
+The logo compositing rule is now permanent: **never let the image model draw the Knowted logo.** This extends the existing image generation rule (nano banana = human/lifestyle scenes, HTML = product UI) with a third category: **Puppeteer post-processing = brand marks and logos.**
+
 ## Related Concepts
 
 - [[concepts/html-css-ad-creative-renderer]] - The Puppeteer HTML→PNG pipeline that the photoStatement template extends; established the principle that HTML/CSS owns all text while diffusion handles backgrounds
@@ -92,4 +107,5 @@ A final copy iteration in Session 23:08 evolved the adopted headline from "Just 
 
 ## Sources
 
+- [[daily/lcash/2026-06-17.md]] - AI renders Google Meet grids well but logos poorly (skewed/garbled even with reference image); `brand-overlay.js` deterministic compositing pipeline permanently fixes logo rendering; 6 post-ready images validated (stress, relax, sell, promised, student, free); free-v1 text glitch ("Record" x2) required v2; Meet grids added to call scenes only (not promised/student/free); copy-bank §1 drifted from built lines — 2 of 6 came from §5 avatar hooks (Sessions 00:11, 00:47)
 - [[daily/lcash/2026-06-16.md]] - Nano Banana Pro (Gemini 3 Pro Image) confirmed working via existing gemini.js; photoStatement template built (full-bleed AI photo + gradient scrim + HTML overlay); AI text garbled but hidden by scrim; brand green threads through prompts; macOS sandbox blocks ~/Downloads/; user chose "Both" (template text cards + AI photo cards); 4-week posting rollout 70/20/10; generated assets gitignored; MCP server setup bypassed for simpler direct API path (Session 20:32). Two-pipeline strategy formalized: Nano Banana Pro for hero/scroll-stoppers, HTML template for workhorse ads; "Knowted ≈ noted" wordplay as brand-ownable asset; shorter headlines reduce AI text duplication; copy bank built across 4 ICPs; "be present" concept killed as too abstract; image rule: nano banana = human/lifestyle (no screens), HTML = product UI; Pro > Flash for ad quality (Session 22:20). ICP testing of 8 hero lines: 3 universal winners, 1 retired, rest segment-specific; call/meeting language invisible to students, lecture language invisible to pros; content-mode over ad-mode pivot (hook + wordmark, caption carries CTA); logo reference wiring into nano banana (recognizable not pixel-perfect); "Listen, or take notes. Not both" rejected as riddle → "Just listen. Knowted takes the notes." adopted; variant-pick workflow (generate 2, keep clean one); copy bank line "Never miss what was said on a call" retired as too generic (Session 22:55). Final iteration: "Just listen" evolved to "Just relax. Knowted quietly takes the notes." — stress-relief angle, "quietly" does double duty (discreet + differentiation from bot); lines that work as organic quotes ≠ punchy headlines — different formats need different copy (Session 23:08)

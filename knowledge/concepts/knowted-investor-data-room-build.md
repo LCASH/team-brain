@@ -4,8 +4,9 @@ aliases: [data-room, investor-data-room, sends-not-builds, fundraise-velocity, k
 tags: [knowted, investor-relations, fundraise, strategy, data-room, operations]
 sources:
   - "daily/lcash/2026-06-16.md"
+  - "daily/lcash/2026-06-27.md"
 created: 2026-06-16
-updated: 2026-06-16
+updated: 2026-06-27
 ---
 
 # Knowted Investor Data Room Build
@@ -74,3 +75,4 @@ This creates a single point of failure: the warmest intro path is mediated by Je
 ## Sources
 
 - [[daily/lcash/2026-06-16.md]] - Data room built (financial model, cap table, traction metrics, README); "sends not builds" diagnosis — 3 sends completed (Jeffrey re-chase, investor update, Danny retention); cap table: Jeffrey 55 / Luke 45 + Braedon; 3 persistent financial model blanks (cash, infra cost, Braedon formality); banker identity gap — warmest intro path runs through unnamed contact, 2 intros 7 days overdue; fallback direct-ask draft staged for Thu 18 Jun (Sessions 12:40, 13:17, 15:23)
+- [[daily/lcash/2026-06-27.md]] - P0 items 1-4 confirmed done by user (Jeffrey re-chase sent, June investor update sent, Danny touch sent, D2 cleared); Jeff plan drafted covering website go-live, waitlist endpoint, product claims, and data room completion; user didn't know what "data room" meant — investor jargon landed badly, keep terminology plain when talking to founders; infra cost still outstanding from Jeff; consider copying `data-room/` to shareable Google Drive folder (Session 14:13)

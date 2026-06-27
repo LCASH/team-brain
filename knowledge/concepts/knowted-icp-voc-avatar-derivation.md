@@ -4,8 +4,9 @@ aliases: [knowted-icp, voc-research, customer-avatars, land-and-expand-motion, c
 tags: [knowted, gtm, icp, marketing, positioning, voice-of-customer]
 sources:
   - "daily/lcash/2026-06-16.md"
+  - "daily/lcash/2026-06-18.md"
 created: 2026-06-16
-updated: 2026-06-16
+updated: 2026-06-18
 ---
 
 # Knowted ICP Voice-of-Customer Avatar Derivation
@@ -71,6 +72,11 @@ The prior ICP research (high-ticket closers for the Team plan) represents the ta
 - [[concepts/llm-feature-fabrication-audit-pattern]] - VoC methodology prevents fabricated persona claims by grounding in real customer language
 - [[connections/output-before-infrastructure-sequencing]] - The ICP work is output (specific copy and positioning) not infrastructure (CRM setup, sequence templates)
 
+### Four ICP Docs Complete the Data Room (2026-06-18)
+
+On 2026-06-18, four ICP documents were completed — Player-Coach (Closer Chloe), Corporate Caller (bridge persona), Solopreneur Sam, and Student Sophie — completing the ICP layer of the data room and mapping the full land-and-expand motion from Free through Team to Enterprise. Enterprise ICP (IT Ian) was noted as still unwritten but lower priority. An HTML ICP viewer built earlier predates the 4-persona split and needs a refresh to match the current structure.
+
 ## Sources
 
 - [[daily/lcash/2026-06-16.md]] - Four ICP avatars built (Solopreneur Sam, Student Sophie, Closer Chloe, IT Ian) mapping land-and-expand motion; universal pain hook "I can either listen or take notes, but not both" discovered verbatim across two independent segments; Corporate Caller identified as bridge persona (Free → pulls team → manager buys Team); three shared objections (no bot, don't upload, free = actually free); VoC research via Perplexity MCP; existing tagline kept as sub-headline; 4-week posting rollout plan drafted (70/20/10 organic schedule) (Sessions 13:17, 15:23)
+- [[daily/lcash/2026-06-18.md]] - Four ICP docs completed (Player-Coach, Corporate Caller, Solopreneur, Student) completing the data room's ICP layer; Enterprise ICP (IT Ian) still unwritten (lower priority); HTML ICP viewer predates the 4-persona split and needs refresh (Session 15:29)

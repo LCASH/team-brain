@@ -7,8 +7,10 @@ sources:
   - "daily/lcash/2026-06-11.md"
   - "daily/lcash/2026-06-12.md"
   - "daily/lcash/2026-06-13.md"
+  - "daily/lcash/2026-06-23.md"
+  - "daily/lcash/2026-06-27.md"
 created: 2026-06-04
-updated: 2026-06-16
+updated: 2026-06-27
 ---
 
 # Knowted Content-First GTM Strategy
@@ -93,3 +95,5 @@ The social ad creative system was also built — headless Chrome (Puppeteer) ren
 - [[daily/lcash/2026-06-11.md]] - Video #1 reframed from "founder POV" to "Your AI finally knows about your meetings" (free-tier demo); website rewritten with waitlist CTA + 3-tier pricing + sales landing page; designer hiring scoped for Framer redesign at $3-8K (Sessions 10:20, 10:57, 11:31)
 - [[daily/lcash/2026-06-12.md]] - Waitlist site deployed (f5120cb); content audit verified; form endpoint was localStorage-only (fixed with Google Apps Script → Sheet); social ad creative system built (Puppeteer HTML+CSS→PNG); legal positioning: local-first no-bot is safest in category; login=cloud privacy boundary (Sessions 13:45, 16:46, 17:22, 22:27)
 - [[daily/lcash/2026-06-13.md]] - Website middle-section revamp: 4/6 bento cards repeat hero, phone demo shows failure state, Claude Code card assumes MCP knowledge; hero rewritten to "Botless, Private, Free, Unlimited AI Meeting Assistant"; em-dash sweep; marketing confirmed blocked by unmade decisions not missing content — all assets built, decisions are the blocker (Session 11:09)
+- [[daily/lcash/2026-06-23.md]] - Launch sequence locked: website + endpoint live → content drives traffic → data room closes investors; website confirmed as immediate next objective (demand lever over data-room polish); `VITE_WAITLIST_ENDPOINT` is the single gate before any content posting makes sense; "Consider it noted" campaign designed with before/after creative device, 4 ICP-matched executions, organic-first rollout (2 posts/week + build-in-public); brand book committed with Fraunces/Public Sans typography (Sessions 10:09, 11:33)
+- [[daily/lcash/2026-06-27.md]] - Website confirmed as correct next objective; hero copy recommendation locked: "Stop stressing about notes. Let Knowted note it." with strip "Undetectable · Unlimited recordings & transcripts · Free"; P0 items 1-4 confirmed done (Jeffrey re-chase, investor update, Danny touch, D2 cleared); Jeff plan drafted for website go-live; VITE_WAITLIST_ENDPOINT remains single critical gate; investor outreach running in parallel via PhantomBuster (Sessions 14:13, 19:37)
