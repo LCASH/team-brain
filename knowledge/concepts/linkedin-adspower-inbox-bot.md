@@ -5,8 +5,9 @@ tags: [knowted, linkedin, scraping, adspower, ai-agent, anti-detection, outreach
 sources:
   - "daily/lcash/2026-06-12.md"
   - "daily/lcash/2026-06-16.md"
+  - "daily/lcash/2026-06-27.md"
 created: 2026-06-12
-updated: 2026-06-16
+updated: 2026-06-27
 ---
 
 # LinkedIn AdsPower Inbox Bot
@@ -65,7 +66,16 @@ Key anti-detection additions:
 
 The `__cf_bm` cookie (Cloudflare bot management) rotates every ~30 minutes; stale cookies from hours-old pastes will fail silently — always harvest fresh from the live session.
 
+### Voice Context and Motion-Based AI Drafting (2026-06-27)
+
+On 2026-06-27, lcash built `voice_context.py` as a comprehensive single-file source of truth for AI-powered reply drafting. The file contains voice rules, product facts, three outreach motions (sales leader, entrepreneur-operator, investor, 1:1 warm), and example messages. The `/api/ai-draft` endpoint uses motion-based system prompts — each contact type gets a tailored framing rather than a generic template. Auto-pick mode selects the motion automatically from conversation context.
+
+A **SessionDeadError pattern** was formalized: when the bot detects a login checkpoint or re-authentication redirect, it halts immediately rather than continuing to interact with the login wall. Hammering the login/checkpoint page is itself a strong bot signal that accelerates account restriction. The detection fires on URL checks during scans and causes an immediate session teardown.
+
+A critical operational lesson was confirmed: **code fixes cannot undo existing account flags.** After LinkedIn flags an account, 24-72 hours of clean manual human behavior (logging in normally, browsing profiles, engaging with the feed naturally) is required for the risk score to decay. No amount of stealth JS patching or bezier curve improvements can accelerate this cooldown — the fixes only prevent future flagging, they don't retroactively clear existing flags.
+
 ## Sources
 
 - [[daily/lcash/2026-06-12.md]] - AdsPower profile k19yb91n over CDP, Playwright vanilla fingerprint nuked, cookie management pitfalls, /api/ai-draft with motion-aware personas, voice_context.py single-file config, rate limits (4 scans/25 unreads/10 replies/50 messages), bot-detection signals (navigator.webdriver et al.), humanization techniques (bezier/typing/jitter), li_a vs li_at cookie analysis, project at ~/Documents/Claude Bot/ (Session times)
 - [[daily/lcash/2026-06-16.md]] - Anti-detection overhaul: fill()/click() replaced with per-char typing + bezier mouse; auto-start pattern across all endpoints (lazy boot on first call); gaussian jitter on all sleeps; scroll realism; context-level patching of webdriver/runtime/plugins/permissions; __cf_bm 30-min rotation; account flagging requires 24-72h manual cooloff (Session 20:45)
+- [[daily/lcash/2026-06-27.md]] - voice_context.py built as single-file source of truth (voice rules, product facts, 3 outreach motions + auto-pick); motion-based system prompts for /api/ai-draft; SessionDeadError pattern (detect login/checkpoint redirects, halt immediately); code fixes can't undo existing account flags — 24-72h clean human behavior required; safe limits codified (4 scans/25 unreads/10 replies/50 msgs daily); ANTHROPIC_API_KEY needed in ~/.zshrc for persistent access (Session 20:48)
