@@ -758,3 +758,10 @@
 - Note: Incremental recompile covering Sessions 20:28, 20:48, 21:03, 21:40 that were not captured in the initial compile pass
 - Articles created: (none)
 - Articles updated: [[concepts/linkedin-adspower-inbox-bot]] (added 2026-06-27 source: voice_context.py voice rules, motion-based AI draft prompts, SessionDeadError pattern, code-fixes-cant-undo-account-flags lesson), [[concepts/knowted-waitlist-website-iteration]] (added Google Workspace Apps Script domain restriction discovery from Session 21:03: deployments under /a/macros/<domain>/ are domain-restricted by default, blocking anonymous POST — must redeploy with "Anyone" access)
+
+## [2026-06-27T22:19:11+10:00] compile | daily/lcash/2026-06-27.md (final incremental)
+- Source: daily/lcash/2026-06-27.md
+- Developer: lcash
+- Note: Final incremental pass capturing Sessions 20:28 (gallery download buttons, Gowun Batang font), 22:19 (35 new content hooks, Photos section, nano-ads.js pipeline), 20:30 (PentestGPT Q&A — no extractable concepts), 21:45 (expert/launch-decisions — duplicate of already-compiled Jun 13 content). Sessions 20:47, 21:40 contained no extractable knowledge.
+- Articles created: (none)
+- Articles updated: [[concepts/puppeteer-branded-social-image-pipeline]] (35 new content hooks in concepts.js across 7 themes; 34 mirrored to nano-ads.js; nb-02 excluded from AI pipeline; Photos section with /api/assets endpoint and AssetGrid; gallery download buttons; live filesystem scan API; Gowun Batang font tested)
